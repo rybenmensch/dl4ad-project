@@ -3,7 +3,6 @@
 ## measuring
 
 - is hard because output is not deterministic
-- unless there is a way to set a seed for each model?
 
 ## encoder
 
