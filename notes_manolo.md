@@ -1,4 +1,12 @@
-# RAVE
+# things to try out
+
+- print out all the dimensions to see where we could swap/skip/repeat
+  layers
+- find out how we can actually modify the graph or whatever so that we can
+  actually do it
+- using image processing techniques (such as filtering) on weights
+
+# Model knowledge
 
 ## measuring
 
@@ -63,3 +71,43 @@ state_dict['encoder.net.0.weight'] = test
 - has 3 identical subnets
     - `.net.0`, `.net.2`, `.net.4`
 - doesn't do a lot it seems?
+
+# RAVE training states
+
+## *.ts
+
+File that is ultimately exported. Holds JIT-compiled model (data +
+computation graph), but in a possibly less-than-optimally-flexible
+structure. Bending is possible by getting and setting the state_dict.
+
+## *.ckpt
+
+- Potentially contains a lot more than the ts
+    - model state_dict
+    - optimizer state_dict
+    - epoch log
+    - loss log
+    - means etc. for things that need running means/avgs.
+
+## events.out.tfevents
+
+- contains output for tensorboard
+    - model and config text summary
+    - logs
+    - exported wavs
+- probably not important/useful?
+
+# RAVE exporting
+
+RAVE has both an export and export_onnx script. export_onnx does not seem
+to work and also probably irrelevant for us
+
+## export.py
+
+Turns a model checkpoint into a torchscript file.
+
+Defines a `ScriptedRAVE` model, not quite sure why it needs to be turned
+into that, since the model already exists. But maybe this is just for
+serialization.
+
+
