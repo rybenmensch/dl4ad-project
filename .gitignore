@@ -2,5 +2,6 @@
 .venv/
 __pycache__/
 models/jungle_ravev3.ts
+models/checkpoint/
 RAVE/
 audio/reconstructed/
