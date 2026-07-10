@@ -23,15 +23,35 @@ from pathlib import Path
 import torchaudio
 from lib import *
 
-run_path = "/Volumes/manolossd/RAVEMATERIAL/jungle/jungle_ravev3_8e8d6179ca/"
+
+run_path = "models/checkpoint/"
 config_file = rave.core.search_for_config(run_path)
 gin.parse_config_file(config_file)
 
-model = rave.RAVE()
 checkpoint_path = rave.core.search_for_run(run_path)
 checkpoint = torch.load(checkpoint_path, map_location="cpu")
+
+# Find the input channels of the encoder's first conv layer from state_dict to detect n_channels
+in_channels = None
+for key in ["encoder.encoder.net.0.weight_v", "encoder.net.0.weight_v", "encoder.encoder.net.0.weight"]:
+    if key in checkpoint["state_dict"]:
+        in_channels = checkpoint["state_dict"][key].shape[1]
+        break
+
+if in_channels is not None:
+    try:
+        n_band = gin.query_parameter('%N_BAND')
+    except Exception:
+        n_band = 16
+    n_channels = in_channels // n_band
+else:
+    n_channels = 1
+
+model = rave.RAVE(n_channels=n_channels)
 model.load_state_dict(checkpoint["state_dict"], strict=False)
 model.eval()
+# # exit()
+
 
 # EXPERIMENT
 
@@ -43,6 +63,7 @@ else:
     conv_layer = last_layer
 
 encoder_output_channels = conv_layer.out_channels
+torch.manual_seed(0)
 
 class CustomEncoderWrapper(torch.nn.Module):
     def __init__(self, original_net, channels):
@@ -68,7 +89,7 @@ model.encoder.encoder.net = CustomEncoderWrapper(
     encoder_output_channels
 )
 
-# print(model.encoder.encoder.net)
+print(model.encoder.encoder.net)
 
 # AUDIO
 source_path: Path = check_path("audio/source")

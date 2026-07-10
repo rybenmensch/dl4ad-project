@@ -9,31 +9,73 @@ def check_path(p: str|Path) -> Path:
         raise Exception(f"Path {path} doesn't exist!")
     return path
 
+def get_model_channels(model) -> int:
+    if hasattr(model, "n_channels"):
+        return model.n_channels
+    try:
+        sd = model.state_dict()
+        if 'encode_params' in sd:
+            return int(sd['encode_params'][0].item())
+    except Exception:
+        pass
+    return 1
+
 def process_audio(model, waveform: torch.Tensor) -> torch.Tensor:
-    num_audio_channels = waveform.shape[0]
+    model_channels = get_model_channels(model)
+    audio_channels = waveform.shape[0]
 
-    processed_channels = []
-    for i in range(num_audio_channels):
-        # (channels, timesteps) -> (1, timesteps)
-        channel = waveform[i:i+1, ...] 
+    if model_channels == 2:
+        if audio_channels == 1:
+            waveform = torch.cat([waveform, waveform], dim=0)
+            audio_channels = 2
         
-        # (1, timesteps) -> (batch, 1, timesteps)
-        input_tensor = channel.unsqueeze(0)
+        if audio_channels == 2:
+            input_tensor = waveform.unsqueeze(0)
+            with torch.no_grad():
+                torch.manual_seed(0)
+                output_tensor = model(input_tensor)
+                output_waveform = output_tensor.squeeze(0)
+                return output_waveform
+        else:
+            processed_channels = []
+            for i in range(0, audio_channels, 2):
+                if i + 1 < audio_channels:
+                    pair = waveform[i:i+2, ...]
+                else:
+                    pair = torch.cat([waveform[i:i+1, ...], waveform[i:i+1, ...]], dim=0)
+                input_tensor = pair.unsqueeze(0)
+                with torch.no_grad():
+                    torch.manual_seed(0)
+                    output_tensor = model(input_tensor)
+                    output_waveform = output_tensor.squeeze(0)
+                    if i + 1 >= audio_channels:
+                        output_waveform = output_waveform[0:1, ...]
+                    processed_channels.append(output_waveform)
+            return torch.cat(processed_channels, dim=0)
 
-        with torch.no_grad():
-            # (batch, num_chans, timesteps)
-            torch.manual_seed(0)
-            output_tensor = model(input_tensor)
-            # (batch, num_chans, timesteps) -> (num_chans, timesteps)
-            output_waveform = output_tensor.squeeze(0)
-            # (num_chans, timesteps) -> (1, timesteps)
-            output_waveform = output_waveform[0:1, ...]
-            processed_channels.append(output_waveform)
+    else:
+        processed_channels = []
+        for i in range(audio_channels):
+            # (channels, timesteps) -> (1, timesteps)
+            channel = waveform[i:i+1, ...] 
+            
+            # (1, timesteps) -> (batch, 1, timesteps)
+            input_tensor = channel.unsqueeze(0)
 
-    # [(1, timesteps), ..., (1, timesteps)] -> (num_audio_channels, timesteps)
-    output_tensor = torch.cat(processed_channels, dim=0)
+            with torch.no_grad():
+                # (batch, num_chans, timesteps)
+                torch.manual_seed(0)
+                output_tensor = model(input_tensor)
+                # (batch, num_chans, timesteps) -> (num_chans, timesteps)
+                output_waveform = output_tensor.squeeze(0)
+                # (num_chans, timesteps) -> (1, timesteps)
+                output_waveform = output_waveform[0:1, ...]
+                processed_channels.append(output_waveform)
 
-    return output_tensor
+        # [(1, timesteps), ..., (1, timesteps)] -> (num_audio_channels, timesteps)
+        output_tensor = torch.cat(processed_channels, dim=0)
+
+        return output_tensor
 
 class Model:
     def __init__(self, path: Path|str) -> None:
