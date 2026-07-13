@@ -169,7 +169,7 @@ class SequentialWithRepeat(nn.Module):
     def forward(self, x):
         for i, layer in enumerate(self.original_net):
             r = self.repeats.get(i, 1)
-            for r in range(r):
+            for _ in range(r):
                 x  = layer(x)
             return x
 
