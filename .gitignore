@@ -2,6 +2,7 @@
 .venv/
 __pycache__/
 models/jungle_ravev3.ts
-models/checkpoint/
+models/run/best.ckpt
 RAVE/
-audio/reconstructed/
+audio/old_results/
+audio/results
