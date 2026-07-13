@@ -2,23 +2,18 @@ import torch
 from pathlib import Path
 import torchaudio
 from lib import *
+from rave_lib import *
+import rave
 
+# model = rave_from_checkpoint("models/satyr/")
 model = rave_from_checkpoint("models/checkpoint/")
 
-# for k in checkpoint["state_dict"].keys():
-#     print(k)
 
-# for k in model.get_():
-#     print(k)
+original_encoder_net, _ = get_encoder_net(model)
+conv_layer = original_encoder_net[-1]
+print(type(conv_layer))
 
-# EXPERIMENT
-
-original_encoder_net = model.encoder.encoder.net
-last_layer = model.encoder.encoder.net[-1]
-if hasattr(last_layer, "module"):
-    conv_layer = last_layer.module
-else:
-    conv_layer = last_layer
+exit()
 
 encoder_output_channels = conv_layer.out_channels
 torch.manual_seed(0)
