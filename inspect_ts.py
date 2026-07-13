@@ -4,6 +4,7 @@ from pathlib import Path
 import numpy as np
 from lib import *
 import torchinfo
+from plotting import plot_comparison
 
 # MODEL
 model = Model("models/percussion.ts")
@@ -29,6 +30,8 @@ reconstructed_path: Path = check_path("audio/reconstructed")
 file_name: str = "GLM.wav"
 
 input_path, output_path = inout_paths(Path(file_name), source_path, reconstructed_path)
+print(input_path)
+#input_path = str(input_path)
 waveform, sr = torchaudio.load(input_path)
 
 output_clean = model_clean.process_audio(waveform)
@@ -37,7 +40,7 @@ output_clean = model_clean.process_audio(waveform)
 state_dict = model.get_state_dict()
 
 model.print_model_keys()
-exit()
+#exit()
 
 x = np.linspace(-2, 2, num = 10, endpoint = False)
 
@@ -60,9 +63,20 @@ for i in x:
 
     model.set_state_dict(state_dict)
     output_tensor = model.process_audio(waveform)
-
+    
+    
     output_tensor *= 10
     
+    plot_comparison(
+        output_clean,
+        output_tensor,
+        sr=model.sr,
+        title=f"Degradation {i}",
+        save_path=f"plots/plot_{i}.png",
+        show=False,
+    )
+    
+
     name, ext = os.path.splitext(output_path)
     out_path = f"{name}_{i}{ext}"
     torchaudio.save(out_path, output_tensor, sr)
