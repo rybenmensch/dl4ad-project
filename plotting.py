@@ -1,13 +1,7 @@
+import auraloss
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
-
-try:
-    import auraloss
-
-    _HAS_AURALOSS = True
-except ImportError:
-    _HAS_AURALOSS = False
 
 
 def _to_mono_numpy(x: torch.Tensor) -> np.ndarray:
@@ -20,7 +14,7 @@ def plot_comparison(
     clean: torch.Tensor,
     degraded: torch.Tensor,
     sr: int,
-    title: str = "Comparison: clean vs. degradet)",
+    title: str = "Comparison: clean vs. degraded)",
     save_path: str | None = None,
     show: bool = True,
 ) -> dict:
@@ -53,12 +47,11 @@ def plot_comparison(
     std_abs_diff = float(np.std(np.abs(diff_np)))
 
     spectral_loss = None
-    if _HAS_AURALOSS:
-        mrstft = auraloss.freq.MultiResolutionSTFTLoss()
-        clean_t = torch.from_numpy(clean_np).float().unsqueeze(0).unsqueeze(0)
-        degraded_t = torch.from_numpy(degraded_np).float().unsqueeze(0).unsqueeze(0)
-        with torch.no_grad():
-            spectral_loss = float(mrstft(degraded_t, clean_t))
+    mrstft = auraloss.freq.MultiResolutionSTFTLoss()
+    clean_t = torch.from_numpy(clean_np).float().unsqueeze(0).unsqueeze(0)
+    degraded_t = torch.from_numpy(degraded_np).float().unsqueeze(0).unsqueeze(0)
+    with torch.no_grad():
+        spectral_loss = float(mrstft(degraded_t, clean_t))
 
     # Plot
     fig, axes = plt.subplots(2, 2, figsize=(12, 7))
@@ -71,7 +64,7 @@ def plot_comparison(
         label="clean model",
         color="#2a78d6",
         linewidth=0.8,
-        alpha=0.8,
+        alpha=0.5,
     )
     ax.plot(
         time_axis,
@@ -79,7 +72,7 @@ def plot_comparison(
         label="degraded model",
         color="#e34948",
         linewidth=0.8,
-        alpha=0.8,
+        alpha=0.5,
     )
     ax.set_xlabel("Time (s)")
     ax.set_ylabel("Amplitude")
@@ -104,7 +97,7 @@ def plot_comparison(
     # Spektrogramm manipuliertes Modell
     ax = axes[1, 1]
     ax.specgram(degraded_np, Fs=sr, NFFT=1024, noverlap=512, cmap="magma")
-    ax.set_xlabel("time (s)")
+    ax.set_xlabel("Time (s)")
     ax.set_ylabel("Frequency (Hz)")
     ax.set_title("Spectrogram degraded")
 
@@ -117,7 +110,7 @@ def plot_comparison(
     fig.tight_layout(rect=(0, 0, 1, 0.94))
 
     if save_path is not None:
-        fig.savefig(save_path, dpi=150)
+        fig.savefig(save_path, dpi=300)
 
     if show:
         plt.show()
