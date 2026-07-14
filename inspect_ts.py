@@ -9,7 +9,7 @@ from plotting import plot_comparison
 # MODEL
 model = Model("models/percussion.ts")
 # assume mono model
-if(model.input_channels != 1):
+if model.input_channels != 1:
     raise Exception("Stereo models not supported yet!")
 
 model_clean = Model("models/percussion.ts")
@@ -31,7 +31,7 @@ file_name: str = "GLM.wav"
 
 input_path, output_path = inout_paths(Path(file_name), source_path, reconstructed_path)
 print(input_path)
-#input_path = str(input_path)
+# input_path = str(input_path)
 waveform, sr = torchaudio.load(input_path)
 
 output_clean = model_clean.process_audio(waveform)
@@ -40,9 +40,9 @@ output_clean = model_clean.process_audio(waveform)
 state_dict = model.get_state_dict()
 
 model.print_model_keys()
-#exit()
+# exit()
 
-x = np.linspace(-2, 2, num = 10, endpoint = False)
+x = np.linspace(-2, 2, num=10, endpoint=False)
 
 x = [0, 2, 4]
 
@@ -63,10 +63,9 @@ for i in x:
 
     model.set_state_dict(state_dict)
     output_tensor = model.process_audio(waveform)
-    
-    
+
     output_tensor *= 10
-    
+
     plot_comparison(
         output_clean,
         output_tensor,
@@ -75,7 +74,6 @@ for i in x:
         save_path=f"plots/plot_{i}.png",
         show=False,
     )
-    
 
     name, ext = os.path.splitext(output_path)
     out_path = f"{name}_{i}{ext}"
@@ -102,11 +100,11 @@ keys = list(filter(lambda x: "encoder" in x, keys))
 bruh = {}
 for key in keys:
     start = len("encoder.net.")
-    ln = key[start:].find('.')
-    idx = int(key[start:start+ln])
+    ln = key[start:].find(".")
+    idx = int(key[start : start + ln])
     if idx not in bruh:
         bruh[idx] = []
-    bruh[idx].append(key[start+ln+1:])
+    bruh[idx].append(key[start + ln + 1 :])
 
 for key in bruh.keys():
     path = f"encoder.net.{key}"
@@ -116,4 +114,3 @@ for key in bruh.keys():
         entry = state_dict[f"{path}.{v}"]
         shape = list(entry.shape)
         print(f"    {v}:    {entry.shape}")
-

@@ -14,7 +14,6 @@ from torch.nn.utils import remove_weight_norm
 
 from lib import *
 
-
 # ============================================================
 # 1. CONFIGURATION
 # ============================================================
@@ -25,18 +24,20 @@ reconstructed_root = check_path("./audio/")
 
 file_name = "GLM.wav"
 
-scaling_factors = np.array([
-    0.50,
-    0.75,
-    1.00,
-    1.50,
-    2.00,
-    3.00,
-    4.00,
-    6.00,
-    8.00,
-    10.00,
-])
+scaling_factors = np.array(
+    [
+        0.50,
+        0.75,
+        1.00,
+        1.50,
+        2.00,
+        3.00,
+        4.00,
+        6.00,
+        8.00,
+        10.00,
+    ]
+)
 
 depth_positions = {
     "early": 0.10,
@@ -63,11 +64,7 @@ feature_rolloff_percent = 0.85
 run_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 source_stem = Path(file_name).stem
 
-result_directory = (
-    reconstructed_root
-    / "results"
-    / f"{source_stem}_{run_timestamp}"
-)
+result_directory = reconstructed_root / "results" / f"{source_stem}_{run_timestamp}"
 
 encoder_audio_directory = result_directory / "encoder"
 decoder_audio_directory = result_directory / "decoder"
@@ -89,6 +86,7 @@ print(f"Results for this run will be saved to:\n  {result_directory}")
 # 3. GENERAL HELPERS
 # ============================================================
 
+
 def natural_sort_key(text: str) -> list[Any]:
     """Sort strings containing numbers naturally."""
     return [
@@ -97,10 +95,7 @@ def natural_sort_key(text: str) -> list[Any]:
     ]
 
 
-def get_submodule(
-    root_module: torch.nn.Module,
-    module_path: str,
-) -> torch.nn.Module:
+def get_submodule(root_module: torch.nn.Module, module_path: str) -> torch.nn.Module:
     """Navigate to a nested module using a dotted module path."""
     module = root_module
 
@@ -114,8 +109,7 @@ def get_submodule(
 
 
 def align_audio(
-    first: torch.Tensor,
-    second: torch.Tensor,
+    first: torch.Tensor, second: torch.Tensor
 ) -> tuple[torch.Tensor, torch.Tensor]:
     """Align channel count and sample count for comparison."""
     if first.ndim == 1:
@@ -133,10 +127,7 @@ def align_audio(
     )
 
 
-def safe_db(
-    value: float,
-    epsilon: float = 1e-12,
-) -> float:
+def safe_db(value: float, epsilon: float = 1e-12) -> float:
     """Convert a linear amplitude value to decibels."""
     return 20.0 * math.log10(max(value, epsilon))
 
@@ -148,16 +139,10 @@ def format_factor(factor: float) -> str:
 
 def factor_is_saved(factor: float) -> bool:
     """Check whether audio should be saved for a scaling factor."""
-    return any(
-        np.isclose(factor, save_factor)
-        for save_factor in save_factors
-    )
+    return any(np.isclose(factor, save_factor) for save_factor in save_factors)
 
 
-def shorten_module_name(
-    module_path: str,
-    maximum_length: int = 45,
-) -> str:
+def shorten_module_name(module_path: str, maximum_length: int = 45) -> str:
     """Shorten long module paths for plot titles."""
     if len(module_path) <= maximum_length:
         return module_path
@@ -169,9 +154,8 @@ def shorten_module_name(
 # 4. FIND ENCODER AND DECODER WEIGHT MODULES
 # ============================================================
 
-def parameter_key_to_module_path(
-    parameter_key: str,
-) -> str | None:
+
+def parameter_key_to_module_path(parameter_key: str) -> str | None:
     """Convert a state-dict weight key into its module path."""
     supported_suffixes = (
         ".weight",
@@ -182,15 +166,12 @@ def parameter_key_to_module_path(
 
     for suffix in supported_suffixes:
         if parameter_key.endswith(suffix):
-            return parameter_key[:-len(suffix)]
+            return parameter_key[: -len(suffix)]
 
     return None
 
 
-def collect_weight_module_paths(
-    model: torch.nn.Module,
-    section_name: str,
-) -> list[str]:
+def collect_weight_module_paths(model: torch.nn.Module, section_name: str) -> list[str]:
     """Collect valid weight-bearing modules in one model section."""
     module_paths = set()
 
@@ -235,8 +216,7 @@ def collect_weight_module_paths(
 
 
 def select_representative_depths(
-    module_paths: list[str],
-    positions: dict[str, float],
+    module_paths: list[str], positions: dict[str, float]
 ) -> list[tuple[str, str]]:
     """Select early, middle and late modules."""
     if not module_paths:
@@ -246,9 +226,7 @@ def select_representative_depths(
     used_paths = set()
 
     for depth_name, relative_position in positions.items():
-        index = round(
-            (len(module_paths) - 1) * relative_position
-        )
+        index = round((len(module_paths) - 1) * relative_position)
 
         index = max(
             0,
@@ -264,9 +242,7 @@ def select_representative_depths(
     return selected
 
 
-def remove_module_weight_norm(
-    module: torch.nn.Module,
-) -> bool:
+def remove_module_weight_norm(module: torch.nn.Module) -> bool:
     """Remove legacy PyTorch weight normalization."""
     try:
         remove_weight_norm(module)
@@ -276,9 +252,7 @@ def remove_module_weight_norm(
 
 
 def scale_module_weight(
-    model: torch.nn.Module,
-    module_path: str,
-    factor: float,
+    model: torch.nn.Module, module_path: str, factor: float
 ) -> dict[str, Any]:
     """Scale the effective weight of a selected module."""
     module = get_submodule(model, module_path)
@@ -286,9 +260,7 @@ def scale_module_weight(
     weight_norm_removed = remove_module_weight_norm(module)
 
     if not hasattr(module, "weight"):
-        raise AttributeError(
-            f"Module '{module_path}' does not expose a weight tensor."
-        )
+        raise AttributeError(f"Module '{module_path}' does not expose a weight tensor.")
 
     with torch.no_grad():
         original_weight = module.weight.detach().clone()
@@ -310,9 +282,8 @@ def scale_module_weight(
 # 5. AUDIO FEATURE EXTRACTION
 # ============================================================
 
-def calculate_zero_crossing_rate(
-    waveform: torch.Tensor,
-) -> float:
+
+def calculate_zero_crossing_rate(waveform: torch.Tensor) -> float:
     """Calculate the mean zero-crossing rate."""
     if waveform.numel() < 2:
         return 0.0
@@ -346,9 +317,7 @@ def extract_audio_features(
 
     duration_seconds = mono.shape[-1] / sample_rate
 
-    rms = torch.sqrt(
-        torch.mean(mono.square()) + 1e-12
-    ).item()
+    rms = torch.sqrt(torch.mean(mono.square()) + 1e-12).item()
 
     peak = torch.max(torch.abs(mono)).item()
     crest_factor = peak / max(rms, 1e-12)
@@ -358,9 +327,7 @@ def extract_audio_features(
     effective_n_fft = min(n_fft, mono.shape[-1])
 
     if effective_n_fft < 2:
-        raise ValueError(
-            "The audio signal is too short for spectral analysis."
-        )
+        raise ValueError("The audio signal is too short for spectral analysis.")
 
     effective_hop_length = min(
         hop_length,
@@ -394,20 +361,14 @@ def extract_audio_features(
     frequencies_column = frequencies.unsqueeze(1)
     magnitude_sum = magnitude.sum(dim=0).clamp_min(1e-12)
 
-    frame_centroids = (
-        frequencies_column * magnitude
-    ).sum(dim=0) / magnitude_sum
+    frame_centroids = (frequencies_column * magnitude).sum(dim=0) / magnitude_sum
 
     spectral_centroid = frame_centroids.mean().item()
 
     frame_bandwidth = torch.sqrt(
-        (
-            (
-                frequencies_column
-                - frame_centroids.unsqueeze(0)
-            ).square()
-            * magnitude
-        ).sum(dim=0)
+        ((frequencies_column - frame_centroids.unsqueeze(0)).square() * magnitude).sum(
+            dim=0
+        )
         / magnitude_sum
     )
 
@@ -418,33 +379,22 @@ def extract_audio_features(
     rolloff_threshold = rolloff_percent * total_power
 
     rolloff_indices = (
-        cumulative_power
-        >= rolloff_threshold.unsqueeze(0)
-    ).float().argmax(dim=0)
-
-    spectral_rolloff = (
-        frequencies[rolloff_indices]
-        .float()
-        .mean()
-        .item()
+        (cumulative_power >= rolloff_threshold.unsqueeze(0)).float().argmax(dim=0)
     )
 
-    spectral_flatness_per_frame = (
-        torch.exp(
-            torch.mean(
-                torch.log(power.clamp_min(1e-12)),
-                dim=0,
-            )
-        )
-        / torch.mean(
-            power.clamp_min(1e-12),
+    spectral_rolloff = frequencies[rolloff_indices].float().mean().item()
+
+    spectral_flatness_per_frame = torch.exp(
+        torch.mean(
+            torch.log(power.clamp_min(1e-12)),
             dim=0,
         )
+    ) / torch.mean(
+        power.clamp_min(1e-12),
+        dim=0,
     )
 
-    spectral_flatness = (
-        spectral_flatness_per_frame.mean().item()
-    )
+    spectral_flatness = spectral_flatness_per_frame.mean().item()
 
     return {
         "duration_seconds": duration_seconds,
@@ -468,9 +418,7 @@ def calculate_feature_deltas(
 ) -> dict[str, float]:
     """Calculate feature differences from a reference signal."""
     return {
-        f"{feature_name}_delta": (
-            value - reference_features[feature_name]
-        )
+        f"{feature_name}_delta": (value - reference_features[feature_name])
         for feature_name, value in features.items()
         if feature_name in reference_features
     }
@@ -479,6 +427,7 @@ def calculate_feature_deltas(
 # ============================================================
 # 6. CSV OUTPUT
 # ============================================================
+
 
 def save_dict_rows_to_csv(
     rows: list[dict[str, Any]],
@@ -519,9 +468,7 @@ def save_dict_rows_to_csv(
 input_path = source_path / file_name
 
 if not input_path.exists():
-    raise FileNotFoundError(
-        f"Source audio does not exist: {input_path}"
-    )
+    raise FileNotFoundError(f"Source audio does not exist: {input_path}")
 
 waveform, sample_rate = torchaudio.load(input_path)
 
@@ -543,10 +490,7 @@ with torch.no_grad():
 waveform_cpu = waveform.detach().cpu().float()
 output_clean = output_clean.detach().cpu().float()
 
-clean_output_path = (
-    result_directory
-    / f"{source_stem}_clean_reconstruction.wav"
-)
+clean_output_path = result_directory / f"{source_stem}_clean_reconstruction.wav"
 
 torchaudio.save(
     str(clean_output_path),
@@ -626,27 +570,23 @@ decoder_targets = select_representative_depths(
 )
 
 experiments = [
-    ("encoder", depth_name, module_path)
-    for depth_name, module_path in encoder_targets
+    ("encoder", depth_name, module_path) for depth_name, module_path in encoder_targets
 ]
 
-experiments.extend([
-    ("decoder", depth_name, module_path)
-    for depth_name, module_path in decoder_targets
-])
+experiments.extend(
+    [
+        ("decoder", depth_name, module_path)
+        for depth_name, module_path in decoder_targets
+    ]
+)
 
 print("\nSelected experiment modules:")
 
 for section, depth_name, module_path in experiments:
-    print(
-        f"  {section:>7} {depth_name:>6}: "
-        f"{module_path}"
-    )
+    print(f"  {section:>7} {depth_name:>6}: " f"{module_path}")
 
 if not experiments:
-    raise RuntimeError(
-        "No encoder or decoder weight modules were found."
-    )
+    raise RuntimeError("No encoder or decoder weight modules were found.")
 
 
 # ============================================================
@@ -661,19 +601,14 @@ experiment_results = {}
 for network_section, depth_name, module_path in experiments:
     experiment_name = f"{network_section}_{depth_name}"
 
-    print(
-        f"\nEvaluating {network_section} {depth_name}:\n"
-        f"  {module_path}"
-    )
+    print(f"\nEvaluating {network_section} {depth_name}:\n" f"  {module_path}")
 
     factor_results = []
 
     for factor in scaling_factors:
         factor = float(factor)
 
-        model_manipulated = rave_from_checkpoint(
-            str(run_path)
-        )
+        model_manipulated = rave_from_checkpoint(str(run_path))
 
         model_manipulated.eval()
 
@@ -689,12 +624,7 @@ for network_section, depth_name, module_path in experiments:
                 waveform,
             )
 
-        manipulated_output = (
-            manipulated_output
-            .detach()
-            .cpu()
-            .float()
-        )
+        manipulated_output = manipulated_output.detach().cpu().float()
 
         comparable_output, comparable_clean = align_audio(
             manipulated_output,
@@ -704,17 +634,11 @@ for network_section, depth_name, module_path in experiments:
         difference = comparable_output - comparable_clean
         absolute_difference = torch.abs(difference)
 
-        mean_absolute_difference = (
-            absolute_difference.mean().item()
-        )
+        mean_absolute_difference = absolute_difference.mean().item()
 
-        absolute_difference_std = (
-            absolute_difference.std().item()
-        )
+        absolute_difference_std = absolute_difference.std().item()
 
-        root_mean_squared_error = torch.sqrt(
-            torch.mean(difference.square())
-        ).item()
+        root_mean_squared_error = torch.sqrt(torch.mean(difference.square())).item()
 
         mrstft_loss = mrstft(
             comparable_output.unsqueeze(0),
@@ -747,32 +671,16 @@ for network_section, depth_name, module_path in experiments:
             "depth": depth_name,
             "module_path": module_path,
             "scaling_factor": factor,
-            "mean_absolute_difference": (
-                mean_absolute_difference
-            ),
-            "absolute_difference_std": (
-                absolute_difference_std
-            ),
+            "mean_absolute_difference": (mean_absolute_difference),
+            "absolute_difference_std": (absolute_difference_std),
             "rmse": root_mean_squared_error,
             "mrstft_loss": mrstft_loss,
-            "weight_shape": str(
-                weight_information["shape"]
-            ),
-            "weight_mean": (
-                weight_information["original_mean"]
-            ),
-            "weight_std": (
-                weight_information["original_std"]
-            ),
-            "original_weight_norm": (
-                weight_information["original_norm"]
-            ),
-            "scaled_weight_norm": (
-                weight_information["scaled_norm"]
-            ),
-            "weight_norm_removed": (
-                weight_information["weight_norm_removed"]
-            ),
+            "weight_shape": str(weight_information["shape"]),
+            "weight_mean": (weight_information["original_mean"]),
+            "weight_std": (weight_information["original_std"]),
+            "original_weight_norm": (weight_information["original_norm"]),
+            "scaled_weight_norm": (weight_information["scaled_norm"]),
+            "weight_norm_removed": (weight_information["weight_norm_removed"]),
         }
 
         feature_row = {
@@ -799,14 +707,10 @@ for network_section, depth_name, module_path in experiments:
         if factor_is_saved(factor):
             factor_text = format_factor(factor)
 
-            audio_directory = section_directories[
-                network_section
-            ]
+            audio_directory = section_directories[network_section]
 
             output_audio_path = audio_directory / (
-                f"{source_stem}_"
-                f"{depth_name}_"
-                f"factor_{factor_text}.wav"
+                f"{source_stem}_" f"{depth_name}_" f"factor_{factor_text}.wav"
             )
 
             torchaudio.save(
@@ -815,10 +719,7 @@ for network_section, depth_name, module_path in experiments:
                 sample_rate,
             )
 
-            print(
-                f"  factor {factor:>5.2f}: "
-                f"saved {output_audio_path.name}"
-            )
+            print(f"  factor {factor:>5.2f}: " f"saved {output_audio_path.name}")
         else:
             print(f"  factor {factor:>5.2f}: analyzed")
 
@@ -834,15 +735,9 @@ for network_section, depth_name, module_path in experiments:
 # 11. SAVE CSV RESULTS
 # ============================================================
 
-metrics_csv_path = (
-    analysis_directory
-    / "perturbation_metrics.csv"
-)
+metrics_csv_path = analysis_directory / "perturbation_metrics.csv"
 
-features_csv_path = (
-    analysis_directory
-    / "audio_features.csv"
-)
+features_csv_path = analysis_directory / "audio_features.csv"
 
 save_dict_rows_to_csv(
     metric_rows,
@@ -885,45 +780,29 @@ plot_definitions = [
         "key": "spectral_centroid_hz",
         "title": "Spectral centroid",
         "ylabel": "Frequency [Hz]",
-        "clean_reference": (
-            clean_features["spectral_centroid_hz"]
-        ),
-        "source_reference": (
-            source_features["spectral_centroid_hz"]
-        ),
+        "clean_reference": (clean_features["spectral_centroid_hz"]),
+        "source_reference": (source_features["spectral_centroid_hz"]),
     },
     {
         "key": "spectral_bandwidth_hz",
         "title": "Spectral bandwidth",
         "ylabel": "Bandwidth [Hz]",
-        "clean_reference": (
-            clean_features["spectral_bandwidth_hz"]
-        ),
-        "source_reference": (
-            source_features["spectral_bandwidth_hz"]
-        ),
+        "clean_reference": (clean_features["spectral_bandwidth_hz"]),
+        "source_reference": (source_features["spectral_bandwidth_hz"]),
     },
     {
         "key": "spectral_rolloff_hz",
         "title": "Spectral roll-off",
         "ylabel": "Frequency [Hz]",
-        "clean_reference": (
-            clean_features["spectral_rolloff_hz"]
-        ),
-        "source_reference": (
-            source_features["spectral_rolloff_hz"]
-        ),
+        "clean_reference": (clean_features["spectral_rolloff_hz"]),
+        "source_reference": (source_features["spectral_rolloff_hz"]),
     },
     {
         "key": "spectral_flatness",
         "title": "Spectral flatness",
         "ylabel": "Flatness ratio",
-        "clean_reference": (
-            clean_features["spectral_flatness"]
-        ),
-        "source_reference": (
-            source_features["spectral_flatness"]
-        ),
+        "clean_reference": (clean_features["spectral_flatness"]),
+        "source_reference": (source_features["spectral_flatness"]),
     },
 ]
 
@@ -949,10 +828,7 @@ for row_index, (
     experiment_name = f"{network_section}_{depth_name}"
     results = experiment_results[experiment_name]
 
-    factors = np.array([
-        result["scaling_factor"]
-        for result in results
-    ])
+    factors = np.array([result["scaling_factor"] for result in results])
 
     row_label = (
         f"{network_section.capitalize()} – "
@@ -960,15 +836,10 @@ for row_index, (
         f"{shorten_module_name(module_path)}"
     )
 
-    for column_index, definition in enumerate(
-        plot_definitions
-    ):
+    for column_index, definition in enumerate(plot_definitions):
         axis = axes[row_index, column_index]
 
-        values = np.array([
-            result[definition["key"]]
-            for result in results
-        ])
+        values = np.array([result[definition["key"]] for result in results])
 
         axis.plot(
             factors,
@@ -1044,10 +915,7 @@ for axis in axes.flat:
             legend_labels.append(label)
 
 figure.suptitle(
-    (
-        f"RAVE encoder and decoder weight perturbation analysis\n"
-        f"Source: {file_name}"
-    ),
+    (f"RAVE encoder and decoder weight perturbation analysis\n" f"Source: {file_name}"),
     fontsize=16,
     fontweight="bold",
 )
@@ -1069,10 +937,7 @@ figure.subplots_adjust(
     wspace=0.32,
 )
 
-combined_plot_path = (
-    analysis_directory
-    / "combined_analysis.png"
-)
+combined_plot_path = analysis_directory / "combined_analysis.png"
 
 figure.savefig(
     combined_plot_path,

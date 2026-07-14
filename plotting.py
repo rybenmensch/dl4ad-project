@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 
 try:
     import auraloss
+
     _HAS_AURALOSS = True
 except ImportError:
     _HAS_AURALOSS = False
@@ -26,20 +27,20 @@ def plot_comparison(
     """
     Vergleicht output_clean (unverändertes Modell) mit
     Output des manipuliertes Modells ("degraded"), für gleichen input.
-   
+
 
     clean:    output_clean = model_clean.process_audio(waveform)
-    degraded: output_tensor = model.process_audio(waveform) 
+    degraded: output_tensor = model.process_audio(waveform)
 
-    Erwartet Tensoren mit Shape [Kanaele, Samples] 
-    Bei Stereo nur der erste Kanal geplottet 
+    Erwartet Tensoren mit Shape [Kanaele, Samples]
+    Bei Stereo nur der erste Kanal geplottet
 
     Gibt ein Dictionary mit den berechneten Metriken zurueck
     """
     clean_np = _to_mono_numpy(clean)
     degraded_np = _to_mono_numpy(degraded)
 
-    # Falls die beiden Signale unterschiedlich lang sind auf die kkürzere Länge 
+    # Falls die beiden Signale unterschiedlich lang sind auf die kkürzere Länge
     min_len = min(len(clean_np), len(degraded_np))
     clean_np = clean_np[:min_len]
     degraded_np = degraded_np[:min_len]
@@ -64,8 +65,22 @@ def plot_comparison(
 
     # (0,0) Wellenformen übereinander
     ax = axes[0, 0]
-    ax.plot(time_axis, clean_np, label="clean model", color="#2a78d6", linewidth=0.8, alpha=0.8)
-    ax.plot(time_axis, degraded_np, label="degraded model", color="#e34948", linewidth=0.8, alpha=0.8)
+    ax.plot(
+        time_axis,
+        clean_np,
+        label="clean model",
+        color="#2a78d6",
+        linewidth=0.8,
+        alpha=0.8,
+    )
+    ax.plot(
+        time_axis,
+        degraded_np,
+        label="degraded model",
+        color="#e34948",
+        linewidth=0.8,
+        alpha=0.8,
+    )
     ax.set_xlabel("Time (s)")
     ax.set_ylabel("Amplitude")
     ax.set_title("comparison waveform")
@@ -93,7 +108,7 @@ def plot_comparison(
     ax.set_ylabel("Frequency (Hz)")
     ax.set_title("Spectrogram degraded")
 
-    #Titel mit Metriken
+    # Titel mit Metriken
     subtitle_parts = [f"mean|diff|={mean_abs_diff:.4f}", f"std={std_abs_diff:.4f}"]
     if spectral_loss is not None:
         subtitle_parts.append(f"auraloss={spectral_loss:.4f}")

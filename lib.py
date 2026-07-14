@@ -5,10 +5,12 @@ from pathlib import Path
 import gin
 import auraloss
 
+
 def get_in_channels(model) -> int:
     if hasattr(model, "n_channels"):
         return model.n_channels
     return get_state_dict_in_channels(model.state_dict())
+
 
 def get_state_dict_in_channels(state_dict: dict) -> int:
     """
@@ -20,9 +22,11 @@ def get_state_dict_in_channels(state_dict: dict) -> int:
 
     # first conv layer of state_dict might have a different 'path' depending on
     # model version
-    for key in ["encoder.encoder.net.0.weight_v",
-                "encoder.net.0.weight_v",
-                "encoder.encoder.net.0.weight"]:
+    for key in [
+        "encoder.encoder.net.0.weight_v",
+        "encoder.net.0.weight_v",
+        "encoder.encoder.net.0.weight",
+    ]:
         if key in state_dict:
             in_channels = state_dict[key].shape[1]
             break
@@ -30,13 +34,14 @@ def get_state_dict_in_channels(state_dict: dict) -> int:
     # actual amount of input channels is input_channels // number of pqmf bands
     if in_channels is not None:
         try:
-            n_band = gin.query_parameter('%N_BAND')
+            n_band = gin.query_parameter("%N_BAND")
         except Exception:
             # assume 16 bands as in the paper if the parameter isn't found
             n_band = 16
         return in_channels // n_band
     else:
         return 1
+
 
 def process_audio(model, waveform: torch.Tensor) -> torch.Tensor:
     model_channels = get_in_channels(model)
@@ -46,7 +51,7 @@ def process_audio(model, waveform: torch.Tensor) -> torch.Tensor:
         if audio_channels == 1:
             waveform = torch.cat([waveform, waveform], dim=0)
             audio_channels = 2
-        
+
         if audio_channels == 2:
             input_tensor = waveform.unsqueeze(0)
             with torch.no_grad():
@@ -58,9 +63,11 @@ def process_audio(model, waveform: torch.Tensor) -> torch.Tensor:
             processed_channels = []
             for i in range(0, audio_channels, 2):
                 if i + 1 < audio_channels:
-                    pair = waveform[i:i+2, ...]
+                    pair = waveform[i : i + 2, ...]
                 else:
-                    pair = torch.cat([waveform[i:i+1, ...], waveform[i:i+1, ...]], dim=0)
+                    pair = torch.cat(
+                        [waveform[i : i + 1, ...], waveform[i : i + 1, ...]], dim=0
+                    )
                 input_tensor = pair.unsqueeze(0)
                 with torch.no_grad():
 
@@ -76,8 +83,8 @@ def process_audio(model, waveform: torch.Tensor) -> torch.Tensor:
         processed_channels = []
         for i in range(audio_channels):
             # (channels, timesteps) -> (1, timesteps)
-            channel = waveform[i:i+1, ...] 
-            
+            channel = waveform[i : i + 1, ...]
+
             # (1, timesteps) -> (batch, 1, timesteps)
             input_tensor = channel.unsqueeze(0)
 
@@ -96,21 +103,22 @@ def process_audio(model, waveform: torch.Tensor) -> torch.Tensor:
 
         return output_tensor
 
+
 class Model:
     # useful for JIT-compiled .ts models
-    def __init__(self, path: Path|str) -> None:
+    def __init__(self, path: Path | str) -> None:
         check_path(path)
-        self.model = torch.jit.load(path);
+        self.model = torch.jit.load(path)
         self.model.eval()
 
         self.state_dict = self.model.state_dict()
 
-        if 'sampling_rate' in self.state_dict:
-            self.sr: int = self.state_dict['sampling_rate'].item()
+        if "sampling_rate" in self.state_dict:
+            self.sr: int = self.state_dict["sampling_rate"].item()
         else:
             self.sr: int = 44100
 
-        self.input_channels: int = self.state_dict['encode_params'][0].item()
+        self.input_channels: int = self.state_dict["encode_params"][0].item()
 
     def get_model_keys(self):
         return self.state_dict.keys()
@@ -128,12 +136,14 @@ class Model:
     def set_state_dict(self, state_dict) -> None:
         self.model.load_state_dict(state_dict)
 
-def check_path(p: str|Path) -> Path:
-    """ Check whether a path exists and returns it if it does. """
+
+def check_path(p: str | Path) -> Path:
+    """Check whether a path exists and returns it if it does."""
     path: Path = Path(p)
     if not path.exists():
         raise Exception(f"Path {path} doesn't exist!")
     return path
+
 
 def inout_paths(file_path: Path, in_path: Path, out_path: Path) -> Tuple[Path, Path]:
     dir_path, filename_ext = os.path.split(file_path)
@@ -141,7 +151,7 @@ def inout_paths(file_path: Path, in_path: Path, out_path: Path) -> Tuple[Path, P
 
     # use no prefix for audio_source_path
     # use './' for current folder (unsafe anyway)
-    if dir_path == '':
+    if dir_path == "":
         dir_path = in_path
 
     input_path: Path = check_path(dir_path) / filename_ext
@@ -152,12 +162,14 @@ def inout_paths(file_path: Path, in_path: Path, out_path: Path) -> Tuple[Path, P
 
     return input_path, output_path
 
+
 # LOSS FUNCTIONS
+
 
 def mean_absolute_error(x1: torch.Tensor, x2: torch.Tensor) -> float:
     return torch.mean(torch.abs(x1 - x2)).item()
 
+
 def mrstft(x1: torch.Tensor, x2: torch.Tensor) -> float:
     m = auraloss.freq.MultiResolutionSTFTLoss()
     return m(x1.unsqueeze(0), x2.unsqueeze(0)).item()
-

@@ -89,9 +89,12 @@ def set_decoder_net(model: rave.RAVE, net: Any) -> rave.RAVE:
     return model
 
 
-def get_nets(model: rave.RAVE) -> Tuple[
-        Tuple[cached_conv.convs.CachedSequential, str],
-        Tuple[cached_conv.convs.CachedSequential, str]]:
+def get_nets(
+    model: rave.RAVE,
+) -> Tuple[
+    Tuple[cached_conv.convs.CachedSequential, str],
+    Tuple[cached_conv.convs.CachedSequential, str],
+]:
     """
     Returns the encoder and the decoder nets and the paths to them.
     """
@@ -153,6 +156,7 @@ class SequentialWithSkip(nn.Module):
         super().__init__()
         self.original_net = original_net
         self.skips = set(skips) if skips else set()
+
     def forward(self, x):
         for i, layer in enumerate(self.original_net):
             if i in self.skips:
@@ -166,11 +170,12 @@ class SequentialWithRepeat(nn.Module):
         super().__init__()
         self.original_net = original_net
         self.repeats = repeats if repeats else {}
+
     def forward(self, x):
         for i, layer in enumerate(self.original_net):
             r = self.repeats.get(i, 1)
             for _ in range(r):
-                x  = layer(x)
+                x = layer(x)
             return x
 
 
@@ -180,6 +185,7 @@ class ManipulatedSequential(nn.Module):
         self.original_net = original_net
         self.skips = set(skips) if skips else set()
         self.repeats = repeats if repeats else {}
+
     def forward(self, x):
         for i, layer in enumerate(self.original_net):
             if i in self.skips:

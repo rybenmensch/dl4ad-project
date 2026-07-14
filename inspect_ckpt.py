@@ -18,15 +18,14 @@ exit()
 encoder_output_channels = conv_layer.out_channels
 torch.manual_seed(0)
 
+
 class CustomEncoderWrapper(torch.nn.Module):
     def __init__(self, original_net, channels):
         super().__init__()
         self.original_net = original_net
 
         self.custom_layer = torch.nn.Conv1d(
-            in_channels=channels,
-            out_channels=channels,
-            kernel_size=1
+            in_channels=channels, out_channels=channels, kernel_size=1
         )
 
         with torch.no_grad():
@@ -37,9 +36,9 @@ class CustomEncoderWrapper(torch.nn.Module):
         features = self.original_net(x)
         return self.custom_layer(features)
 
+
 model.encoder.encoder.net = CustomEncoderWrapper(
-    original_encoder_net,
-    encoder_output_channels
+    original_encoder_net, encoder_output_channels
 )
 
 print(model.encoder.encoder.net)
@@ -56,4 +55,3 @@ waveform, sr = torchaudio.load(input_path)
 
 output_tensor = process_audio(model, waveform)
 torchaudio.save(output_path, output_tensor, sr)
-

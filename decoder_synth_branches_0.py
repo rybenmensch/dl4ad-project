@@ -9,7 +9,7 @@ import auraloss
 # MODEL
 model = Model("models/percussion.ts")
 # assume mono model
-if(model.input_channels != 1):
+if model.input_channels != 1:
     raise Exception("Stereo models not supported yet!")
 
 model_clean = Model("models/percussion.ts")
@@ -28,7 +28,7 @@ output_clean = model_clean.process_audio(waveform)
 
 # MANIPULATION
 state_dict = model.get_state_dict()
-x = np.linspace(1, 10, num = 64, endpoint = False)
+x = np.linspace(1, 10, num=64, endpoint=False)
 
 means = []
 errors = []
@@ -56,13 +56,13 @@ fig, ax = plt.subplots(1, 2)
 
 ax[0].errorbar(
     x,
-    y=means, 
-    yerr=errors, 
-    fmt='o-',        # 'o' for circle markers, '-' for a connecting line
-    ecolor='red',    # Color of the error bars
+    y=means,
+    yerr=errors,
+    fmt="o-",  # 'o' for circle markers, '-' for a connecting line
+    ecolor="red",  # Color of the error bars
     elinewidth=1.5,  # Width of the error bar lines
-    capsize=5,       # Width of the horizontal caps on the error bars
-    color='blue',    # Color of the data points and line
+    capsize=5,  # Width of the horizontal caps on the error bars
+    color="blue",  # Color of the data points and line
 )
 ax[0].set_title("mean absolute difference")
 ax[1].scatter(x, losses)
@@ -72,4 +72,3 @@ plt.show()
 
 # # SAVE OUTPUT
 # torchaudio.save(output_path, output_tensor, sr)
-
