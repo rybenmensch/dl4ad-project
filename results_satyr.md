@@ -1,138 +1,138 @@
-=======================================================================
---- RESULTS: Layer Impact (Sorted from Least Impact to Most Impact) ---
-Layer path               | Type       | Operation | Reconstruction Change (MAE)   
-------------------------------------------------------------------------
-encoder.encoder.net[20]  | LeakyReLU  | skip    | 0.335092
-encoder.encoder.net[18]  | LeakyReLU  | skip    | 0.329181
-encoder.encoder.net[14]  | LeakyReLU  | skip    | 0.299082
-decoder.net[19]          | Residual   | skip    | 0.257364
-decoder.net[1]           | LeakyReLU  | skip    | 0.219124
-encoder.encoder.net[9]   | LeakyReLU  | skip    | 0.165351
-decoder.net[4]           | Residual   | skip    | 0.160985
-decoder.net[3]           | Residual   | repeat  | 0.158008
-decoder.net[3]           | Residual   | skip    | 0.130838
-decoder.net[4]           | Residual   | repeat  | 0.114936
-encoder.encoder.net[4]   | LeakyReLU  | skip    | 0.113820
-encoder.encoder.net[20]  | LeakyReLU  | repeat  | 0.106238
-decoder.net[5]           | LeakyReLU  | repeat  | 0.105964
-decoder.net[18]          | Residual   | repeat  | 0.104770
-decoder.net[9]           | Residual   | skip    | 0.099629
-decoder.net[8]           | Residual   | skip    | 0.098841
-decoder.net[7]           | Residual   | repeat  | 0.097218
-decoder.net[5]           | LeakyReLU  | skip    | 0.096864
-decoder.net[7]           | Residual   | skip    | 0.095651
-encoder.encoder.net[4]   | LeakyReLU  | repeat  | 0.089977
-decoder.net[10]          | LeakyReLU  | skip    | 0.089615
-decoder.net[17]          | Residual   | skip    | 0.086741
-decoder.net[19]          | Residual   | repeat  | 0.086444
-encoder.encoder.net[9]   | LeakyReLU  | repeat  | 0.085123
-decoder.net[12]          | Residual   | repeat  | 0.084929
-decoder.net[12]          | Residual   | skip    | 0.084132
-encoder.encoder.net[14]  | LeakyReLU  | repeat  | 0.082942
-encoder.encoder.net[13]  | Residual   | repeat  | 0.082931
-decoder.net[8]           | Residual   | repeat  | 0.082335
-encoder.encoder.net[1]   | Residual   | skip    | 0.081759
-decoder.net[10]          | LeakyReLU  | repeat  | 0.081047
-encoder.encoder.net[17]  | Residual   | skip    | 0.080027
-decoder.net[1]           | LeakyReLU  | repeat  | 0.079887
-decoder.net[14]          | Residual   | skip    | 0.077766
-decoder.net[9]           | Residual   | repeat  | 0.076915
-decoder.net[13]          | Residual   | repeat  | 0.076428
-encoder.encoder.net[7]   | Residual   | repeat  | 0.076116
-encoder.encoder.net[2]   | Residual   | skip    | 0.075697
-decoder.net[13]          | Residual   | skip    | 0.075527
-decoder.net[20]          | LeakyReLU  | skip    | 0.073051
-encoder.encoder.net[18]  | LeakyReLU  | repeat  | 0.072134
-encoder.encoder.net[1]   | Residual   | repeat  | 0.071617
-encoder.encoder.net[13]  | Residual   | skip    | 0.070335
-decoder.net[14]          | Residual   | repeat  | 0.070248
-encoder.encoder.net[2]   | Residual   | repeat  | 0.068108
-encoder.encoder.net[7]   | Residual   | skip    | 0.065939
-decoder.net[18]          | Residual   | skip    | 0.064757
-encoder.encoder.net[16]  | Residual   | repeat  | 0.061175
-encoder.encoder.net[12]  | Residual   | repeat  | 0.061171
-encoder.encoder.net[12]  | Residual   | skip    | 0.060567
-decoder.net[15]          | LeakyReLU  | skip    | 0.060025
-encoder.encoder.net[17]  | Residual   | repeat  | 0.055904
-decoder.net[17]          | Residual   | repeat  | 0.052926
-encoder.encoder.net[16]  | Residual   | skip    | 0.052802
-encoder.encoder.net[11]  | Residual   | repeat  | 0.049971
-encoder.encoder.net[8]   | Residual   | repeat  | 0.049908
-encoder.encoder.net[11]  | Residual   | skip    | 0.042544
-encoder.encoder.net[6]   | Residual   | repeat  | 0.039518
-encoder.encoder.net[6]   | Residual   | skip    | 0.035680
-encoder.encoder.net[3]   | Residual   | skip    | 0.034492
-encoder.encoder.net[8]   | Residual   | skip    | 0.033985
-decoder.net[15]          | LeakyReLU  | repeat  | 0.029351
-encoder.encoder.net[3]   | Residual   | repeat  | 0.025584
-decoder.net[20]          | LeakyReLU  | repeat  | 0.023960
-
-=======================================================================
 
 --- RESULTS: Layer Impact (Sorted from Least Impact to Most Impact) ---
-Layer path               | Type       | Operation | Reconstruction Change (MRSTFT)
-------------------------------------------------------------------------
-decoder.net[19]          | Residual   | repeat  | 16.213827
-decoder.net[10]          | LeakyReLU  | skip    | 10.089469
-encoder.encoder.net[4]   | LeakyReLU  | skip    | 5.955499
-decoder.net[5]           | LeakyReLU  | skip    | 5.680468
-encoder.encoder.net[14]  | LeakyReLU  | repeat  | 4.337533
-decoder.net[18]          | Residual   | repeat  | 4.048501
-encoder.encoder.net[18]  | LeakyReLU  | skip    | 4.047798
-decoder.net[19]          | Residual   | skip    | 3.841199
-encoder.encoder.net[9]   | LeakyReLU  | skip    | 3.715570
-decoder.net[17]          | Residual   | repeat  | 3.630310
-decoder.net[15]          | LeakyReLU  | skip    | 3.554600
-encoder.encoder.net[13]  | Residual   | repeat  | 2.912383
-encoder.encoder.net[20]  | LeakyReLU  | skip    | 2.760240
-decoder.net[1]           | LeakyReLU  | repeat  | 2.713610
-decoder.net[1]           | LeakyReLU  | skip    | 2.601636
-decoder.net[14]          | Residual   | repeat  | 2.582418
-encoder.encoder.net[9]   | LeakyReLU  | repeat  | 2.580534
-decoder.net[12]          | Residual   | repeat  | 2.566451
-decoder.net[17]          | Residual   | skip    | 2.515597
-encoder.encoder.net[14]  | LeakyReLU  | skip    | 2.403994
-encoder.encoder.net[20]  | LeakyReLU  | repeat  | 2.370556
-encoder.encoder.net[1]   | Residual   | skip    | 2.062876
-decoder.net[20]          | LeakyReLU  | skip    | 2.060294
-encoder.encoder.net[18]  | LeakyReLU  | repeat  | 2.018324
-decoder.net[3]           | Residual   | repeat  | 1.987581
-decoder.net[13]          | Residual   | repeat  | 1.971409
-decoder.net[9]           | Residual   | repeat  | 1.948180
-encoder.encoder.net[4]   | LeakyReLU  | repeat  | 1.911827
-decoder.net[13]          | Residual   | skip    | 1.853859
-decoder.net[9]           | Residual   | skip    | 1.825060
-encoder.encoder.net[7]   | Residual   | repeat  | 1.812685
-decoder.net[5]           | LeakyReLU  | repeat  | 1.702333
-encoder.encoder.net[2]   | Residual   | skip    | 1.697421
-decoder.net[10]          | LeakyReLU  | repeat  | 1.649567
-decoder.net[4]           | Residual   | repeat  | 1.649562
-decoder.net[4]           | Residual   | skip    | 1.648409
-decoder.net[3]           | Residual   | skip    | 1.627602
-decoder.net[12]          | Residual   | skip    | 1.620547
-decoder.net[14]          | Residual   | skip    | 1.612225
-decoder.net[8]           | Residual   | skip    | 1.582660
-decoder.net[7]           | Residual   | skip    | 1.532819
-decoder.net[7]           | Residual   | repeat  | 1.496113
-decoder.net[8]           | Residual   | repeat  | 1.490538
-decoder.net[18]          | Residual   | skip    | 1.458267
-encoder.encoder.net[16]  | Residual   | repeat  | 1.440762
-encoder.encoder.net[1]   | Residual   | repeat  | 1.267159
-encoder.encoder.net[17]  | Residual   | skip    | 1.260046
-encoder.encoder.net[2]   | Residual   | repeat  | 1.243640
-encoder.encoder.net[17]  | Residual   | repeat  | 1.240706
-encoder.encoder.net[12]  | Residual   | repeat  | 1.202880
-encoder.encoder.net[13]  | Residual   | skip    | 1.178480
-encoder.encoder.net[7]   | Residual   | skip    | 1.169280
-decoder.net[15]          | LeakyReLU  | repeat  | 1.150122
-encoder.encoder.net[12]  | Residual   | skip    | 1.064280
-encoder.encoder.net[8]   | Residual   | repeat  | 1.057173
-encoder.encoder.net[16]  | Residual   | skip    | 0.965756
-encoder.encoder.net[11]  | Residual   | repeat  | 0.958673
-encoder.encoder.net[6]   | Residual   | repeat  | 0.867844
-encoder.encoder.net[11]  | Residual   | skip    | 0.846411
-encoder.encoder.net[6]   | Residual   | skip    | 0.757804
-encoder.encoder.net[8]   | Residual   | skip    | 0.744960
-encoder.encoder.net[3]   | Residual   | skip    | 0.741787
-encoder.encoder.net[3]   | Residual   | repeat  | 0.578633
-decoder.net[20]          | LeakyReLU  | repeat  | 0.461154
+
+|        Layer path       |    Type   | Operation | Reconstruction Change (MAE) |
+|-------------------------|-----------|-----------|-----------------------------|
+| encoder.encoder.net[20] | LeakyReLU | skip      | 0.33509185910224915         |
+| encoder.encoder.net[18] | LeakyReLU | skip      | 0.3291805684566498          |
+| encoder.encoder.net[14] | LeakyReLU | skip      | 0.29908156394958496         |
+| decoder.net[19]         | Residual  | skip      | 0.2573642432689667          |
+| decoder.net[1]          | LeakyReLU | skip      | 0.21912360191345215         |
+| encoder.encoder.net[9]  | LeakyReLU | skip      | 0.16535133123397827         |
+| decoder.net[4]          | Residual  | skip      | 0.16098517179489136         |
+| decoder.net[3]          | Residual  | repeat    | 0.1580083668231964          |
+| decoder.net[3]          | Residual  | skip      | 0.13083791732788086         |
+| decoder.net[4]          | Residual  | repeat    | 0.11493626236915588         |
+| encoder.encoder.net[4]  | LeakyReLU | skip      | 0.11381968855857849         |
+| encoder.encoder.net[20] | LeakyReLU | repeat    | 0.10623764246702194         |
+| decoder.net[5]          | LeakyReLU | repeat    | 0.10596387088298798         |
+| decoder.net[18]         | Residual  | repeat    | 0.10476969927549362         |
+| decoder.net[9]          | Residual  | skip      | 0.09962932020425797         |
+| decoder.net[8]          | Residual  | skip      | 0.09884068369865417         |
+| decoder.net[7]          | Residual  | repeat    | 0.09721750766038895         |
+| decoder.net[5]          | LeakyReLU | skip      | 0.09686412662267685         |
+| decoder.net[7]          | Residual  | skip      | 0.09565138816833496         |
+| encoder.encoder.net[4]  | LeakyReLU | repeat    | 0.08997683972120285         |
+| decoder.net[10]         | LeakyReLU | skip      | 0.08961478620767593         |
+| decoder.net[17]         | Residual  | skip      | 0.08674095571041107         |
+| decoder.net[19]         | Residual  | repeat    | 0.08644425868988037         |
+| encoder.encoder.net[9]  | LeakyReLU | repeat    | 0.08512341231107712         |
+| decoder.net[12]         | Residual  | repeat    | 0.08492931723594666         |
+| decoder.net[12]         | Residual  | skip      | 0.08413249999284744         |
+| encoder.encoder.net[14] | LeakyReLU | repeat    | 0.08294175565242767         |
+| encoder.encoder.net[13] | Residual  | repeat    | 0.08293065428733826         |
+| decoder.net[8]          | Residual  | repeat    | 0.08233547955751419         |
+| encoder.encoder.net[1]  | Residual  | skip      | 0.08175910264253616         |
+| decoder.net[10]         | LeakyReLU | repeat    | 0.08104690164327621         |
+| encoder.encoder.net[17] | Residual  | skip      | 0.08002664148807526         |
+| decoder.net[1]          | LeakyReLU | repeat    | 0.0798874944448471          |
+| decoder.net[14]         | Residual  | skip      | 0.07776619493961334         |
+| decoder.net[9]          | Residual  | repeat    | 0.07691532373428345         |
+| decoder.net[13]         | Residual  | repeat    | 0.07642750442028046         |
+| encoder.encoder.net[7]  | Residual  | repeat    | 0.07611611485481262         |
+| encoder.encoder.net[2]  | Residual  | skip      | 0.07569657266139984         |
+| decoder.net[13]         | Residual  | skip      | 0.07552697509527206         |
+| decoder.net[20]         | LeakyReLU | skip      | 0.07305127382278442         |
+| encoder.encoder.net[18] | LeakyReLU | repeat    | 0.07213424146175385         |
+| encoder.encoder.net[1]  | Residual  | repeat    | 0.07161690294742584         |
+| encoder.encoder.net[13] | Residual  | skip      | 0.07033482939004898         |
+| decoder.net[14]         | Residual  | repeat    | 0.07024825364351273         |
+| encoder.encoder.net[2]  | Residual  | repeat    | 0.06810778379440308         |
+| encoder.encoder.net[7]  | Residual  | skip      | 0.0659392699599266          |
+| decoder.net[18]         | Residual  | skip      | 0.06475690007209778         |
+| encoder.encoder.net[16] | Residual  | repeat    | 0.061174605041742325        |
+| encoder.encoder.net[12] | Residual  | repeat    | 0.061171162873506546        |
+| encoder.encoder.net[12] | Residual  | skip      | 0.06056671217083931         |
+| decoder.net[15]         | LeakyReLU | skip      | 0.06002454832196236         |
+| encoder.encoder.net[17] | Residual  | repeat    | 0.05590442940592766         |
+| decoder.net[17]         | Residual  | repeat    | 0.052926480770111084        |
+| encoder.encoder.net[16] | Residual  | skip      | 0.05280168727040291         |
+| encoder.encoder.net[11] | Residual  | repeat    | 0.049970947206020355        |
+| encoder.encoder.net[8]  | Residual  | repeat    | 0.049908336251974106        |
+| encoder.encoder.net[11] | Residual  | skip      | 0.04254419729113579         |
+| encoder.encoder.net[6]  | Residual  | repeat    | 0.03951774537563324         |
+| encoder.encoder.net[6]  | Residual  | skip      | 0.03568016737699509         |
+| encoder.encoder.net[3]  | Residual  | skip      | 0.03449160233139992         |
+| encoder.encoder.net[8]  | Residual  | skip      | 0.03398466482758522         |
+| decoder.net[15]         | LeakyReLU | repeat    | 0.029351169243454933        |
+| encoder.encoder.net[3]  | Residual  | repeat    | 0.025584250688552856        |
+| decoder.net[20]         | LeakyReLU | repeat    | 0.023960113525390625        |
+
+--- RESULTS: Layer Impact (Sorted from Least Impact to Most Impact) ---
+
+|        Layer path       |    Type   | Operation | Reconstruction Change (MRSTFT) |
+|-------------------------|-----------|-----------|--------------------------------|
+| decoder.net[19]         | Residual  | repeat    | 16.21382713317871              |
+| decoder.net[10]         | LeakyReLU | skip      | 10.089468955993652             |
+| encoder.encoder.net[4]  | LeakyReLU | skip      | 5.955499172210693              |
+| decoder.net[5]          | LeakyReLU | skip      | 5.68046760559082               |
+| encoder.encoder.net[14] | LeakyReLU | repeat    | 4.337532997131348              |
+| decoder.net[18]         | Residual  | repeat    | 4.0485005378723145             |
+| encoder.encoder.net[18] | LeakyReLU | skip      | 4.047797679901123              |
+| decoder.net[19]         | Residual  | skip      | 3.8411989212036133             |
+| encoder.encoder.net[9]  | LeakyReLU | skip      | 3.7155704498291016             |
+| decoder.net[17]         | Residual  | repeat    | 3.630309820175171              |
+| decoder.net[15]         | LeakyReLU | skip      | 3.554600477218628              |
+| encoder.encoder.net[13] | Residual  | repeat    | 2.9123830795288086             |
+| encoder.encoder.net[20] | LeakyReLU | skip      | 2.760240316390991              |
+| decoder.net[1]          | LeakyReLU | repeat    | 2.7136099338531494             |
+| decoder.net[1]          | LeakyReLU | skip      | 2.6016364097595215             |
+| decoder.net[14]         | Residual  | repeat    | 2.5824177265167236             |
+| encoder.encoder.net[9]  | LeakyReLU | repeat    | 2.5805342197418213             |
+| decoder.net[12]         | Residual  | repeat    | 2.566450834274292              |
+| decoder.net[17]         | Residual  | skip      | 2.515596628189087              |
+| encoder.encoder.net[14] | LeakyReLU | skip      | 2.403993606567383              |
+| encoder.encoder.net[20] | LeakyReLU | repeat    | 2.3705556392669678             |
+| encoder.encoder.net[1]  | Residual  | skip      | 2.0628764629364014             |
+| decoder.net[20]         | LeakyReLU | skip      | 2.0602939128875732             |
+| encoder.encoder.net[18] | LeakyReLU | repeat    | 2.0183238983154297             |
+| decoder.net[3]          | Residual  | repeat    | 1.9875813722610474             |
+| decoder.net[13]         | Residual  | repeat    | 1.9714088439941406             |
+| decoder.net[9]          | Residual  | repeat    | 1.948180079460144              |
+| encoder.encoder.net[4]  | LeakyReLU | repeat    | 1.911826729774475              |
+| decoder.net[13]         | Residual  | skip      | 1.8538588285446167             |
+| decoder.net[9]          | Residual  | skip      | 1.8250598907470703             |
+| encoder.encoder.net[7]  | Residual  | repeat    | 1.8126850128173828             |
+| decoder.net[5]          | LeakyReLU | repeat    | 1.7023330926895142             |
+| encoder.encoder.net[2]  | Residual  | skip      | 1.6974214315414429             |
+| decoder.net[10]         | LeakyReLU | repeat    | 1.6495670080184937             |
+| decoder.net[4]          | Residual  | repeat    | 1.6495624780654907             |
+| decoder.net[4]          | Residual  | skip      | 1.6484090089797974             |
+| decoder.net[3]          | Residual  | skip      | 1.627602219581604              |
+| decoder.net[12]         | Residual  | skip      | 1.6205474138259888             |
+| decoder.net[14]         | Residual  | skip      | 1.61222505569458               |
+| decoder.net[8]          | Residual  | skip      | 1.5826596021652222             |
+| decoder.net[7]          | Residual  | skip      | 1.532819390296936              |
+| decoder.net[7]          | Residual  | repeat    | 1.4961129426956177             |
+| decoder.net[8]          | Residual  | repeat    | 1.490538477897644              |
+| decoder.net[18]         | Residual  | skip      | 1.4582672119140625             |
+| encoder.encoder.net[16] | Residual  | repeat    | 1.4407621622085571             |
+| encoder.encoder.net[1]  | Residual  | repeat    | 1.2671586275100708             |
+| encoder.encoder.net[17] | Residual  | skip      | 1.2600457668304443             |
+| encoder.encoder.net[2]  | Residual  | repeat    | 1.2436400651931763             |
+| encoder.encoder.net[17] | Residual  | repeat    | 1.2407063245773315             |
+| encoder.encoder.net[12] | Residual  | repeat    | 1.2028803825378418             |
+| encoder.encoder.net[13] | Residual  | skip      | 1.1784800291061401             |
+| encoder.encoder.net[7]  | Residual  | skip      | 1.169279932975769              |
+| decoder.net[15]         | LeakyReLU | repeat    | 1.1501224040985107             |
+| encoder.encoder.net[12] | Residual  | skip      | 1.0642796754837036             |
+| encoder.encoder.net[8]  | Residual  | repeat    | 1.0571728944778442             |
+| encoder.encoder.net[16] | Residual  | skip      | 0.9657561182975769             |
+| encoder.encoder.net[11] | Residual  | repeat    | 0.9586734771728516             |
+| encoder.encoder.net[6]  | Residual  | repeat    | 0.8678435683250427             |
+| encoder.encoder.net[11] | Residual  | skip      | 0.8464105725288391             |
+| encoder.encoder.net[6]  | Residual  | skip      | 0.7578043937683105             |
+| encoder.encoder.net[8]  | Residual  | skip      | 0.7449600696563721             |
+| encoder.encoder.net[3]  | Residual  | skip      | 0.7417869567871094             |
+| encoder.encoder.net[3]  | Residual  | repeat    | 0.5786331295967102             |
+| decoder.net[20]         | LeakyReLU | repeat    | 0.4611540734767914             |

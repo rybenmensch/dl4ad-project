@@ -178,27 +178,45 @@ for L in [mean_absolute_error, mrstft]:
     flattened_rows.sort(key=lambda x: x["change"])
     flattened_rows.reverse()
 
-    print("\n=======================================================================")
-    print("\n--- RESULTS: Layer Impact (Sorted from Least Impact to Most Impact) ---")
-    print(
-        " | ".join(
-            [
-                f"{'Layer path':<24}",
-                f"{'Type':<10}",
-                f"{'Operation':<7}",
-                f"{f'Reconstruction Change ({stat_attr.upper()})':<30}",
-            ]
-        )
-    )
-    print("-" * 72)
+    from table2md import MarkdownTable
+
+    data = []
+
+    print("\n--- RESULTS: Layer Impact (Sorted from Least Impact to Most Impact) ---\n")
+
     for row in flattened_rows:
-        print(
-            " | ".join(
-                [
-                    f"{row['path']:<24}",
-                    f"{row['type']:<10}",
-                    f"{row['operation']:<7}",
-                    f"{row['change']:.6f}",
-                ]
-            )
+        data.append(
+            {
+                "Layer path": row["path"],
+                "Type": row["type"],
+                "Operation": row["operation"],
+                f"Reconstruction Change ({stat_attr.upper()})": row["change"],
+            }
         )
+
+    MarkdownTable.from_dicts(data).print()
+
+    # print("\n=======================================================================")
+    # print("\n--- RESULTS: Layer Impact (Sorted from Least Impact to Most Impact) ---")
+    # print(
+    #     " | ".join(
+    #         [
+    #             f"{'Layer path':<24}",
+    #             f"{'Type':<10}",
+    #             f"{'Operation':<7}",
+    #             f"{f'Reconstruction Change ({stat_attr.upper()})':<30}",
+    #         ]
+    #     )
+    # )
+    # print("-" * 72)
+    # for row in flattened_rows:
+    #     print(
+    #         " | ".join(
+    #             [
+    #                 f"{row['path']:<24}",
+    #                 f"{row['type']:<10}",
+    #                 f"{row['operation']:<7}",
+    #                 f"{row['change']:.6f}",
+    #             ]
+    #         )
+    #     )
