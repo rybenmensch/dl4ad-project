@@ -1,9 +1,11 @@
-import torch
 from pathlib import Path
+
+import rave
+import torch
 import torchaudio
+
 from lib import *
 from rave_lib import *
-import rave
 
 # model = rave_from_checkpoint("models/satyr/")
 model = rave_from_checkpoint("models/checkpoint/")

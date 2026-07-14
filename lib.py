@@ -1,9 +1,10 @@
 import os
-from typing import Tuple
-import torch
 from pathlib import Path
-import gin
+from typing import Tuple
+
 import auraloss
+import gin
+import torch
 
 
 def get_in_channels(model) -> int:

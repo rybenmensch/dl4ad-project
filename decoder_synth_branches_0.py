@@ -1,10 +1,12 @@
+from pathlib import Path
+
+import auraloss
+import matplotlib.pyplot as plt
+import numpy as np
 import torch
 import torchaudio
-from pathlib import Path
-import numpy as np
-import matplotlib.pyplot as plt
+
 from lib import *
-import auraloss
 
 # MODEL
 model = Model("models/percussion.ts")

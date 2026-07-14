@@ -1,13 +1,15 @@
 import os
+import re
+from copy import deepcopy
+from pathlib import Path
+
+import auraloss
+import matplotlib.pyplot as plt
+import numpy as np
 import torch
 import torchaudio
-from pathlib import Path
-import numpy as np
-import matplotlib.pyplot as plt
-import auraloss
-from copy import deepcopy
+
 from lib import *
-import re
 
 # 1. SETUP PATHS & AUDIO
 # Point this to the directory containing your gin config and the v3 .ckpt file

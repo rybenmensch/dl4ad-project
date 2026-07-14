@@ -1,9 +1,11 @@
+from pathlib import Path
+
+import numpy as np
 import torch
 import torchaudio
-from pathlib import Path
-import numpy as np
-from lib import *
 import torchinfo
+
+from lib import *
 from plotting import plot_comparison
 
 # MODEL

@@ -1,10 +1,12 @@
+from typing import Any
+
 import cached_conv
-import torch
 import gin
 import rave
-from lib import *
+import torch
 import torch.nn as nn
-from typing import Any
+
+from lib import *
 
 # In here, just stuff to interface with RAVE models and components!
 
