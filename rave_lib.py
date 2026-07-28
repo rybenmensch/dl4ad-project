@@ -1,24 +1,36 @@
-from typing import Any
+from pathlib import Path
 
-import cached_conv
 import gin
 import rave
 import torch
 import torch.nn as nn
 
-from lib import *
+from lib import get_in_channels_from_state_dict
 
 # In here, just stuff to interface with RAVE models and components!
 
+# still have to think about how to separate these things out??
+# because most everything here does not just apply to RAVE
+# but could be used for any model (I guess)
+# but how to interface is kind of the question
+# the cheapest way would just be to do something like
+#
+# when we want to use RAVE:
+# from rave_lib import get_encoder_net_path, get_decoder_net_path
+#
+# when we want to use blabla:
+# from blabla_lib import get_encoder_net_path, get_decoder_net_path
+# but obviously this is very very restricted
+#
+# The approach might just have to be some kind of base class thing. Thin
+# wrapper around the model, has the all the functions that are not specific to
+# rave as normal member functions, and then get_encoder_net_path and
+# get_decoder_net_path as virtual functions depending on the type of model.
 
+
+# actually specific to RAVE
 def rave_from_checkpoint(run_path: Path | str) -> rave.RAVE:
-    """
-    Create a full RAVE model from the path to a run.
-    input:
-        run_path: Path | str
-    output:
-        RAVE model
-    """
+    """Create a full RAVE model from the path to a run."""
 
     config_file = rave.core.search_for_config(run_path)
     gin.parse_config_file(config_file)
@@ -27,7 +39,7 @@ def rave_from_checkpoint(run_path: Path | str) -> rave.RAVE:
     checkpoint = torch.load(checkpoint_path, map_location="cpu")
 
     state_dict = checkpoint["state_dict"]
-    n_channels = get_state_dict_in_channels(state_dict)
+    n_channels = get_in_channels_from_state_dict(state_dict)
 
     model = rave.RAVE(n_channels=n_channels)
     model.load_state_dict(state_dict, strict=False)
@@ -35,87 +47,11 @@ def rave_from_checkpoint(run_path: Path | str) -> rave.RAVE:
     return model
 
 
-def get_encoder_net(model: rave.RAVE) -> Tuple[cached_conv.convs.CachedSequential, str]:
-    """
-    Returns the encoder net and the path to it.
-    Exists because the topology can change between RAVE updates, in which case
-    we will update the getter here.
-    """
-    encoder = model.encoder
-    encoder_str = "encoder"
-    if hasattr(encoder, "encoder"):
-        encoder = encoder.encoder
-        encoder_str += ".encoder"
-    return (encoder.net, encoder_str + ".net")
-
-
-def set_encoder_net(model: rave.RAVE, net: Any) -> rave.RAVE:
-    """
-    Returns the model with updated encoder_net.
-    Exists because the topology can change between RAVE updates, in which case
-    we will update the getter here.
-    Also exists because of a kludge and will maybe possibly be removed
-    """
-    if hasattr(model.encoder, "encoder"):
-        model.encoder.encoder.net = net
-    else:
-        model.encoder.net = net
-    return model
-
-
-def get_decoder_net(model: rave.RAVE) -> Tuple[cached_conv.convs.CachedSequential, str]:
-    """
-    Returns the decoder net and the path to it.
-    Exists because the topology can change between RAVE updates, in which case
-    we will update the getter here.
-    """
-    decoder = model.decoder
-    decoder_str = "decoder"
-    if hasattr(decoder, "decoder"):
-        decoder = decoder.decoder
-        decoder_str += ".decoder"
-    return (decoder.net, decoder_str + ".net")
-
-
-def set_decoder_net(model: rave.RAVE, net: Any) -> rave.RAVE:
-    """
-    Returns the model with updated decoder_net.
-    Exists because the topology can change between RAVE updates, in which case
-    we will update the getter here.
-    Also exists because of a kludge and will maybe possibly be removed
-    """
-    if hasattr(model.decoder, "decoder"):
-        model.decoder.decoder.net = net
-    else:
-        model.decoder.net = net
-    return model
-
-
-def get_nets(
-    model: rave.RAVE,
-) -> Tuple[
-    Tuple[cached_conv.convs.CachedSequential, str],
-    Tuple[cached_conv.convs.CachedSequential, str],
-]:
-    """
-    Returns the encoder and the decoder nets and the paths to them.
-    """
-    return (get_encoder_net(model), get_decoder_net(model))
-
-
-def get_last_encoder_layer(model: rave.RAVE) -> cached_conv.convs.Conv1d:
-    return model.encoder.encoder.net[-1]
-
-
-def get_encoder_output_channels(model: rave.RAVE) -> int:
-    return model.encoder.encoder.net[-1].out_channels
-
-
-def get_shape_preserving_layers(net: cached_conv.CachedSequential):
+def get_shape_preserving_layers(net: nn.Module):
     """
     Returns information about every layer that preserves the input shape.
     Input:
-        - Sequential net
+        - CachedSequential net
     Output:
         - List of dicts with content {index, name}
     """
@@ -150,81 +86,11 @@ def get_shape_preserving_layers(net: cached_conv.CachedSequential):
     return results
 
 
-# CUSTOM MODULES
+# GRAVEYARD
+
+# def get_last_encoder_layer(model: rave.RAVE) -> cached_conv.convs.Conv1d:
+#     return model.encoder.encoder.net[-1]
 
 
-class SequentialWithSkip(nn.Module):
-    def __init__(self, original_net, skips=None):
-        super().__init__()
-        self.original_net = original_net
-        self.skips = set(skips) if skips else set()
-
-    def forward(self, x):
-        for i, layer in enumerate(self.original_net):
-            if i in self.skips:
-                continue
-            x = layer(x)
-        return x
-
-
-class SequentialWithRepeat(nn.Module):
-    def __init__(self, original_net, repeats=None):
-        super().__init__()
-        self.original_net = original_net
-        self.repeats = repeats if repeats else {}
-
-    def forward(self, x):
-        for i, layer in enumerate(self.original_net):
-            r = self.repeats.get(i, 1)
-            for _ in range(r):
-                x = layer(x)
-            return x
-
-
-class ManipulatedSequential(nn.Module):
-    def __init__(self, original_net, skips=None, repeats=None):
-        super().__init__()
-        self.original_net = original_net
-        self.skips = set(skips) if skips else set()
-        self.repeats = repeats if repeats else {}
-
-    def forward(self, x):
-        for i, layer in enumerate(self.original_net):
-            if i in self.skips:
-                continue
-            r = self.repeats.get(i, 1)
-            for _ in range(r):
-                x = layer(x)
-        return x
-
-
-# class CustomEncoderWrapper(torch.nn.Module):
-#     def __init__(self, original_net, channels):
-#         super().__init__()
-#         self.original_net = original_net
-#
-#         self.custom_layer = torch.nn.Conv1d(
-#             in_channels=channels,
-#             out_channels=channels,
-#             kernel_size=1
-#         )
-#
-#         with torch.no_grad():
-#             self.custom_layer.weight.copy_(torch.eye(channels).unsqueeze(-1))
-#             self.custom_layer.bias.zero_()
-#
-#     def forward(self, x):
-#         features = self.original_net(x)
-#         return self.custom_layer(features)
-#
-# """
-# # Usage
-# encoder_output_channels = conv_layer.out_channels
-# torch.manual_seed(0)
-# model.encoder.encoder.net = CustomEncoderWrapper(
-#     original_encoder_net,
-#     encoder_output_channels
-# )
-#
-# print(model.encoder.encoder.net)
-# """
+# def get_encoder_output_channels(model: rave.RAVE) -> int:
+#     return model.encoder.encoder.net[-1].out_channels

@@ -1,19 +1,30 @@
 import os
 from pathlib import Path
-from typing import Tuple
+from typing import Any, List, Tuple
 
 import auraloss
 import gin
 import torch
+import torch.nn as nn
+
+
+def get_attr_from_attr_string(obj: Any, string: str) -> Any:
+    attrs: List[str] = string.split(".")
+    for attr in attrs:
+        try:
+            obj = getattr(obj, attr)
+        except Exception as e:
+            raise e
+    return obj
 
 
 def get_in_channels(model) -> int:
     if hasattr(model, "n_channels"):
         return model.n_channels
-    return get_state_dict_in_channels(model.state_dict())
+    return get_in_channels_from_state_dict(model.state_dict())
 
 
-def get_state_dict_in_channels(state_dict: dict) -> int:
+def get_in_channels_from_state_dict(state_dict: dict) -> int:
     """
     Find the input channels of the encoder's first conv layer from state_dict
     to detect n_channels. We need this because at this point, we do not have a

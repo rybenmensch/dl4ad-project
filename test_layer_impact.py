@@ -8,7 +8,9 @@ import numpy as np
 import torch
 import torchaudio
 
+import from_path
 from lib import *
+from modules import *
 from plotting import plot_comparison
 from rave_lib import *
 
@@ -33,7 +35,6 @@ file_name: str = "GLM.wav"
 
 base_source, sr = torchaudio.load("audio/source/GLM.wav")
 base_recon = process_audio(model, base_source)
-
 
 torchaudio.save(reconstructed_root / "base_reconstruction.wav", base_recon, sr)
 
@@ -89,12 +90,15 @@ class Layer:
 
 # collect layers from both encoder and decoder
 shape_preserving_layers: List[Layer] = []
-for net, net_path in get_nets(model):
+for net, net_path in get_nets_and_paths(model):
     layers = get_shape_preserving_layers(net)
     for layer in layers:
         shape_preserving_layers.append(
             Layer(model, net, net_path, layer["index"], layer["name"], [])
         )
+
+
+exit()
 
 # the following function is less-than-optimal only to be used for current task!
 # should be structured differently if we want to do layer skipping for actually
@@ -102,7 +106,7 @@ for net, net_path in get_nets(model):
 # time to deal with it now :)
 
 
-def process_audio_with_modified_layer(layer: Layer, layer_factory) -> torch.Tensor:
+def process_audio_with_modified_layer(layer: Layer, make_layer) -> torch.Tensor:
     model = layer.model
     original_net = layer.net
 
@@ -112,10 +116,11 @@ def process_audio_with_modified_layer(layer: Layer, layer_factory) -> torch.Tens
     # is for now
     # skip_net = SequentialWithSkip(original_net, skips=[layer.index])
     # repeat_net = SequentialWithRepeat(original_net, repeats={layer.index: num_repeats})
-    new_net = layer_factory(original_net, layer.index)
-    if layer.net_path == get_encoder_net(model)[1]:
+
+    new_net = make_layer(original_net, layer.index)
+    if layer.net_path == get_encoder_net_path(model):
         model = set_encoder_net(model, new_net)
-    elif layer.net_path == get_decoder_net(model)[1]:
+    elif layer.net_path == get_decoder_net_path(model):
         model = set_decoder_net(model, new_net)
 
     with torch.no_grad():
@@ -123,9 +128,9 @@ def process_audio_with_modified_layer(layer: Layer, layer_factory) -> torch.Tens
 
     # set to old net again
     # honk honk
-    if layer.net_path == get_encoder_net(model)[1]:
+    if layer.net_path == get_encoder_net_path(model):
         model = set_encoder_net(model, original_net)
-    elif layer.net_path == get_decoder_net(model)[1]:
+    elif layer.net_path == get_decoder_net_path(model):
         model = set_decoder_net(model, original_net)
 
     return mod_recon

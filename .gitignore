@@ -6,3 +6,5 @@ models/run/best.ckpt
 RAVE/
 audio/old_results/
 audio/results
+audio/reconstructed
+*.ckpt
