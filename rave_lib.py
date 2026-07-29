@@ -8,7 +8,7 @@ import torch
 import torch.nn as nn
 
 from lib import get_attr_from_attr_string, get_in_channels_from_state_dict
-from model import Net, NNModel
+from model import Net, NetTypeEnum, NNModel
 
 Conv1d: TypeAlias = cached_conv.convs.Conv1d | cached_conv.convs.CachedConv1d
 CachedSequential: TypeAlias = cached_conv.convs.CachedSequential
@@ -20,53 +20,34 @@ class RAVEModel(NNModel):
     def __init__(self, model):
         super(RAVEModel, self).__init__(model)
 
-    def get_encoder_net_path(self) -> str:
-        """Returns the path of the encoder net"""
-        encoder_str = "encoder"
-        if hasattr(self.model.encoder, "encoder"):
-            encoder_str += ".encoder"
-        return encoder_str + ".net"
+    def get_net_path(self, net_type: NetTypeEnum) -> str:
+        """Returns the path of the net"""
+        comp_name = net_type.value
+        comp = getattr(self.model, comp_name)
 
-    def get_decoder_net_path(self) -> str:
-        """Returns the path of the decoder net."""
-        decoder_str = "decoder"
-        if hasattr(self.model.decoder, "decoder"):
-            decoder_str += ".decoder"
-        return decoder_str + ".net"
+        path_str = comp_name
+        if hasattr(comp, comp_name):
+            path_str += f".{comp_name}"
+        return path_str + ".net"
 
-    def get_encoder_net(self) -> CachedSequential:
-        """Returns the encoder net."""
-        net_path = self.get_encoder_net_path()
+    def get_net(self, net_type: NetTypeEnum) -> CachedSequential:
+        """Returns the net."""
+        net_path = self.get_net_path(net_type)
         return get_attr_from_attr_string(self.model, net_path)
 
-    def get_decoder_net(self) -> CachedSequential:
-        """Returns the decoder net."""
-        net_path = self.get_decoder_net_path()
-        return get_attr_from_attr_string(self.model, net_path)
-
-    def set_encoder_net(self, net: Net):
+    def set_net(self, net_type: NetTypeEnum, net: Net):
         """
-        Returns the model with updated encoder_net.
+        Returns the model with updated net.
         Exists because the topology can change between RAVE updates, in which case
         we will update the setter here.
         Also exists because of a kludge and will maybe possibly be removed
         """
-        if hasattr(self.model.encoder, "encoder"):
-            self.model.encoder.encoder.net = net
+        comp_name = net_type.value
+        comp = getattr(self.model, comp_name)
+        if hasattr(comp, comp_name):
+            getattr(comp, comp_name).net = net
         else:
-            self.model.encoder.net = net
-
-    def set_decoder_net(self, net: Net):
-        """
-        Returns the model with updated decoder_net.
-        Exists because the topology can change between RAVE updates, in which case
-        we will update the getter here.
-        Also exists because of a kludge and will maybe possibly be removed
-        """
-        if hasattr(self.model.decoder, "decoder"):
-            self.model.decoder.decoder.net = net
-        else:
-            self.model.decoder.net = net
+            comp.net = net
 
 
 # actually specific to RAVE
