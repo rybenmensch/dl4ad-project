@@ -9,6 +9,7 @@ import torch
 import torchaudio
 
 from lib import *
+from model import NetTypeEnum
 from modules import *
 from plotting import plot_comparison
 from rave_lib import RAVEModel, rave_from_checkpoint
@@ -35,13 +36,12 @@ file_name: str = "GLM.wav"
 base_source, sr = torchaudio.load("audio/source/GLM.wav")
 
 # EXAMPLE: set the net to something
-encoder_net = model.get_encoder_net()
-model.set_encoder_net(SequentialWithSkip(encoder_net, [20]))
+encoder_net = model.get_net(NetTypeEnum.Encoder)
+model.set_net(NetTypeEnum.Encoder, SequentialWithSkip(encoder_net, [20]))
 # model.set_encoder_net(ManipulatedSequential(old_encoder_net, repeats={14: 3}))
 mod_recon = process_audio(model.model, base_source)
-model.set_encoder_net = encoder_net
+model.set_net(NetTypeEnum.Encoder, encoder_net)
 torchaudio.save(reconstructed_root / "test.wav", mod_recon, sr)
-
 
 # reset the model again (no better option for now lulz)
 model.model = rave_from_checkpoint("models/satyr")
