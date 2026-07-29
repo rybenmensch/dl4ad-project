@@ -1,6 +1,5 @@
-import from_path
-from model import RAVEWrapper
-from rave_lib import *
+from lib import check_path
+from rave_lib import RAVEModel, rave_from_checkpoint
 
 model = rave_from_checkpoint("models/satyr/")
 source_path = check_path("./audio/source/")
@@ -12,9 +11,11 @@ file_name: str = "GLM.wav"
 # base_source, sr = torchaudio.load(input_path)
 # base_reconstruction = process_audio(model_clean, base_source)
 
-model = RAVEWrapper(model)
+model = RAVEModel(model)
 
-layer = from_path.get_layer(model, "encoder.encoder.net.0")
+layer = model.from_net_path.get_layer("encoder.encoder.net", 0)
+
+# layer = from_path.get_layer(model, "encoder.encoder.net.0")
 
 # from_path.get_layer(model, "decoder.net.0")
 

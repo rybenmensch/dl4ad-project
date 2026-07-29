@@ -5,7 +5,8 @@ from typing import Any, List, Tuple
 import auraloss
 import gin
 import torch
-import torch.nn as nn
+
+# TODO: clean up the mess
 
 
 def get_attr_from_attr_string(obj: Any, string: str) -> Any:
@@ -116,7 +117,7 @@ def process_audio(model, waveform: torch.Tensor) -> torch.Tensor:
         return output_tensor
 
 
-class Model:
+class JITModel:
     # useful for JIT-compiled .ts models
     def __init__(self, path: Path | str) -> None:
         check_path(path)

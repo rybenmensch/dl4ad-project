@@ -9,12 +9,12 @@ import torchaudio
 from lib import *
 
 # MODEL
-model = Model("models/percussion.ts")
+model = JITModel("models/percussion.ts")
 # assume mono model
 if model.input_channels != 1:
     raise Exception("Stereo models not supported yet!")
 
-model_clean = Model("models/percussion.ts")
+model_clean = JITModel("models/percussion.ts")
 
 # AUDIO
 source_path: Path = check_path("audio/source")

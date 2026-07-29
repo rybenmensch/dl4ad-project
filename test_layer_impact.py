@@ -8,11 +8,10 @@ import numpy as np
 import torch
 import torchaudio
 
-import from_path
 from lib import *
 from modules import *
 from plotting import plot_comparison
-from rave_lib import *
+from rave_lib import RAVEModel, rave_from_checkpoint
 
 # Suppress the lightning_fabric pkg_resources warning
 warnings.filterwarnings("ignore", category=UserWarning, message=".*pkg_resources.*")
@@ -26,26 +25,31 @@ warnings.filterwarnings(
 )
 
 model = rave_from_checkpoint("models/satyr")
-# model = rave_from_checkpoint("models/checkpoint/")
+model = RAVEModel(model)
 
 source_path: Path = check_path("audio/source")
-reconstructed_root: Path = check_path("audio/reconstructed/satyr/")
+reconstructed_root: Path = check_path("audio/reconstructed")
 
 file_name: str = "GLM.wav"
 
 base_source, sr = torchaudio.load("audio/source/GLM.wav")
-base_recon = process_audio(model, base_source)
 
+# EXAMPLE: set the net to something
+encoder_net = model.get_encoder_net()
+model.set_encoder_net(SequentialWithSkip(encoder_net, [20]))
+# model.set_encoder_net(ManipulatedSequential(old_encoder_net, repeats={14: 3}))
+mod_recon = process_audio(model.model, base_source)
+model.set_encoder_net = encoder_net
+torchaudio.save(reconstructed_root / "test.wav", mod_recon, sr)
+
+
+# reset the model again (no better option for now lulz)
+model.model = rave_from_checkpoint("models/satyr")
+
+base_recon = process_audio(model.model, base_source)
 torchaudio.save(reconstructed_root / "base_reconstruction.wav", base_recon, sr)
 
-# model.encoder.encoder.net = SequentialWithSkip(model.encoder.encoder.net, [20])
-# with torch.no_grad():
-#     mod_recon = process_audio(model, base_source)
-
-# model.decoder.net = ManipulatedSequential(model.decoder.net, repeats={14: 3})
-# with torch.no_grad():
-#     mod_recon = process_audio(model, base_source)
-# torchaudio.save(output_path, mod_recon, sr)
+exit()
 
 
 class Mode(Enum):
@@ -97,8 +101,6 @@ for net, net_path in get_nets_and_paths(model):
             Layer(model, net, net_path, layer["index"], layer["name"], [])
         )
 
-
-exit()
 
 # the following function is less-than-optimal only to be used for current task!
 # should be structured differently if we want to do layer skipping for actually

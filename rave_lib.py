@@ -1,31 +1,72 @@
 from pathlib import Path
+from typing import TypeAlias
 
+import cached_conv
 import gin
 import rave
 import torch
 import torch.nn as nn
 
-from lib import get_in_channels_from_state_dict
+from lib import get_attr_from_attr_string, get_in_channels_from_state_dict
+from model import Net, NNModel
+
+Conv1d: TypeAlias = cached_conv.convs.Conv1d | cached_conv.convs.CachedConv1d
+CachedSequential: TypeAlias = cached_conv.convs.CachedSequential
 
 # In here, just stuff to interface with RAVE models and components!
 
-# still have to think about how to separate these things out??
-# because most everything here does not just apply to RAVE
-# but could be used for any model (I guess)
-# but how to interface is kind of the question
-# the cheapest way would just be to do something like
-#
-# when we want to use RAVE:
-# from rave_lib import get_encoder_net_path, get_decoder_net_path
-#
-# when we want to use blabla:
-# from blabla_lib import get_encoder_net_path, get_decoder_net_path
-# but obviously this is very very restricted
-#
-# The approach might just have to be some kind of base class thing. Thin
-# wrapper around the model, has the all the functions that are not specific to
-# rave as normal member functions, and then get_encoder_net_path and
-# get_decoder_net_path as virtual functions depending on the type of model.
+
+class RAVEModel(NNModel):
+    def __init__(self, model):
+        super(RAVEModel, self).__init__(model)
+
+    def get_encoder_net_path(self) -> str:
+        """Returns the path of the encoder net"""
+        encoder_str = "encoder"
+        if hasattr(self.model.encoder, "encoder"):
+            encoder_str += ".encoder"
+        return encoder_str + ".net"
+
+    def get_decoder_net_path(self) -> str:
+        """Returns the path of the decoder net."""
+        decoder_str = "decoder"
+        if hasattr(self.model.decoder, "decoder"):
+            decoder_str += ".decoder"
+        return decoder_str + ".net"
+
+    def get_encoder_net(self) -> CachedSequential:
+        """Returns the encoder net."""
+        net_path = self.get_encoder_net_path()
+        return get_attr_from_attr_string(self.model, net_path)
+
+    def get_decoder_net(self) -> CachedSequential:
+        """Returns the decoder net."""
+        net_path = self.get_decoder_net_path()
+        return get_attr_from_attr_string(self.model, net_path)
+
+    def set_encoder_net(self, net: Net):
+        """
+        Returns the model with updated encoder_net.
+        Exists because the topology can change between RAVE updates, in which case
+        we will update the setter here.
+        Also exists because of a kludge and will maybe possibly be removed
+        """
+        if hasattr(self.model.encoder, "encoder"):
+            self.model.encoder.encoder.net = net
+        else:
+            self.model.encoder.net = net
+
+    def set_decoder_net(self, net: Net):
+        """
+        Returns the model with updated decoder_net.
+        Exists because the topology can change between RAVE updates, in which case
+        we will update the getter here.
+        Also exists because of a kludge and will maybe possibly be removed
+        """
+        if hasattr(self.model.decoder, "decoder"):
+            self.model.decoder.decoder.net = net
+        else:
+            self.model.decoder.net = net
 
 
 # actually specific to RAVE
