@@ -13,7 +13,8 @@ file_name: str = "GLM.wav"
 
 model = RAVEModel(model)
 
-layer = model.from_net_path.get_layer("encoder.encoder.net", 0)
+print(model.model)
+layer = model.from_net_path.get_layer("encoder.encoder.net", 1)
 
 # layer = from_path.get_layer(model, "encoder.encoder.net.0")
 

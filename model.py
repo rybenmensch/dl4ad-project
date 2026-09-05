@@ -9,11 +9,6 @@ Net: TypeAlias = nn.Module
 Module: TypeAlias = nn.Module
 
 
-class VirtualException(BaseException):
-    def __init__(self):
-        BaseException(self)
-
-
 class NNModel(metaclass=ABCMeta):
     """wrapper class for non-torchscript models"""
 
@@ -24,15 +19,15 @@ class NNModel(metaclass=ABCMeta):
         self.from_layer_path = LayerPath(self)
 
     @abstractmethod
-    def get_net_path(self, net_type: 'NetTypeEnum') -> str:
+    def get_net_path(self, net_type: "NetTypeEnum") -> str:
         pass
 
     @abstractmethod
-    def get_net(self, net_type: 'NetTypeEnum') -> Net:
+    def get_net(self, net_type: "NetTypeEnum") -> Net:
         pass
 
     @abstractmethod
-    def set_net(self, net_type: 'NetTypeEnum', net: Net):
+    def set_net(self, net_type: "NetTypeEnum", net: Net):
         pass
 
     def get_nets(self) -> Tuple[
@@ -44,7 +39,10 @@ class NNModel(metaclass=ABCMeta):
 
     def get_net_paths(self) -> Tuple[str, str]:
         """Returns the encoder and decoder paths."""
-        return (self.get_net_path(NetTypeEnum.Encoder), self.get_net_path(NetTypeEnum.Decoder))
+        return (
+            self.get_net_path(NetTypeEnum.Encoder),
+            self.get_net_path(NetTypeEnum.Decoder),
+        )
 
     def get_nets_and_paths(self) -> Tuple[
         Tuple[Net, str],
