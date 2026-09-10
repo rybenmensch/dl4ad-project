@@ -9,10 +9,10 @@ import torch
 import torchaudio
 
 from lib import *
-from model import NetTypeEnum
+from model import Net, NetTypeEnum, NNModel
 from modules import *
 from plotting import plot_comparison
-from rave_lib import RAVEModel, rave_from_checkpoint
+from rave_lib import RAVEModel, get_shape_preserving_layers, rave_from_checkpoint
 
 # Suppress the lightning_fabric pkg_resources warning
 warnings.filterwarnings("ignore", category=UserWarning, message=".*pkg_resources.*")
@@ -47,9 +47,7 @@ torchaudio.save(reconstructed_root / "test.wav", mod_recon, sr)
 model.model = rave_from_checkpoint("models/satyr")
 
 base_recon = process_audio(model.model, base_source)
-torchaudio.save(reconstructed_root / "base_reconstruction.wav", base_recon, sr)
-
-exit()
+# torchaudio.save(reconstructed_root / "base_reconstruction.wav", base_recon, sr)
 
 
 class Mode(Enum):
@@ -82,8 +80,8 @@ class Stats:
 
 @dataclass
 class Layer:
-    model: rave.RAVE
-    net: cached_conv.convs.CachedSequential
+    model: RAVEModel
+    net: Net
     net_path: str
     index: int
     name: str
@@ -94,7 +92,7 @@ class Layer:
 
 # collect layers from both encoder and decoder
 shape_preserving_layers: List[Layer] = []
-for net, net_path in get_nets_and_paths(model):
+for net, net_path in model.get_nets_and_paths():
     layers = get_shape_preserving_layers(net)
     for layer in layers:
         shape_preserving_layers.append(
@@ -102,38 +100,19 @@ for net, net_path in get_nets_and_paths(model):
         )
 
 
-# the following function is less-than-optimal only to be used for current task!
-# should be structured differently if we want to do layer skipping for actually
-# producing sounds! also, things are hardcoded and idiotic but I don't have
-# time to deal with it now :)
-
-
-def process_audio_with_modified_layer(layer: Layer, make_layer) -> torch.Tensor:
+def process_audio_with_modified_layer(layer: Layer, make_net) -> torch.Tensor:
     model = layer.model
+    # TODO: implement an actual copy here!
     original_net = layer.net
 
-    # set to new net
-    # this is rather dumb. should do something with getattr and setattr or
-    # something, but also borderline unbearable to do it that way. so kludge it
-    # is for now
-    # skip_net = SequentialWithSkip(original_net, skips=[layer.index])
-    # repeat_net = SequentialWithRepeat(original_net, repeats={layer.index: num_repeats})
-
-    new_net = make_layer(original_net, layer.index)
-    if layer.net_path == get_encoder_net_path(model):
-        model = set_encoder_net(model, new_net)
-    elif layer.net_path == get_decoder_net_path(model):
-        model = set_decoder_net(model, new_net)
+    net_type: NetTypeEnum = model.from_net_path.get_net_type(layer.net_path)
+    new_net = make_net(original_net, layer.index)
+    model.set_net(net_type, new_net)
 
     with torch.no_grad():
         mod_recon = process_audio(model, base_source)
 
-    # set to old net again
-    # honk honk
-    if layer.net_path == get_encoder_net_path(model):
-        model = set_encoder_net(model, original_net)
-    elif layer.net_path == get_decoder_net_path(model):
-        model = set_decoder_net(model, original_net)
+    model.set_net(net_type, original_net)
 
     return mod_recon
 

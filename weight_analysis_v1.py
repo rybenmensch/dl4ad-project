@@ -63,23 +63,23 @@ feature_rolloff_percent = 0.85
 # 2. CREATE A NEW RESULT DIRECTORY FOR THIS RUN
 # ============================================================
 
-run_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-source_stem = Path(file_name).stem
-
-result_directory = reconstructed_root / "results" / f"{source_stem}_{run_timestamp}"
-
-encoder_audio_directory = result_directory / "encoder"
-decoder_audio_directory = result_directory / "decoder"
-analysis_directory = result_directory / "analysis"
-
-encoder_audio_directory.mkdir(parents=True, exist_ok=False)
-decoder_audio_directory.mkdir(parents=True, exist_ok=False)
-analysis_directory.mkdir(parents=True, exist_ok=False)
-
-section_directories = {
-    "encoder": encoder_audio_directory,
-    "decoder": decoder_audio_directory,
-}
+# run_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+# source_stem = Path(file_name).stem
+#
+# result_directory = reconstructed_root / "results" / f"{source_stem}_{run_timestamp}"
+#
+# encoder_audio_directory = result_directory / "encoder"
+# decoder_audio_directory = result_directory / "decoder"
+# analysis_directory = result_directory / "analysis"
+#
+# encoder_audio_directory.mkdir(parents=True, exist_ok=False)
+# decoder_audio_directory.mkdir(parents=True, exist_ok=False)
+# analysis_directory.mkdir(parents=True, exist_ok=False)
+#
+# section_directories = {
+#     "encoder": encoder_audio_directory,
+#     "decoder": decoder_audio_directory,
+# }
 
 # print(f"Results for this run will be saved to:\n  {result_directory}")
 

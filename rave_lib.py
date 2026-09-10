@@ -50,7 +50,6 @@ class RAVEModel(NNModel):
             comp.net = net
 
 
-# actually specific to RAVE
 def rave_from_checkpoint(run_path: Path | str) -> rave.RAVE:
     """Create a full RAVE model from the path to a run."""
 
@@ -69,6 +68,17 @@ def rave_from_checkpoint(run_path: Path | str) -> rave.RAVE:
     return model
 
 
+# TORCH STUFF - should move to other library
+
+
+def is_layer_iterable(net: nn.Module) -> bool:
+    try:
+        net[0]
+    except:
+        return False
+    return True
+
+
 def get_shape_preserving_layers(net: nn.Module):
     """
     Returns information about every layer that preserves the input shape.
@@ -77,11 +87,10 @@ def get_shape_preserving_layers(net: nn.Module):
     Output:
         - List of dicts with content {index, name}
     """
+    # does not recurse right now
     results = []
 
-    try:
-        net[0]
-    except:
+    if not is_layer_iterable(net):
         print("Model should be sequential!")
         exit()
 
@@ -106,6 +115,10 @@ def get_shape_preserving_layers(net: nn.Module):
             print(f"Layer nr {idx} of type {layer_name} raised {e}")
 
     return results
+
+
+def get_weighted_layers(net: nn.Module):
+    pass
 
 
 # GRAVEYARD
