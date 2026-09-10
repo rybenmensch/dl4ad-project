@@ -1,7 +1,11 @@
-from lib import check_path
-from rave_lib import RAVEModel, rave_from_checkpoint
+from rave import RAVE, Residual, nn
 
-model = rave_from_checkpoint("models/satyr/")
+from lib import check_path
+from rave_lib import RAVEModel, is_layer_iterable, rave_from_checkpoint
+
+# from weight_analysis_v1 import parameter_key_to_module_path
+
+c = rave_from_checkpoint("models/satyr/")
 source_path = check_path("./audio/source/")
 reconstructed_path = check_path("./audio/")
 
@@ -11,10 +15,26 @@ file_name: str = "GLM.wav"
 # base_source, sr = torchaudio.load(input_path)
 # base_reconstruction = process_audio(model_clean, base_source)
 
-model = RAVEModel(model)
+model = RAVEModel(c)
 
-print(model.model)
 layer = model.from_net_path.get_layer("encoder.encoder.net", 1)
+
+for net in model.get_nets():
+    for l in net:
+        if type(l).__name__ != "Residual":
+            continue
+
+        lol: Residual = l
+        print(lol)
+        print("===============")
+        for c in lol.named_children():
+            print("---------------")
+            print(c)
+        exit()
+
+# TODO:
+# from_layer: get_layer_path,
+
 
 # layer = from_path.get_layer(model, "encoder.encoder.net.0")
 
