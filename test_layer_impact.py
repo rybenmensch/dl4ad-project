@@ -12,7 +12,8 @@ from lib import *
 from model import Net, NetTypeEnum, NNModel
 from modules import *
 from plotting import plot_comparison
-from rave_lib import RAVEModel, get_shape_preserving_layers, rave_from_checkpoint
+from rave_lib import RAVEModel, rave_from_checkpoint
+from torch_lib import get_shape_preserving_layers
 
 # Suppress the lightning_fabric pkg_resources warning
 warnings.filterwarnings("ignore", category=UserWarning, message=".*pkg_resources.*")
@@ -98,6 +99,8 @@ for net, net_path in model.get_nets_and_paths():
         shape_preserving_layers.append(
             Layer(model, net, net_path, layer["index"], layer["name"], [])
         )
+        break
+    break
 
 
 def process_audio_with_modified_layer(layer: Layer, make_net) -> torch.Tensor:
@@ -110,7 +113,7 @@ def process_audio_with_modified_layer(layer: Layer, make_net) -> torch.Tensor:
     model.set_net(net_type, new_net)
 
     with torch.no_grad():
-        mod_recon = process_audio(model, base_source)
+        mod_recon = process_audio(model.model, base_source)
 
     model.set_net(net_type, original_net)
 

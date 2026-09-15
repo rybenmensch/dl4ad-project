@@ -14,6 +14,7 @@ def is_layer_iterable(net: nn.Module) -> bool:
 
 # TODO:
 # this should be the responsibility of the models tbh
+# maybe make the models itself
 def get_input_size(net: nn.Module) -> int:
     first_layer = net[0]
 
@@ -39,6 +40,7 @@ def get_shape_preserving_layers(net: nn.Module):
     Input:  nn.Module (needs to be iterable!)
     Output: List of dicts with content {index, name}
     """
+    # TODO: make this recursive, so that we can check nets of sub-nets
 
     if not is_layer_iterable(net):
         print("Model should be sequential!")

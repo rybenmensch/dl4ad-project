@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import TypeAlias
+from typing import List, TypeAlias
 
 import cached_conv
 import gin
@@ -7,11 +7,15 @@ import rave
 import torch
 import torch.nn as nn
 
-from lib import get_in_channels_from_state_dict, getattr_from_attr_string
+from lib import (
+    get_in_channels_from_state_dict,
+    getattr_from_attr_string,
+    setattr_from_attr_string,
+)
 from model import Net, NetTypeEnum, NNModel
 
 Conv1d: TypeAlias = cached_conv.convs.Conv1d | cached_conv.convs.CachedConv1d
-CachedSequential: TypeAlias = cached_conv.convs.CachedSequential
+LayerSequence: TypeAlias = cached_conv.convs.CachedSequential
 
 # In here, just stuff to interface with RAVE models and components!
 
@@ -21,33 +25,24 @@ class RAVEModel(NNModel):
         super(RAVEModel, self).__init__(model)
 
     def get_net_path(self, net_type: NetTypeEnum) -> str:
-        """Returns the path of the net"""
-        comp_name = net_type.value
-        comp = getattr(self.model, comp_name)
-
-        path_str = comp_name
-        if hasattr(comp, comp_name):
-            path_str += f".{comp_name}"
+        """Returns the path of the net."""
+        net_type_name = net_type.value
+        net = getattr(self.model, net_type_name)
+        path_str = net_type_name  # 'encoder' or 'decoder'
+        if hasattr(net, net_type_name):
+            # name is nested, e.g. 'decoder.decoder'
+            path_str += f".{net_type_name}"
         return path_str + ".net"
 
-    def get_net(self, net_type: NetTypeEnum) -> CachedSequential:
+    def get_net(self, net_type: NetTypeEnum) -> LayerSequence:
         """Returns the net."""
         net_path = self.get_net_path(net_type)
         return getattr_from_attr_string(self.model, net_path)
 
     def set_net(self, net_type: NetTypeEnum, net: Net):
-        """
-        Returns the model with updated net.
-        Exists because the topology can change between RAVE updates, in which case
-        we will update the setter here.
-        Also exists because of a kludge and will maybe possibly be removed
-        """
-        comp_name = net_type.value
-        comp = getattr(self.model, comp_name)
-        if hasattr(comp, comp_name):
-            getattr(comp, comp_name).net = net
-        else:
-            comp.net = net
+        """Update the net."""
+        net_path = self.get_net_path(net_type)
+        setattr_from_attr_string(self.model, net_path, net)
 
 
 def rave_from_checkpoint(run_path: Path | str) -> rave.RAVE:
@@ -68,60 +63,12 @@ def rave_from_checkpoint(run_path: Path | str) -> rave.RAVE:
     return model
 
 
-# TORCH STUFF - should move to other library
-
-
-# def is_layer_iterable(net: nn.Module) -> bool:
-#     try:
-#         net[0]
-#     except:
-#         return False
-#     return True
-#
-#
-# def get_shape_preserving_layers(net: nn.Module):
-#     """
-#     Returns information about every layer that preserves the input shape.
-#     Input:
-#         - CachedSequential net
-#     Output:
-#         - List of dicts with content {index, name}
-#     """
-#     # does not recurse right now
-#     results = []
-#
-#     if not is_layer_iterable(net):
-#         print("Model should be sequential!")
-#         exit()
-#
-#     input_size = net[0].in_channels
-#
-#     # batch=1, channels=input_size, time=64
-#     x = torch.zeros(1, input_size, 64)
-#
-#     for idx, layer in enumerate(net):
-#         layer_name = type(layer).__name__
-#         try:
-#             with torch.no_grad():
-#                 out = layer(x)
-#                 if out.shape == x.shape:
-#                     # layer preserves shape
-#                     results.append({"index": idx, "name": layer_name})
-#                 else:
-#                     # layer does not preserve shape
-#                     pass
-#                 x = out
-#         except Exception as e:
-#             print(f"Layer nr {idx} of type {layer_name} raised {e}")
-#
-#     return results
-
-
-def get_weighted_layers(net: nn.Module):
-    pass
-
-
 # GRAVEYARD
+
+
+# def get_weighted_layers(net: nn.Module):
+#     pass
+
 
 # def get_last_encoder_layer(model: rave.RAVE) -> cached_conv.convs.Conv1d:
 #     return model.encoder.encoder.net[-1]
