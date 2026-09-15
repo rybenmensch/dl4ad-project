@@ -33,6 +33,10 @@ class NNModel(metaclass=ABCMeta):
         pass
 
     @abstractmethod
+    def get_sample_rate(self) -> int:
+        pass
+
+    @abstractmethod
     def get_net_path(self, net_type: NetTypeEnum) -> str:
         """Implement this for looking up the actual path to the encoder or decoder."""
         pass

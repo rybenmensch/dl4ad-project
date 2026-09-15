@@ -26,7 +26,10 @@ class EncodecNNModel(NNModel):
         self.model: EncodecModel
 
     def reset(self):
-        self.model = raw_encodec_model(self.model.sample_rate)
+        self.model = raw_encodec_model(self.get_sample_rate())
+
+    def get_sample_rate(self) -> int:
+        return self.model.sample_rate
 
     def get_net_path(self, net_type: NetTypeEnum) -> str:
         """Returns the path of the net."""
@@ -55,7 +58,10 @@ class HFEncodecNNModel(NNModel):
 
     def reset(self):
         sr: int = self.model.config.sampling_rate
-        self.model = raw_hf_encodec_model(self.model.config.sampling_rate)
+        self.model = raw_hf_encodec_model(self.get_sample_rate())
+
+    def get_sample_rate(self) -> int:
+        return self.model.config.sampling_rate
 
     def get_net_path(self, net_type: NetTypeEnum) -> str:
         """Returns the path of the net."""

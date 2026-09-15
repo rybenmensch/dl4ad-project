@@ -45,12 +45,13 @@ def norm(x: torch.Tensor) -> torch.Tensor:
 
 raw_model = raw_hf_encodec_model()
 model = HFEncodecNNModel(raw_model)
+print(model.get_sample_rate())
 model.reset()
 
 raw_model = raw_encodec_model(24_000)
 model = EncodecNNModel(raw_model)
+print(model.get_sample_rate())
 model.reset()
-print(model.model.sample_rate)
 
 # raw_model = encodec_model_24khz()
 # model = EncodecNNModel(raw_model)

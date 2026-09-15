@@ -38,6 +38,9 @@ class RAVEModel(NNModel):
             exit()
         self.model = raw_rave_model(self.path)
 
+    def get_sample_rate(self) -> int:
+        return self.model.sr
+
     def get_net_path(self, net_type: NetTypeEnum) -> str:
         """Returns the path of the net."""
         net_type_name = net_type.value

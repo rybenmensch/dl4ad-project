@@ -29,6 +29,8 @@ warnings.filterwarnings(
 model = raw_rave_model("models/satyr")
 model = RAVEModel("models/satyr")
 
+print(model.get_sample_rate())
+
 print(hex(id(model.model)))
 
 model.reset()
