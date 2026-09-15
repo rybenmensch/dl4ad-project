@@ -1,3 +1,4 @@
+import copy
 from abc import ABCMeta, abstractmethod
 from enum import Enum
 from typing import Tuple, TypeAlias
@@ -28,7 +29,12 @@ class NNModel(metaclass=ABCMeta):
         self.from_layer = Layer(self)
 
     @abstractmethod
+    def reset(self):
+        pass
+
+    @abstractmethod
     def get_net_path(self, net_type: NetTypeEnum) -> str:
+        """Implement this for looking up the actual path to the encoder or decoder."""
         pass
 
     def get_net(self, net_type: NetTypeEnum) -> LayerSequence:

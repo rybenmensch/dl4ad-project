@@ -12,7 +12,7 @@ from lib import *
 from model import Net, NetTypeEnum, NNModel
 from modules import *
 from plotting import plot_comparison
-from rave_lib import RAVEModel, rave_from_checkpoint
+from rave_lib import RAVEModel, raw_rave_model
 from torch_lib import get_shape_preserving_layers
 
 # Suppress the lightning_fabric pkg_resources warning
@@ -26,8 +26,13 @@ warnings.filterwarnings(
     message=".*return_complex.*argument is now deprecated.*",
 )
 
-model = rave_from_checkpoint("models/satyr")
-model = RAVEModel(model)
+model = raw_rave_model("models/satyr")
+model = RAVEModel("models/satyr")
+
+print(hex(id(model.model)))
+
+model.reset()
+print(hex(id(model.model)))
 
 source_path: Path = check_path("audio/source")
 reconstructed_root: Path = check_path("audio/reconstructed")
@@ -37,15 +42,20 @@ file_name: str = "GLM.wav"
 base_source, sr = torchaudio.load("audio/source/GLM.wav")
 
 # EXAMPLE: set the net to something
-encoder_net = model.get_net(NetTypeEnum.Encoder)
-model.set_net(NetTypeEnum.Encoder, SequentialWithSkip(encoder_net, [20]))
-# model.set_encoder_net(ManipulatedSequential(old_encoder_net, repeats={14: 3}))
-mod_recon = process_audio(model.model, base_source)
-model.set_net(NetTypeEnum.Encoder, encoder_net)
-torchaudio.save(reconstructed_root / "test.wav", mod_recon, sr)
+original_net = model.get_net(NetTypeEnum.Encoder)
+model.set_net(NetTypeEnum.Encoder, SequentialWithSkip(original_net, [20]))
 
-# reset the model again (no better option for now lulz)
-model.model = rave_from_checkpoint("models/satyr")
+# # model.set_encoder_net(ManipulatedSequential(old_encoder_net, repeats={14: 3}))
+# mod_recon = process_audio(model.model, base_source)
+# model.set_net(NetTypeEnum.Encoder, original_net)
+# torchaudio.save(reconstructed_root / "test.wav", mod_recon, sr)
+#
+# # reset the model again (no better option for now lulz)
+# # model.model = raw_rave_model("models/satyr")
+#
+# print(hex(id(model.get_net(NetTypeEnum.Encoder))))
+
+exit()
 
 base_recon = process_audio(model.model, base_source)
 # torchaudio.save(reconstructed_root / "base_reconstruction.wav", base_recon, sr)

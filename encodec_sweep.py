@@ -7,9 +7,9 @@ import torchaudio
 from encodec_lib import (
     EncodecNNModel,
     HFEncodecNNModel,
-    encodec_from_hf,
-    encodec_model_48khz,
     process_audio,
+    raw_encodec_model,
+    raw_hf_encodec_model,
 )
 from lib import check_path
 from model import NetTypeEnum
@@ -43,8 +43,25 @@ def norm(x: torch.Tensor) -> torch.Tensor:
 
 # MODELL LADEN
 
-raw_model = encodec_model_48khz()
+raw_model = raw_hf_encodec_model()
+model = HFEncodecNNModel(raw_model)
+model.reset()
+
+raw_model = raw_encodec_model(24_000)
 model = EncodecNNModel(raw_model)
+model.reset()
+print(model.model.sample_rate)
+
+# raw_model = encodec_model_24khz()
+# model = EncodecNNModel(raw_model)
+# model.reset()
+# print(model.model.sample_rate)
+#
+# model = EncodecNNModel()
+# model.reset()
+# print(model.model.sample_rate)
+
+exit()
 
 # raw_model = encodec_from_hf("facebook/encodec_24khz")
 # model = HFEncodecNNModel(raw_model)

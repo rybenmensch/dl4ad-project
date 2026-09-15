@@ -21,8 +21,22 @@ LayerSequence: TypeAlias = cached_conv.convs.CachedSequential
 
 
 class RAVEModel(NNModel):
-    def __init__(self, model):
+    def __init__(self, path_or_model: Path | str | rave.RAVE):
+        self.path: Path | str | None
+        model = None
+        if isinstance(path_or_model, Path) or isinstance(path_or_model, str):
+            self.path = path_or_model
+            model = raw_rave_model(path_or_model)
         super(RAVEModel, self).__init__(model)
+        self.model: rave.RAVE
+
+    def reset(self):
+        if self.path == None:
+            print(
+                "Cannot reset model that was initialized without a path to a checkpoint!"
+            )
+            exit()
+        self.model = raw_rave_model(self.path)
 
     def get_net_path(self, net_type: NetTypeEnum) -> str:
         """Returns the path of the net."""
@@ -35,7 +49,7 @@ class RAVEModel(NNModel):
         return path_str + ".net"
 
 
-def rave_from_checkpoint(run_path: Path | str) -> rave.RAVE:
+def raw_rave_model(run_path: Path | str) -> rave.RAVE:
     """Create a full RAVE model from the path to a run."""
 
     config_file = rave.core.search_for_config(run_path)

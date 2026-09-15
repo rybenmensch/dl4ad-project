@@ -513,7 +513,7 @@ print(f"Sample rate: {sample_rate} Hz")
 
 print("\nLoading clean baseline model...")
 
-model_clean = rave_from_checkpoint(str(run_path))
+model_clean = raw_rave_model(str(run_path))
 model_clean.eval()
 
 output_clean = process_audio(model_clean, waveform)
@@ -635,7 +635,7 @@ for network_section, depth_name, module_path in experiments:
     for factor in scaling_factors:
         factor = float(factor)
 
-        model_manipulated = rave_from_checkpoint(str(run_path))
+        model_manipulated = raw_rave_model(str(run_path))
 
         model_manipulated.eval()
 

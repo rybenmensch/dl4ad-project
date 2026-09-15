@@ -9,6 +9,7 @@ from transformers import EncodecModel as HFEncodecModel
 from lib import (
     getattr_from_attr_string,
     hasattr_from_attr_string,
+    print_all_attrs,
     setattr_from_attr_string,
 )
 from model import Net, NetTypeEnum, NNModel
@@ -18,37 +19,58 @@ LayerSequence: TypeAlias = nn.ModuleList
 
 
 class EncodecNNModel(NNModel):
-    def __init__(self, model: EncodecModel):
+    def __init__(self, model: EncodecModel | None = None):
+        if model == None:
+            model = raw_encodec_model(48_000)
         super(EncodecNNModel, self).__init__(model)
-        self.subnet_name = "model"
+        self.model: EncodecModel
+
+    def reset(self):
+        self.model = raw_encodec_model(self.model.sample_rate)
 
     def get_net_path(self, net_type: NetTypeEnum) -> str:
         """Returns the path of the net."""
-        return net_type.value + "." + self.subnet_name
+        return net_type.value + ".model"
 
 
-class HFEncodecNNModel(EncodecNNModel):
-    def __init__(self, model: HFEncodecModel):
+def raw_encodec_model(sample_rate: int = 48_000) -> EncodecModel:
+    model: EncodecModel | None = None
+    if sample_rate == 24_000:
+        model = EncodecModel.encodec_model_24khz()
+    elif sample_rate == 48_000:
+        model = EncodecModel.encodec_model_48khz()
+    else:
+        print(f"Samplerate {sample_rate} not supported!")
+        exit()
+    model.eval()
+    return model
+
+
+class HFEncodecNNModel(NNModel):
+    def __init__(self, model: HFEncodecModel | None = None):
+        if model == None:
+            model = raw_hf_encodec_model()
         super(HFEncodecNNModel, self).__init__(cast(EncodecModel, model))
-        self.subnet_name = "layers"
+        self.model: HFEncodecModel
+
+    def reset(self):
+        sr: int = self.model.config.sampling_rate
+        self.model = raw_hf_encodec_model(self.model.config.sampling_rate)
+
+    def get_net_path(self, net_type: NetTypeEnum) -> str:
+        """Returns the path of the net."""
+        return net_type.value + ".layers"
 
 
-def encodec_from_hf(
-    model_name: str = "facebook/encodec_24khz",
-) -> HFEncodecModel:
-    model = HFEncodecModel.from_pretrained(model_name)
-    model.eval()
-    return model
-
-
-def encodec_model_48khz() -> EncodecModel:
-    model = EncodecModel.encodec_model_48khz()
-    model.eval()
-    return model
-
-
-def encodec_model_24khz() -> EncodecModel:
-    model = EncodecModel.encodec_model_24khz()
+def raw_hf_encodec_model(sample_rate: int = 48_000) -> HFEncodecModel:
+    model: HFEncodecModel | None = None
+    sr: int
+    if sample_rate == 24_000 or sample_rate == 48_000:
+        sr = sample_rate // 1000
+    else:
+        print(f"Samplerate {sample_rate} not supported!")
+        exit()
+    model = HFEncodecModel.from_pretrained(f"facebook/encodec_{sr}khz")
     model.eval()
     return model
 

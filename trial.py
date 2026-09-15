@@ -1,11 +1,11 @@
 from rave import RAVE, Residual, nn
 
 from lib import check_path
-from rave_lib import RAVEModel, is_layer_iterable, rave_from_checkpoint
+from rave_lib import RAVEModel, is_layer_iterable, raw_rave_model
 
 # from weight_analysis_v1 import parameter_key_to_module_path
 
-c = rave_from_checkpoint("models/satyr/")
+c = raw_rave_model("models/satyr/")
 source_path = check_path("./audio/source/")
 reconstructed_path = check_path("./audio/")
 

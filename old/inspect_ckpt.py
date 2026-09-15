@@ -8,7 +8,7 @@ from lib import *
 from rave_lib import *
 
 # model = rave_from_checkpoint("models/satyr/")
-model = rave_from_checkpoint("models/checkpoint/")
+model = raw_rave_model("models/checkpoint/")
 
 
 original_encoder_net, _ = get_encoder_net(model)
