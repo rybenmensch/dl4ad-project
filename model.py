@@ -6,11 +6,10 @@ from typing import Tuple, TypeAlias
 from torch import nn
 
 from lib import getattr_from_attr_string, setattr_from_attr_string
+from torch_lib import IterableModule
 
-# TODO: maybe make more specific
-Net: TypeAlias = nn.Module
+Net: TypeAlias = IterableModule
 Module: TypeAlias = nn.Module
-LayerSequence: TypeAlias = nn.Module
 
 
 class NetTypeEnum(str, Enum):
@@ -21,7 +20,7 @@ class NetTypeEnum(str, Enum):
 class NNModel(metaclass=ABCMeta):
     """wrapper class for non-torchscript models"""
 
-    def __init__(self, model):
+    def __init__(self, model) -> None:
         self.model = model
         self.from_net_type = NetType(self)
         self.from_net_path = NetPath(self)
@@ -29,7 +28,7 @@ class NNModel(metaclass=ABCMeta):
         self.from_layer = Layer(self)
 
     @abstractmethod
-    def reset(self):
+    def reset(self) -> None:
         pass
 
     @abstractmethod
@@ -41,12 +40,12 @@ class NNModel(metaclass=ABCMeta):
         """Implement this for looking up the actual path to the encoder or decoder."""
         pass
 
-    def get_net(self, net_type: NetTypeEnum) -> LayerSequence:
+    def get_net(self, net_type: NetTypeEnum) -> Net:
         """Returns the net."""
         net_path = self.get_net_path(net_type)
         return getattr_from_attr_string(self.model, net_path)
 
-    def set_net(self, net_type: NetTypeEnum, net: Net):
+    def set_net(self, net_type: NetTypeEnum, net: Net) -> None:
         """Update the net."""
         net_path = self.get_net_path(net_type)
         setattr_from_attr_string(self.model, net_path, net)
@@ -81,12 +80,12 @@ class NNModel(metaclass=ABCMeta):
 
         return (
             (self.get_net(NetTypeEnum.Encoder), NetTypeEnum.Encoder),
-            (self.get_net(NetTypeEnum.Encoder), NetTypeEnum.Encoder),
+            (self.get_net(NetTypeEnum.Decoder), NetTypeEnum.Decoder),
         )
 
 
 class NetType:
-    def __init__(self, model: NNModel):
+    def __init__(self, model: NNModel) -> None:
         self.model = model
 
     def get_net_path(self, net_type: NetTypeEnum) -> str:
@@ -101,7 +100,7 @@ class NetType:
 
 
 class NetPath:
-    def __init__(self, model: NNModel):
+    def __init__(self, model: NNModel) -> None:
         self.model = model
 
     def get_net_type(self, net_path: str) -> NetTypeEnum:
@@ -120,7 +119,7 @@ class NetPath:
 
 
 class Layer:
-    def __init__(self, model: NNModel):
+    def __init__(self, model: NNModel) -> None:
         self.model = model
 
     def get_net_type(self, layer: Module) -> NetTypeEnum:
@@ -163,7 +162,7 @@ class Layer:
 
 
 class LayerPath:
-    def __init__(self, model: NNModel):
+    def __init__(self, model: NNModel) -> None:
         self.model = model
 
     def get_net_type(self, layer_path: str) -> NetTypeEnum:

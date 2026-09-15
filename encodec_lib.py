@@ -19,13 +19,13 @@ LayerSequence: TypeAlias = nn.ModuleList
 
 
 class EncodecNNModel(NNModel):
-    def __init__(self, model: EncodecModel | None = None):
+    def __init__(self, model: EncodecModel | None = None) -> None:
         if model == None:
             model = raw_encodec_model(48_000)
         super(EncodecNNModel, self).__init__(model)
         self.model: EncodecModel
 
-    def reset(self):
+    def reset(self) -> None:
         self.model = raw_encodec_model(self.get_sample_rate())
 
     def get_sample_rate(self) -> int:
@@ -50,13 +50,13 @@ def raw_encodec_model(sample_rate: int = 48_000) -> EncodecModel:
 
 
 class HFEncodecNNModel(NNModel):
-    def __init__(self, model: HFEncodecModel | None = None):
+    def __init__(self, model: HFEncodecModel | None = None) -> None:
         if model == None:
             model = raw_hf_encodec_model()
         super(HFEncodecNNModel, self).__init__(cast(EncodecModel, model))
         self.model: HFEncodecModel
 
-    def reset(self):
+    def reset(self) -> None:
         sr: int = self.model.config.sampling_rate
         self.model = raw_hf_encodec_model(self.get_sample_rate())
 

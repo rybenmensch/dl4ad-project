@@ -1,12 +1,20 @@
+from typing import Iterator, Protocol, cast
+
 import torch
 import torch.nn as nn
 
 from lib import hasattr_from_attr_string, print_all_attrs
 
 
+class IterableModule(Protocol):
+    def __iter__(self) -> Iterator[nn.Module]: ...
+    def __getitem__(self, idx: int) -> nn.Module: ...
+
+
 def is_layer_iterable(net: nn.Module) -> bool:
     try:
-        net[0]
+        net_cast = cast(IterableModule, net)
+        net_cast[0]
     except:
         return False
     return True
@@ -15,7 +23,7 @@ def is_layer_iterable(net: nn.Module) -> bool:
 # TODO:
 # this should be the responsibility of the models tbh
 # maybe make the models itself
-def get_input_size(net: nn.Module) -> int:
+def get_input_size(net: IterableModule) -> int:
     first_layer = net[0]
 
     # intentionally not writing this more cleanly
@@ -34,7 +42,7 @@ def get_input_size(net: nn.Module) -> int:
         exit()
 
 
-def get_shape_preserving_layers(net: nn.Module):
+def get_shape_preserving_layers(net: IterableModule):
     """
     Returns information about every layer that preserves the input shape.
     Input:  nn.Module (needs to be iterable!)
