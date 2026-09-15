@@ -34,6 +34,21 @@ def getattr_from_attr_string(obj: Any, string: str) -> Any:
     return obj
 
 
+def setattr_from_attr_string(obj: object, string: str, value: Any) -> None:
+    attrs: List[str] = string.split(".")
+    if len(attrs) == 0:
+        print(f"Invalid attr string f{string}")
+        exit()
+
+    last = attrs.pop()
+    for attr in attrs:
+        try:
+            obj = getattr(obj, attr)
+        except Exception as e:
+            raise e
+    setattr(obj, last, value)
+
+
 def get_in_channels(model) -> int:
     if hasattr(model, "n_channels"):
         return model.n_channels
