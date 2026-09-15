@@ -24,17 +24,7 @@ class EncodecNNModel(NNModel):
 
     def get_net_path(self, net_type: NetTypeEnum) -> str:
         """Returns the path of the net."""
-        return ".".join([net_type.value, self.subnet_name])
-
-    def get_net(self, net_type: NetTypeEnum) -> LayerSequence:
-        """Returns the net."""
-        net_path = self.get_net_path(net_type)
-        return getattr_from_attr_string(self.model, net_path)
-
-    def set_net(self, net_type: NetTypeEnum, net: Net):
-        """Update the net."""
-        net_path = self.get_net_path(net_type)
-        setattr_from_attr_string(self.model, net_path, net)
+        return net_type.value + "." + self.subnet_name
 
 
 class HFEncodecNNModel(EncodecNNModel):

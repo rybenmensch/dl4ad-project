@@ -34,16 +34,6 @@ class RAVEModel(NNModel):
             path_str += f".{net_type_name}"
         return path_str + ".net"
 
-    def get_net(self, net_type: NetTypeEnum) -> LayerSequence:
-        """Returns the net."""
-        net_path = self.get_net_path(net_type)
-        return getattr_from_attr_string(self.model, net_path)
-
-    def set_net(self, net_type: NetTypeEnum, net: Net):
-        """Update the net."""
-        net_path = self.get_net_path(net_type)
-        setattr_from_attr_string(self.model, net_path, net)
-
 
 def rave_from_checkpoint(run_path: Path | str) -> rave.RAVE:
     """Create a full RAVE model from the path to a run."""

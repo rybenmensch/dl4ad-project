@@ -4,9 +4,12 @@ from typing import Tuple, TypeAlias
 
 from torch import nn
 
+from lib import getattr_from_attr_string, setattr_from_attr_string
+
 # TODO: maybe make more specific
 Net: TypeAlias = nn.Module
 Module: TypeAlias = nn.Module
+LayerSequence: TypeAlias = nn.Module
 
 
 class NetTypeEnum(str, Enum):
@@ -28,13 +31,15 @@ class NNModel(metaclass=ABCMeta):
     def get_net_path(self, net_type: NetTypeEnum) -> str:
         pass
 
-    @abstractmethod
-    def get_net(self, net_type: NetTypeEnum) -> Net:
-        pass
+    def get_net(self, net_type: NetTypeEnum) -> LayerSequence:
+        """Returns the net."""
+        net_path = self.get_net_path(net_type)
+        return getattr_from_attr_string(self.model, net_path)
 
-    @abstractmethod
     def set_net(self, net_type: NetTypeEnum, net: Net):
-        pass
+        """Update the net."""
+        net_path = self.get_net_path(net_type)
+        setattr_from_attr_string(self.model, net_path, net)
 
     def get_nets(self) -> Tuple[
         Net,
