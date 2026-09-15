@@ -1,44 +1,30 @@
 from enum import Enum
-from typing import TypeAlias
+from typing import TypeAlias, cast
 
 import torch
 import torch.nn as nn
 from encodec.model import EncodecModel
 from transformers import EncodecModel as HFEncodecModel
 
-from lib import getattr_from_attr_string, hasattr_from_attr_string
+from lib import (
+    getattr_from_attr_string,
+    hasattr_from_attr_string,
+    setattr_from_attr_string,
+)
 from model import Net, NetTypeEnum, NNModel
 from torch_lib import is_layer_iterable
 
-# from transformers import EncodecModel as HFEncodecModel
-
-
-# EnCodec-Layer liegen als nn.ModuleList vor (nicht als CachedSequential wie bei RAVE)
 LayerSequence: TypeAlias = nn.ModuleList
 
 
 class EncodecNNModel(NNModel):
-    def __init__(self, model):
+    def __init__(self, model: EncodecModel):
         super(EncodecNNModel, self).__init__(model)
+        self.subnet_name = "model"
 
     def get_net_path(self, net_type: NetTypeEnum) -> str:
-        """Returns the path of the net"""
-        comp_name = net_type.value  # "encoder" or "decoder"
-        comp = getattr(self.model, comp_name)
-        path_str = comp_name
-        if hasattr(comp, comp_name):
-            path_str += f".{comp_name}"
-
-        # madness. madness and stupidity.
-        suffix = ""
-        if hasattr(comp, "model"):
-            # models from Encodec have the key "model"
-            suffix = ".model"
-        elif hasattr(comp, "layers"):
-            # models from hugging face have the key "layers"
-            suffix = ".layers"
-
-        return path_str + suffix
+        """Returns the path of the net."""
+        return ".".join([net_type.value, self.subnet_name])
 
     def get_net(self, net_type: NetTypeEnum) -> LayerSequence:
         """Returns the net."""
@@ -46,19 +32,20 @@ class EncodecNNModel(NNModel):
         return getattr_from_attr_string(self.model, net_path)
 
     def set_net(self, net_type: NetTypeEnum, net: Net):
-        """Setzt eine neue Layer-Liste (nn.ModuleList) als Encoder/Decoder ein."""
-        comp_name = net_type.value
-        comp = getattr(self.model, comp_name)
-        if hasattr(comp, comp_name):
-            getattr(comp, comp_name).layers = net
-        else:
-            comp.layers = net
+        """Update the net."""
+        net_path = self.get_net_path(net_type)
+        setattr_from_attr_string(self.model, net_path, net)
+
+
+class HFEncodecNNModel(EncodecNNModel):
+    def __init__(self, model: HFEncodecModel):
+        super(HFEncodecNNModel, self).__init__(cast(EncodecModel, model))
+        self.subnet_name = "layers"
 
 
 def encodec_from_hf(
     model_name: str = "facebook/encodec_24khz",
 ) -> HFEncodecModel:
-    """Laedt Architektur + Gewichte in einem Schritt von Hugging Face."""
     model = HFEncodecModel.from_pretrained(model_name)
     model.eval()
     return model

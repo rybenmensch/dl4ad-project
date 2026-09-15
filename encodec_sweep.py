@@ -6,11 +6,12 @@ import torchaudio
 
 from encodec_lib import (
     EncodecNNModel,
+    HFEncodecNNModel,
     encodec_from_hf,
     encodec_model_48khz,
     process_audio,
 )
-from lib import *
+from lib import check_path
 from model import NetTypeEnum
 from plotting import plot_comparison
 from torch_lib import get_shape_preserving_layers
@@ -42,18 +43,38 @@ def norm(x: torch.Tensor) -> torch.Tensor:
 
 # MODELL LADEN
 
-# raw_model = encodec_from_hf("facebook/encodec_24khz")
 raw_model = encodec_model_48khz()
 model = EncodecNNModel(raw_model)
+
+# raw_model = encodec_from_hf("facebook/encodec_24khz")
+# model = HFEncodecNNModel(raw_model)
 
 # skip and repeat sweep
 shape_preserving_layers = []
 for net, net_path in model.get_nets_and_paths():
     layers = get_shape_preserving_layers(net)
-    # for layer in layers:
-    #     shape_preserving_layers.append(
-    #         {"net_path": net_path, "index": layer["index"], "name": layer["name"]}
-    #     )
+    for layer in layers:
+        shape_preserving_layers.append(
+            {"net_path": net_path, "index": layer["index"], "name": layer["name"]}
+        )
+
+
+index = 0
+net_type = NetTypeEnum.Encoder
+original_net = model.get_net(net_type)
+
+model.set_net(NetTypeEnum.Decoder, None)
+
+# print("==========================================================")
+# print(model.model)
+new_net = make_repeated_modulelist(original_net, index, times=2)
+new_net = None
+model.set_net(net_type, new_net)
+
+print("==========================================================")
+print(model.model)
+# recon = process_audio(model.model, base_source)
+# model.set_net(net_type, original_net)
 
 exit()
 
@@ -67,11 +88,11 @@ if base_source.shape[0] > 1:
     base_source = base_source[0:1, :]
 
 # baseline reconstruction
-base_recon = encodec_process_audio(model.model, base_source)
-torchaudio.save(
-    str(reconstructed_root / "base_reconstruction_encodec.wav"), base_recon, sr
-)
-print("Baseline gespeichert.")
+base_recon = process_audio(model.model, base_source)
+# torchaudio.save(
+#     str(reconstructed_root / "base_reconstruction_encodec.wav"), base_recon, sr
+# )
+# print("Baseline gespeichert.")
 
 
 def process_with_modification(net_path: str, index: int, mode: str) -> torch.Tensor:
@@ -88,7 +109,7 @@ def process_with_modification(net_path: str, index: int, mode: str) -> torch.Ten
         new_net = make_repeated_modulelist(original_net, index, times=2)
 
     model.set_net(net_type, new_net)
-    recon = encodec_process_audio(model.model, base_source)
+    recon = process_audio(model.model, base_source)
     model.set_net(net_type, original_net)
     return recon
 
@@ -97,21 +118,21 @@ for l in shape_preserving_layers:
     net_path, index, name = l["net_path"], l["index"], l["name"]
 
     skip_recon = norm(process_with_modification(net_path, index, "skip"))
-    repeat_recon = norm(process_with_modification(net_path, index, "repeat"))
-
-    tag = "_".join(f"{net_path}_{index}".split("."))
-
-    for op, audio in [("skip", skip_recon), ("repeat", repeat_recon)]:
-        out_name = f"{op}_{tag}"
-        fn_a = str(reconstructed_root / f"{out_name}.wav")
-        fn_p = str(reconstructed_root / f"{out_name}.png")
-
-        torchaudio.save(fn_a, audio, sr)
-        plot_comparison(
-            base_recon,
-            audio,
-            sr,
-            title=f"{op}: {net_path}[{index}] ({name})",
-            save_path=fn_p,
-            show=False,
-        )
+    # repeat_recon = norm(process_with_modification(net_path, index, "repeat"))
+    #
+    # tag = "_".join(f"{net_path}_{index}".split("."))
+    #
+    # for op, audio in [("skip", skip_recon), ("repeat", repeat_recon)]:
+    #     out_name = f"{op}_{tag}"
+    #     fn_a = str(reconstructed_root / f"{out_name}.wav")
+    #     fn_p = str(reconstructed_root / f"{out_name}.png")
+    #
+    #     torchaudio.save(fn_a, audio, sr)
+    #     plot_comparison(
+    #         base_recon,
+    #         audio,
+    #         sr,
+    #         title=f"{op}: {net_path}[{index}] ({name})",
+    #         save_path=fn_p,
+    #         show=False,
+    #     )
