@@ -1,10 +1,13 @@
 from enum import Enum
 from typing import TypeAlias, cast
 
+import encodec
 import torch
 import torch.nn as nn
 from encodec.model import EncodecModel
+from encodec.modules.conv import SConv1d
 from transformers import EncodecModel as HFEncodecModel
+from transformers.models.encodec.modeling_encodec import EncodecConv1d
 
 from lib import (
     getattr_from_attr_string,
@@ -14,8 +17,6 @@ from lib import (
 )
 from model import Net, NetTypeEnum, NNModel
 from torch_lib import is_layer_iterable
-
-LayerSequence: TypeAlias = nn.ModuleList
 
 
 class EncodecNNModel(NNModel):
@@ -30,6 +31,10 @@ class EncodecNNModel(NNModel):
 
     def get_sample_rate(self) -> int:
         return self.model.sample_rate
+
+    def get_first_layer(self, net_type: NetTypeEnum) -> nn.Conv1d:
+        first_layer = cast(SConv1d, self.get_net(net_type)[0])
+        return cast(nn.Conv1d, first_layer.conv.conv)
 
     def get_net_path(self, net_type: NetTypeEnum) -> str:
         """Returns the path of the net."""
@@ -62,6 +67,10 @@ class HFEncodecNNModel(NNModel):
 
     def get_sample_rate(self) -> int:
         return self.model.config.sampling_rate
+
+    def get_first_layer(self, net_type: NetTypeEnum) -> nn.Conv1d:
+        first_layer = cast(EncodecConv1d, self.get_net(net_type)[0])
+        return cast(nn.Conv1d, first_layer.conv)
 
     def get_net_path(self, net_type: NetTypeEnum) -> str:
         """Returns the path of the net."""

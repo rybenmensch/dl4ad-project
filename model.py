@@ -1,7 +1,7 @@
 import copy
 from abc import ABCMeta, abstractmethod
 from enum import Enum
-from typing import Tuple, TypeAlias
+from typing import Protocol, Tuple, TypeAlias, runtime_checkable
 
 from torch import nn
 
@@ -10,6 +10,11 @@ from torch_lib import IterableModule
 
 Net: TypeAlias = IterableModule
 Module: TypeAlias = nn.Module
+
+
+@runtime_checkable
+class HasInChannels(Protocol):
+    in_channels: int
 
 
 class NetTypeEnum(str, Enum):
@@ -33,6 +38,13 @@ class NNModel(metaclass=ABCMeta):
 
     @abstractmethod
     def get_sample_rate(self) -> int:
+        pass
+
+    def get_in_channels(self, net_type: NetTypeEnum) -> int:
+        return self.get_first_layer(net_type).in_channels
+
+    @abstractmethod
+    def get_first_layer(self, net_type: NetTypeEnum) -> HasInChannels:
         pass
 
     @abstractmethod

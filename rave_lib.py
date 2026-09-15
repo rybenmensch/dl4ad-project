@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import List, TypeAlias
+from typing import List, TypeAlias, cast
 
 import cached_conv
 import gin
@@ -40,6 +40,9 @@ class RAVEModel(NNModel):
 
     def get_sample_rate(self) -> int:
         return self.model.sr
+
+    def get_first_layer(self, net_type: NetTypeEnum) -> Conv1d:
+        return cast(Conv1d, self.get_net(net_type)[0])
 
     def get_net_path(self, net_type: NetTypeEnum) -> str:
         """Returns the path of the net."""

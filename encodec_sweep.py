@@ -43,8 +43,14 @@ def norm(x: torch.Tensor) -> torch.Tensor:
 
 # MODELL LADEN
 
-# raw_model = encodec_from_hf("facebook/encodec_24khz")
-# model = HFEncodecNNModel(raw_model)
+
+model = HFEncodecNNModel()
+# model = EncodecNNModel()
+first_encoder = model.get_first_layer(NetTypeEnum.Encoder)
+# print(type(first_encoder))
+first_decoder = model.get_first_layer(NetTypeEnum.Encoder)
+# print(type(first_decoder))
+exit()
 
 # skip and repeat sweep
 shape_preserving_layers = []

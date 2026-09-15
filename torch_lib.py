@@ -11,7 +11,7 @@ class IterableModule(Protocol):
     def __getitem__(self, idx: int) -> nn.Module: ...
 
 
-def is_layer_iterable(net: nn.Module) -> bool:
+def is_layer_iterable(net: nn.Module | IterableModule) -> bool:
     try:
         net_cast = cast(IterableModule, net)
         net_cast[0]

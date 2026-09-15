@@ -31,6 +31,9 @@ model = RAVEModel("models/satyr")
 
 print(model.get_sample_rate())
 
+model.get_first_layer(NetTypeEnum.Encoder)
+model.get_first_layer(NetTypeEnum.Decoder)
+
 print(hex(id(model.model)))
 
 model.reset()
