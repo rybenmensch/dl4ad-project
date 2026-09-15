@@ -7,7 +7,7 @@ import rave
 import torch
 import torch.nn as nn
 
-from lib import get_attr_from_attr_string, get_in_channels_from_state_dict
+from lib import get_in_channels_from_state_dict, getattr_from_attr_string
 from model import Net, NetTypeEnum, NNModel
 
 Conv1d: TypeAlias = cached_conv.convs.Conv1d | cached_conv.convs.CachedConv1d
@@ -33,7 +33,7 @@ class RAVEModel(NNModel):
     def get_net(self, net_type: NetTypeEnum) -> CachedSequential:
         """Returns the net."""
         net_path = self.get_net_path(net_type)
-        return get_attr_from_attr_string(self.model, net_path)
+        return getattr_from_attr_string(self.model, net_path)
 
     def set_net(self, net_type: NetTypeEnum, net: Net):
         """
@@ -71,50 +71,50 @@ def rave_from_checkpoint(run_path: Path | str) -> rave.RAVE:
 # TORCH STUFF - should move to other library
 
 
-def is_layer_iterable(net: nn.Module) -> bool:
-    try:
-        net[0]
-    except:
-        return False
-    return True
-
-
-def get_shape_preserving_layers(net: nn.Module):
-    """
-    Returns information about every layer that preserves the input shape.
-    Input:
-        - CachedSequential net
-    Output:
-        - List of dicts with content {index, name}
-    """
-    # does not recurse right now
-    results = []
-
-    if not is_layer_iterable(net):
-        print("Model should be sequential!")
-        exit()
-
-    input_size = net[0].in_channels
-
-    # batch=1, channels=input_size, time=64
-    x = torch.zeros(1, input_size, 64)
-
-    for idx, layer in enumerate(net):
-        layer_name = type(layer).__name__
-        try:
-            with torch.no_grad():
-                out = layer(x)
-                if out.shape == x.shape:
-                    # layer preserves shape
-                    results.append({"index": idx, "name": layer_name})
-                else:
-                    # layer does not preserve shape
-                    pass
-                x = out
-        except Exception as e:
-            print(f"Layer nr {idx} of type {layer_name} raised {e}")
-
-    return results
+# def is_layer_iterable(net: nn.Module) -> bool:
+#     try:
+#         net[0]
+#     except:
+#         return False
+#     return True
+#
+#
+# def get_shape_preserving_layers(net: nn.Module):
+#     """
+#     Returns information about every layer that preserves the input shape.
+#     Input:
+#         - CachedSequential net
+#     Output:
+#         - List of dicts with content {index, name}
+#     """
+#     # does not recurse right now
+#     results = []
+#
+#     if not is_layer_iterable(net):
+#         print("Model should be sequential!")
+#         exit()
+#
+#     input_size = net[0].in_channels
+#
+#     # batch=1, channels=input_size, time=64
+#     x = torch.zeros(1, input_size, 64)
+#
+#     for idx, layer in enumerate(net):
+#         layer_name = type(layer).__name__
+#         try:
+#             with torch.no_grad():
+#                 out = layer(x)
+#                 if out.shape == x.shape:
+#                     # layer preserves shape
+#                     results.append({"index": idx, "name": layer_name})
+#                 else:
+#                     # layer does not preserve shape
+#                     pass
+#                 x = out
+#         except Exception as e:
+#             print(f"Layer nr {idx} of type {layer_name} raised {e}")
+#
+#     return results
 
 
 def get_weighted_layers(net: nn.Module):

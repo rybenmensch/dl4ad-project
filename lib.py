@@ -9,7 +9,22 @@ import torch
 # TODO: clean up the mess
 
 
-def get_attr_from_attr_string(obj: Any, string: str) -> Any:
+def print_all_attrs(obj: Any) -> None:
+    for k in obj.__dict__.keys():
+        print(k)
+
+
+def hasattr_from_attr_string(obj: Any, string: str) -> Any:
+    attrs: List[str] = string.split(".")
+    for attr in attrs:
+        try:
+            obj = getattr(obj, attr)
+        except Exception as e:
+            return False
+    return True
+
+
+def getattr_from_attr_string(obj: Any, string: str) -> Any:
     attrs: List[str] = string.split(".")
     for attr in attrs:
         try:

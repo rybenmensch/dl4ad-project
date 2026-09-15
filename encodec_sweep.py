@@ -1,35 +1,19 @@
-import warnings
 from pathlib import Path
 
 import torch
 import torch.nn as nn
 import torchaudio
 
-from lib import *
-from plotting import plot_comparison
-from encodec import EncodecNNModel, encodec_from_pretrained, get_shape_preserving_layers
-from model import NetTypeEnum
-
-warnings.filterwarnings("ignore", category=UserWarning, message=".*pkg_resources.*")
-warnings.filterwarnings(
-    "ignore", category=FutureWarning, message=".*weight_norm` is deprecated.*"
+from encodec_lib import (
+    EncodecNNModel,
+    encodec_from_hf,
+    encodec_model_48khz,
+    process_audio,
 )
-
-
-def encodec_process_audio(model, waveform: torch.Tensor, bandwidth: float | None = None) -> torch.Tensor:
-    """
-    Adapter fuer HF EncodecModel: forward() gibt ein EncodecOutput-Objekt
-    zurueck (mit .audio_values), keinen direkten Tensor wie RAVE.
-
-    bandwidth: Ziel-Bitrate in kbps. None -> hoechste verfuegbare Qualitaet
-    """
-    if bandwidth is None:
-        bandwidth = max(model.config.target_bandwidths)
-
-    input_tensor = waveform.unsqueeze(0)
-    with torch.no_grad():
-        output = model(input_tensor, bandwidth=bandwidth)
-    return output.audio_values.squeeze(0)
+from lib import *
+from model import NetTypeEnum
+from plotting import plot_comparison
+from torch_lib import get_shape_preserving_layers
 
 
 def make_skipped_modulelist(original_net, skip_index: int) -> nn.ModuleList:
@@ -37,7 +21,9 @@ def make_skipped_modulelist(original_net, skip_index: int) -> nn.ModuleList:
     return nn.ModuleList([l for i, l in enumerate(original_net) if i != skip_index])
 
 
-def make_repeated_modulelist(original_net, repeat_index: int, times: int = 2) -> nn.ModuleList:
+def make_repeated_modulelist(
+    original_net, repeat_index: int, times: int = 2
+) -> nn.ModuleList:
     """Baut eine neue ModuleList, in der der Layer an repeat_index
     wiederholt wird."""
     new_layers = []
@@ -54,12 +40,22 @@ def norm(x: torch.Tensor) -> torch.Tensor:
     return x / torch.max(torch.abs(x))
 
 
-
 # MODELL LADEN
 
-raw_model = encodec_from_pretrained("facebook/encodec_24khz")
+# raw_model = encodec_from_hf("facebook/encodec_24khz")
+raw_model = encodec_model_48khz()
 model = EncodecNNModel(raw_model)
 
+# skip and repeat sweep
+shape_preserving_layers = []
+for net, net_path in model.get_nets_and_paths():
+    layers = get_shape_preserving_layers(net)
+    # for layer in layers:
+    #     shape_preserving_layers.append(
+    #         {"net_path": net_path, "index": layer["index"], "name": layer["name"]}
+    #     )
+
+exit()
 
 source_path: Path = check_path("audio/source")
 reconstructed_root: Path = check_path("audio/reconstructed")
@@ -72,18 +68,10 @@ if base_source.shape[0] > 1:
 
 # baseline reconstruction
 base_recon = encodec_process_audio(model.model, base_source)
-torchaudio.save(str(reconstructed_root / "base_reconstruction_encodec.wav"), base_recon, sr)
+torchaudio.save(
+    str(reconstructed_root / "base_reconstruction_encodec.wav"), base_recon, sr
+)
 print("Baseline gespeichert.")
-
-# skip and repeat sweep
-shape_preserving_layers = []
-for net, net_path in model.get_nets_and_paths():
-    layers = get_shape_preserving_layers(net)
-    for layer in layers:
-        shape_preserving_layers.append(
-            {"net_path": net_path, "index": layer["index"], "name": layer["name"]}
-        )
-
 
 
 def process_with_modification(net_path: str, index: int, mode: str) -> torch.Tensor:
@@ -120,8 +108,10 @@ for l in shape_preserving_layers:
 
         torchaudio.save(fn_a, audio, sr)
         plot_comparison(
-            base_recon, audio, sr,
+            base_recon,
+            audio,
+            sr,
             title=f"{op}: {net_path}[{index}] ({name})",
-            save_path=fn_p, show=False,
+            save_path=fn_p,
+            show=False,
         )
-
