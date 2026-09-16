@@ -1,22 +1,15 @@
-from enum import Enum
-from typing import TypeAlias, cast
+from typing import Any, TypeAlias, cast
 
-import encodec
 import torch
 import torch.nn as nn
 from encodec.model import EncodecModel
 from encodec.modules.conv import SConv1d
-from transformers import EncodecModel as HFEncodecModel
-from transformers.models.encodec.modeling_encodec import EncodecConv1d
+from rave import Tuple
 
-from lib import (
-    getattr_from_attr_string,
-    hasattr_from_attr_string,
-    print_all_attrs,
-    setattr_from_attr_string,
-)
-from model import Net, NetTypeEnum, NNModel
-from torch_lib import is_layer_iterable
+from lib import convert_audio
+from model import NetTypeEnum, NNModel
+
+Conv1d: TypeAlias = nn.Conv1d
 
 
 class EncodecNNModel(NNModel):
@@ -32,9 +25,17 @@ class EncodecNNModel(NNModel):
     def get_sample_rate(self) -> int:
         return self.model.sample_rate
 
-    def get_first_layer(self, net_type: NetTypeEnum) -> nn.Conv1d:
+    def get_channels(self) -> int:
+        return self.model.channels
+
+    def get_first_layer(self, net_type: NetTypeEnum) -> Conv1d:
         first_layer = cast(SConv1d, self.get_net(net_type)[0])
-        return cast(nn.Conv1d, first_layer.conv.conv)
+        return cast(Conv1d, first_layer.conv.conv)
+
+    def process_audio(self, audio_sr: Tuple[torch.Tensor, int]) -> torch.Tensor:
+        audio = convert_audio(audio_sr, self.get_sample_rate(), self.get_channels())
+        audio = audio.unsqueeze(0)
+        return self.model(audio).squeeze(0)
 
     def get_net_path(self, net_type: NetTypeEnum) -> str:
         """Returns the path of the net."""
@@ -50,42 +51,6 @@ def raw_encodec_model(sample_rate: int = 48_000) -> EncodecModel:
     else:
         print(f"Samplerate {sample_rate} not supported!")
         exit()
-    model.eval()
-    return model
-
-
-class HFEncodecNNModel(NNModel):
-    def __init__(self, model: HFEncodecModel | None = None) -> None:
-        if model == None:
-            model = raw_hf_encodec_model()
-        super(HFEncodecNNModel, self).__init__(cast(EncodecModel, model))
-        self.model: HFEncodecModel
-
-    def reset(self) -> None:
-        sr: int = self.model.config.sampling_rate
-        self.model = raw_hf_encodec_model(self.get_sample_rate())
-
-    def get_sample_rate(self) -> int:
-        return self.model.config.sampling_rate
-
-    def get_first_layer(self, net_type: NetTypeEnum) -> nn.Conv1d:
-        first_layer = cast(EncodecConv1d, self.get_net(net_type)[0])
-        return cast(nn.Conv1d, first_layer.conv)
-
-    def get_net_path(self, net_type: NetTypeEnum) -> str:
-        """Returns the path of the net."""
-        return net_type.value + ".layers"
-
-
-def raw_hf_encodec_model(sample_rate: int = 48_000) -> HFEncodecModel:
-    model: HFEncodecModel | None = None
-    sr: int
-    if sample_rate == 24_000 or sample_rate == 48_000:
-        sr = sample_rate // 1000
-    else:
-        print(f"Samplerate {sample_rate} not supported!")
-        exit()
-    model = HFEncodecModel.from_pretrained(f"facebook/encodec_{sr}khz")
     model.eval()
     return model
 

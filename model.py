@@ -1,12 +1,14 @@
 import copy
-from abc import ABCMeta, abstractmethod
+from abc import ABC, ABCMeta, abstractmethod
 from enum import Enum
-from typing import Protocol, Tuple, TypeAlias, runtime_checkable
+from re import L
+from typing import Any, List, Protocol, Tuple, TypeAlias, cast, runtime_checkable
 
+import torch
 from torch import nn
 
 from lib import getattr_from_attr_string, setattr_from_attr_string
-from torch_lib import IterableModule
+from torch_lib import IterableModule, is_layer_iterable
 
 Net: TypeAlias = IterableModule
 Module: TypeAlias = nn.Module
@@ -31,6 +33,7 @@ class NNModel(metaclass=ABCMeta):
         self.from_net_path = NetPath(self)
         self.from_layer_path = LayerPath(self)
         self.from_layer = Layer(self)
+        self.layer_adapter_type = None
 
     @abstractmethod
     def reset(self) -> None:
@@ -40,11 +43,21 @@ class NNModel(metaclass=ABCMeta):
     def get_sample_rate(self) -> int:
         pass
 
+    # TODO: rename, possibly confusing because doesn't refer to model channels
+    # but input channels for first conv layer
     def get_in_channels(self, net_type: NetTypeEnum) -> int:
         return self.get_first_layer(net_type).in_channels
 
     @abstractmethod
+    def get_channels(self) -> int:
+        pass
+
+    @abstractmethod
     def get_first_layer(self, net_type: NetTypeEnum) -> HasInChannels:
+        pass
+
+    @abstractmethod
+    def process_audio(self, audio_sr: Tuple[torch.Tensor, int]) -> torch.Tensor:
         pass
 
     @abstractmethod
@@ -207,3 +220,39 @@ class LayerPath:
         net: Net = self.get_net(layer_path)
         index: int = self.get_layer_index(layer_path)
         return net[index]
+
+
+def get_shape_preserving_layers(model: NNModel, net_type: NetTypeEnum):
+    """
+    Returns information about every layer that preserves the input shape.
+    Input:  NNModel
+    Output: List of dicts with content {index, name}
+    """
+    net: Net = model.get_net(net_type)
+
+    results = []
+    input_size = model.get_in_channels(net_type)
+
+    x = torch.zeros(1, input_size, 64)
+
+    for idx, layer in enumerate(net):
+        layer_name = type(layer).__name__
+        try:
+            with torch.no_grad():
+                out = layer(x)
+                if out.shape == x.shape:
+                    # layer preserves shape
+                    results.append({"index": idx, "name": layer_name})
+                    print(layer_name)
+                else:
+                    # layer does not preserve shape
+                    pass
+                x = out
+        except Exception as e:
+            print(f"Layer nr {idx} of type {layer_name} raised {e}")
+
+    return results
+
+
+def get_weighted_layers():
+    pass

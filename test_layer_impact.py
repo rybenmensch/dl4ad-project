@@ -8,12 +8,12 @@ import numpy as np
 import torch
 import torchaudio
 
+from encodec_lib import EncodecNNModel
 from lib import *
-from model import Net, NetTypeEnum, NNModel
+from model import Net, NetTypeEnum, NNModel, get_shape_preserving_layers
 from modules import *
 from plotting import plot_comparison
 from rave_lib import RAVEModel, raw_rave_model
-from torch_lib import get_shape_preserving_layers
 
 # Suppress the lightning_fabric pkg_resources warning
 warnings.filterwarnings("ignore", category=UserWarning, message=".*pkg_resources.*")
@@ -26,44 +26,22 @@ warnings.filterwarnings(
     message=".*return_complex.*argument is now deprecated.*",
 )
 
-model = raw_rave_model("models/satyr")
-model = RAVEModel("models/satyr")
-
-print(model.get_sample_rate())
-
-model.get_first_layer(NetTypeEnum.Encoder)
-model.get_first_layer(NetTypeEnum.Decoder)
-
-print(hex(id(model.model)))
-
-model.reset()
-print(hex(id(model.model)))
-
 source_path: Path = check_path("audio/source")
 reconstructed_root: Path = check_path("audio/reconstructed")
-
 file_name: str = "GLM.wav"
-
 base_source, sr = torchaudio.load("audio/source/GLM.wav")
 
-# EXAMPLE: set the net to something
-original_net = model.get_net(NetTypeEnum.Encoder)
-model.set_net(NetTypeEnum.Encoder, SequentialWithSkip(original_net, [20]))
+model = RAVEModel("models/satyr")
 
-# # model.set_encoder_net(ManipulatedSequential(old_encoder_net, repeats={14: 3}))
-# mod_recon = process_audio(model.model, base_source)
-# model.set_net(NetTypeEnum.Encoder, original_net)
-# torchaudio.save(reconstructed_root / "test.wav", mod_recon, sr)
-#
-# # reset the model again (no better option for now lulz)
-# # model.model = raw_rave_model("models/satyr")
-#
-# print(hex(id(model.get_net(NetTypeEnum.Encoder))))
+processed = model.process_audio((base_source, sr))
+# torchaudio.save(reconstructed_root / "lmao.wav", processed, model.get_sample_rate())
+
+
+# base_recon = process_audio(model.model, base_source)
+# torchaudio.save(reconstructed_root / "base_reconstruction.wav", base_recon, sr)
+
 
 exit()
-
-base_recon = process_audio(model.model, base_source)
-# torchaudio.save(reconstructed_root / "base_reconstruction.wav", base_recon, sr)
 
 
 class Mode(Enum):
@@ -106,16 +84,14 @@ class Layer:
     repeat_recon: Optional[torch.Tensor] = None
 
 
-# collect layers from both encoder and decoder
-shape_preserving_layers: List[Layer] = []
-for net, net_path in model.get_nets_and_paths():
-    layers = get_shape_preserving_layers(net)
-    for layer in layers:
-        shape_preserving_layers.append(
-            Layer(model, net, net_path, layer["index"], layer["name"], [])
-        )
-        break
-    break
+# # collect layers from both encoder and decoder
+# shape_preserving_layers: List[Layer] = []
+# for net, net_path in model.get_nets_and_paths():
+#     layers = get_shape_preserving_layers(net)
+#     for layer in layers:
+#         shape_preserving_layers.append(
+#             Layer(model, net, net_path, layer["index"], layer["name"], [])
+#         )
 
 
 def process_audio_with_modified_layer(layer: Layer, make_net) -> torch.Tensor:

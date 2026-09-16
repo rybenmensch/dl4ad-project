@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import List, TypeAlias, cast
+from typing import Tuple, TypeAlias, cast
 
 import cached_conv
 import gin
@@ -7,17 +7,10 @@ import rave
 import torch
 import torch.nn as nn
 
-from lib import (
-    get_in_channels_from_state_dict,
-    getattr_from_attr_string,
-    setattr_from_attr_string,
-)
-from model import Net, NetTypeEnum, NNModel
+from lib import convert_audio, get_in_channels_from_state_dict
+from model import NetTypeEnum, NNModel
 
 Conv1d: TypeAlias = cached_conv.convs.Conv1d | cached_conv.convs.CachedConv1d
-LayerSequence: TypeAlias = cached_conv.convs.CachedSequential
-
-# In here, just stuff to interface with RAVE models and components!
 
 
 class RAVEModel(NNModel):
@@ -41,8 +34,16 @@ class RAVEModel(NNModel):
     def get_sample_rate(self) -> int:
         return self.model.sr
 
+    def get_channels(self) -> int:
+        return self.model.n_channels
+
     def get_first_layer(self, net_type: NetTypeEnum) -> Conv1d:
         return cast(Conv1d, self.get_net(net_type)[0])
+
+    def process_audio(self, audio_sr: Tuple[torch.Tensor, int]) -> torch.Tensor:
+        audio = convert_audio(audio_sr, self.get_sample_rate(), self.get_channels())
+        torch.manual_seed(0)
+        return self.model(audio)
 
     def get_net_path(self, net_type: NetTypeEnum) -> str:
         """Returns the path of the net."""
@@ -71,18 +72,3 @@ def raw_rave_model(run_path: Path | str) -> rave.RAVE:
     model.load_state_dict(state_dict, strict=False)
     model.eval()
     return model
-
-
-# GRAVEYARD
-
-
-# def get_weighted_layers(net: nn.Module):
-#     pass
-
-
-# def get_last_encoder_layer(model: rave.RAVE) -> cached_conv.convs.Conv1d:
-#     return model.encoder.encoder.net[-1]
-
-
-# def get_encoder_output_channels(model: rave.RAVE) -> int:
-#     return model.encoder.encoder.net[-1].out_channels

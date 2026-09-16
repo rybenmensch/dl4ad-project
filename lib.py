@@ -5,6 +5,7 @@ from typing import Any, List, Tuple
 import auraloss
 import gin
 import torch
+import torchaudio
 
 # TODO: clean up the mess
 
@@ -84,6 +85,20 @@ def get_in_channels_from_state_dict(state_dict: dict) -> int:
         return in_channels // n_band
     else:
         return 1
+
+
+def convert_audio(wav: Tuple[torch.Tensor, int], target_sr: int, target_chans: int):
+    audio, sr = wav
+    assert audio.shape[0] in [1, 2], "Audio must be mono or stereo."
+    if target_chans == 1:
+        audio = audio.mean(0, keepdim=True)
+    elif target_chans == 2:
+        *shape, _, length = audio.shape
+        audio = audio.expand(*shape, target_chans, length)
+    elif audio.shape[0] == 1:
+        audio = audio.expand(target_chans, -1)
+    audio = torchaudio.transforms.Resample(sr, target_sr)(audio)
+    return audio
 
 
 def process_audio(model, waveform: torch.Tensor) -> torch.Tensor:

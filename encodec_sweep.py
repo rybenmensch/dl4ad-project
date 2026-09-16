@@ -3,14 +3,9 @@ from pathlib import Path
 import torch
 import torch.nn as nn
 import torchaudio
+from encodec.utils import convert_audio
 
-from encodec_lib import (
-    EncodecNNModel,
-    HFEncodecNNModel,
-    process_audio,
-    raw_encodec_model,
-    raw_hf_encodec_model,
-)
+from encodec_lib import EncodecNNModel, process_audio, raw_encodec_model
 from lib import check_path
 from model import NetTypeEnum
 from plotting import plot_comparison
@@ -43,13 +38,16 @@ def norm(x: torch.Tensor) -> torch.Tensor:
 
 # MODELL LADEN
 
+source_path: Path = check_path("audio/source")
+reconstructed_root: Path = check_path("audio/reconstructed")
 
-model = HFEncodecNNModel()
-# model = EncodecNNModel()
-first_encoder = model.get_first_layer(NetTypeEnum.Encoder)
-# print(type(first_encoder))
-first_decoder = model.get_first_layer(NetTypeEnum.Encoder)
-# print(type(first_decoder))
+base_source, sr = torchaudio.load("audio/source/GLM.wav")
+
+model = EncodecNNModel()
+processed = model.process_audio((base_source, sr))
+
+# torchaudio.save(reconstructed_root / "lmao.wav", processed, model.get_sample_rate())
+
 exit()
 
 # skip and repeat sweep
@@ -78,13 +76,6 @@ print("==========================================================")
 print(model.model)
 # recon = process_audio(model.model, base_source)
 # model.set_net(net_type, original_net)
-
-exit()
-
-source_path: Path = check_path("audio/source")
-reconstructed_root: Path = check_path("audio/reconstructed")
-
-base_source, sr = torchaudio.load("audio/source/GLM.wav")
 
 # Stereo auf Mono
 if base_source.shape[0] > 1:
