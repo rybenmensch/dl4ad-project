@@ -1,8 +1,8 @@
 from pathlib import Path
 
 import torch
-import torch.nn as nn
 import torchaudio
+from torch import nn
 
 from encodec_lib import EncodecNNModel
 from lib import check_path, convert_audio

@@ -8,3 +8,4 @@ audio/old_results/
 audio/results
 audio/reconstructed
 *.ckpt
+.ruff_cache/

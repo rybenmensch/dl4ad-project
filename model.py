@@ -1,14 +1,12 @@
-import copy
-from abc import ABC, ABCMeta, abstractmethod
+from abc import ABC, abstractmethod
 from enum import Enum
-from re import L
-from typing import Any, List, Protocol, Tuple, TypeAlias, cast, runtime_checkable
+from typing import Protocol, TypeAlias, runtime_checkable
 
 import torch
 from torch import nn
 
 from lib import convert_audio, getattr_from_attr_string, setattr_from_attr_string
-from torch_lib import IterableModule, is_layer_iterable
+from torch_lib import IterableModule
 
 Net: TypeAlias = IterableModule
 Module: TypeAlias = nn.Module
@@ -24,7 +22,7 @@ class NetTypeEnum(str, Enum):
     Decoder = "decoder"
 
 
-class NNModel(metaclass=ABCMeta):
+class NNModel(ABC):
     """wrapper class for non-torchscript models"""
 
     def __init__(self, model) -> None:
@@ -56,7 +54,7 @@ class NNModel(metaclass=ABCMeta):
     def get_first_layer(self, net_type: NetTypeEnum) -> HasInChannels:
         pass
 
-    def process_audio(self, audio_sr: Tuple[torch.Tensor, int]) -> torch.Tensor:
+    def process_audio(self, audio_sr: tuple[torch.Tensor, int]) -> torch.Tensor:
         torch.manual_seed(0)
         audio = convert_audio(audio_sr, self.get_sample_rate(), self.get_channels())
         audio = audio.unsqueeze(0)
@@ -78,23 +76,23 @@ class NNModel(metaclass=ABCMeta):
         net_path = self.get_net_path(net_type)
         setattr_from_attr_string(self.model, net_path, net)
 
-    def get_nets(self) -> Tuple[
+    def get_nets(self) -> tuple[
         Net,
         Net,
     ]:
         """Returns the encoder and decoder nets."""
         return (self.get_net(NetTypeEnum.Encoder), self.get_net(NetTypeEnum.Decoder))
 
-    def get_net_paths(self) -> Tuple[str, str]:
+    def get_net_paths(self) -> tuple[str, str]:
         """Returns the encoder and decoder paths."""
         return (
             self.get_net_path(NetTypeEnum.Encoder),
             self.get_net_path(NetTypeEnum.Decoder),
         )
 
-    def get_nets_and_paths(self) -> Tuple[
-        Tuple[Net, str],
-        Tuple[Net, str],
+    def get_nets_and_paths(self) -> tuple[
+        tuple[Net, str],
+        tuple[Net, str],
     ]:
         """Returns the encoder and decoder nets and the paths to them."""
         return (
@@ -104,7 +102,7 @@ class NNModel(metaclass=ABCMeta):
 
     def get_nets_and_types(
         self,
-    ) -> Tuple[Tuple[Net, NetTypeEnum], Tuple[Net, NetTypeEnum]]:
+    ) -> tuple[tuple[Net, NetTypeEnum], tuple[Net, NetTypeEnum]]:
 
         return (
             (self.get_net(NetTypeEnum.Encoder), NetTypeEnum.Encoder),
@@ -176,12 +174,12 @@ class Layer:
         net_path, index = self.get_net_path_and_index(layer)
         return f"{net_path}.{index}"
 
-    def get_net_path_and_index(self, layer: Module) -> Tuple[str, int]:
+    def get_net_path_and_index(self, layer: Module) -> tuple[str, int]:
         net_path: str = self.get_net_path(layer)
         _, i = self.get_net_type_and_index(layer)
         return (net_path, i)
 
-    def get_net_type_and_index(self, layer: Module) -> Tuple[NetTypeEnum, int]:
+    def get_net_type_and_index(self, layer: Module) -> tuple[NetTypeEnum, int]:
         net_type: NetTypeEnum = self.get_net_type(layer)
         for i, l in enumerate(self.model.get_net(net_type)):
             if l == layer:

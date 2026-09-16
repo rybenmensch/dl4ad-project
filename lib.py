@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from typing import Any, List, Tuple
+from typing import Any
 
 import auraloss
 import gin
@@ -11,42 +11,36 @@ import torchaudio
 
 
 def print_all_attrs(obj: Any) -> None:
-    for k in obj.__dict__.keys():
+    for k in obj.__dict__:
         print(k)
 
 
 def hasattr_from_attr_string(obj: Any, string: str) -> Any:
-    attrs: List[str] = string.split(".")
+    attrs: list[str] = string.split(".")
     for attr in attrs:
         try:
             obj = getattr(obj, attr)
-        except Exception as e:
+        except Exception:
             return False
     return True
 
 
 def getattr_from_attr_string(obj: Any, string: str) -> Any:
-    attrs: List[str] = string.split(".")
+    attrs: list[str] = string.split(".")
     for attr in attrs:
-        try:
-            obj = getattr(obj, attr)
-        except Exception as e:
-            raise e
+        obj = getattr(obj, attr)
     return obj
 
 
 def setattr_from_attr_string(obj: object, string: str, value: Any) -> None:
-    attrs: List[str] = string.split(".")
+    attrs: list[str] = string.split(".")
     if len(attrs) == 0:
         print(f"Invalid attr string f{string}")
         exit()
 
     last = attrs.pop()
     for attr in attrs:
-        try:
-            obj = getattr(obj, attr)
-        except Exception as e:
-            raise e
+        obj = getattr(obj, attr)
     setattr(obj, last, value)
 
 
@@ -87,7 +81,7 @@ def get_in_channels_from_state_dict(state_dict: dict) -> int:
         return 1
 
 
-def convert_audio(wav: Tuple[torch.Tensor, int], target_sr: int, target_chans: int):
+def convert_audio(wav: tuple[torch.Tensor, int], target_sr: int, target_chans: int):
     audio, sr = wav
     assert audio.shape[0] in [1, 2], "Audio must be mono or stereo."
     if target_chans == 1:
@@ -203,7 +197,7 @@ def check_path(p: str | Path) -> Path:
     return path
 
 
-def inout_paths(file_path: Path, in_path: Path, out_path: Path) -> Tuple[Path, Path]:
+def inout_paths(file_path: Path, in_path: Path, out_path: Path) -> tuple[Path, Path]:
     dir_path, filename_ext = os.path.split(file_path)
     filename, ext = os.path.splitext(filename_ext)
 

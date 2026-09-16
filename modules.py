@@ -1,4 +1,4 @@
-import torch.nn as nn
+from torch import nn
 
 
 class SequentialWithSkip(nn.Module):
@@ -19,7 +19,7 @@ class SequentialWithRepeat(nn.Module):
     def __init__(self, original_net, repeats=None):
         super().__init__()
         self.original_net = original_net
-        self.repeats = repeats if repeats else {}
+        self.repeats = repeats or {}
 
     def forward(self, x):
         for i, layer in enumerate(self.original_net):
@@ -34,7 +34,7 @@ class ManipulatedSequential(nn.Module):
         super().__init__()
         self.original_net = original_net
         self.skips = set(skips) if skips else set()
-        self.repeats = repeats if repeats else {}
+        self.repeats = repeats or {}
 
     def forward(self, x):
         for i, layer in enumerate(self.original_net):

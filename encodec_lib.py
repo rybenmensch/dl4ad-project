@@ -1,12 +1,9 @@
-from typing import Any, TypeAlias, cast
+from typing import TypeAlias, cast
 
-import torch
-import torch.nn as nn
 from encodec.model import EncodecModel
 from encodec.modules.conv import SConv1d
-from rave import Tuple
+from torch import nn
 
-from lib import convert_audio
 from model import NetTypeEnum, NNModel
 
 Conv1d: TypeAlias = nn.Conv1d
@@ -16,7 +13,7 @@ class EncodecNNModel(NNModel):
     def __init__(self, model: EncodecModel | None = None) -> None:
         if model == None:
             model = raw_encodec_model(48_000)
-        super(EncodecNNModel, self).__init__(model)
+        super().__init__(model)
         self.model: EncodecModel
 
     def reset(self) -> None:

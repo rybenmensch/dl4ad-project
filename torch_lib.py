@@ -1,9 +1,10 @@
-from typing import Iterator, Protocol, cast
+from collections.abc import Iterator
+from typing import Protocol, cast
 
 import torch
-import torch.nn as nn
+from torch import nn
 
-from lib import hasattr_from_attr_string, print_all_attrs
+from lib import hasattr_from_attr_string
 
 
 class IterableModule(Protocol):
@@ -15,7 +16,7 @@ def is_layer_iterable(net: nn.Module | IterableModule) -> bool:
     try:
         net_cast = cast(IterableModule, net)
         net_cast[0]
-    except:
+    except Exception:
         return False
     return True
 

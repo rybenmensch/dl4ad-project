@@ -1,11 +1,11 @@
 from pathlib import Path
-from typing import Tuple, TypeAlias, cast
+from typing import TypeAlias, cast
 
 import cached_conv
 import gin
 import rave
 import torch
-import torch.nn as nn
+from torch import nn
 
 from lib import get_in_channels_from_state_dict
 from model import NetTypeEnum, NNModel
@@ -17,10 +17,10 @@ class RAVEModel(NNModel):
     def __init__(self, path_or_model: Path | str | rave.RAVE):
         self.path: Path | str | None
         model = None
-        if isinstance(path_or_model, Path) or isinstance(path_or_model, str):
+        if isinstance(path_or_model, (Path, str)):
             self.path = path_or_model
             model = raw_rave_model(path_or_model)
-        super(RAVEModel, self).__init__(model)
+        super().__init__(model)
         self.model: rave.RAVE
 
     def reset(self):

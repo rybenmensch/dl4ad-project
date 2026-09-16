@@ -2,18 +2,17 @@ import warnings
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import List, Optional
+from typing import Optional
 
 import numpy as np
 import torch
 import torchaudio
 
-from encodec_lib import EncodecNNModel
 from lib import *
-from model import Net, NetTypeEnum, NNModel, get_shape_preserving_layers
+from model import Net, NetTypeEnum, get_shape_preserving_layers
 from modules import *
 from plotting import plot_comparison
-from rave_lib import RAVEModel, raw_rave_model
+from rave_lib import RAVEModel
 
 # Suppress the lightning_fabric pkg_resources warning
 warnings.filterwarnings("ignore", category=UserWarning, message=".*pkg_resources.*")
@@ -79,9 +78,9 @@ class Layer:
     net_path: str
     index: int
     name: str
-    stats: List[Stats]
-    skip_recon: Optional[torch.Tensor] = None
-    repeat_recon: Optional[torch.Tensor] = None
+    stats: list[Stats]
+    skip_recon: torch.Tensor | None = None
+    repeat_recon: torch.Tensor | None = None
 
 
 # # collect layers from both encoder and decoder
