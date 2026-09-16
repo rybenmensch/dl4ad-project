@@ -32,11 +32,6 @@ class EncodecNNModel(NNModel):
         first_layer = cast(SConv1d, self.get_net(net_type)[0])
         return cast(Conv1d, first_layer.conv.conv)
 
-    def process_audio(self, audio_sr: Tuple[torch.Tensor, int]) -> torch.Tensor:
-        audio = convert_audio(audio_sr, self.get_sample_rate(), self.get_channels())
-        audio = audio.unsqueeze(0)
-        return self.model(audio).squeeze(0)
-
     def get_net_path(self, net_type: NetTypeEnum) -> str:
         """Returns the path of the net."""
         return net_type.value + ".model"
@@ -53,21 +48,3 @@ def raw_encodec_model(sample_rate: int = 48_000) -> EncodecModel:
         exit()
     model.eval()
     return model
-
-
-def process_audio(
-    model, waveform: torch.Tensor, bandwidth: float | None = None
-) -> torch.Tensor:
-    """
-    Adapter fuer HF EncodecModel: forward() gibt ein EncodecOutput-Objekt
-    zurueck (mit .audio_values), keinen direkten Tensor wie RAVE.
-
-    bandwidth: Ziel-Bitrate in kbps. None -> hoechste verfuegbare Qualitaet
-    """
-    if bandwidth is None:
-        bandwidth = max(model.config.target_bandwidths)
-
-    input_tensor = waveform.unsqueeze(0)
-    with torch.no_grad():
-        output = model(input_tensor, bandwidth=bandwidth)
-    return output.audio_values.squeeze(0)

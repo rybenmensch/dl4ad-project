@@ -7,7 +7,7 @@ from typing import Any, List, Protocol, Tuple, TypeAlias, cast, runtime_checkabl
 import torch
 from torch import nn
 
-from lib import getattr_from_attr_string, setattr_from_attr_string
+from lib import convert_audio, getattr_from_attr_string, setattr_from_attr_string
 from torch_lib import IterableModule, is_layer_iterable
 
 Net: TypeAlias = IterableModule
@@ -56,9 +56,12 @@ class NNModel(metaclass=ABCMeta):
     def get_first_layer(self, net_type: NetTypeEnum) -> HasInChannels:
         pass
 
-    @abstractmethod
     def process_audio(self, audio_sr: Tuple[torch.Tensor, int]) -> torch.Tensor:
-        pass
+        torch.manual_seed(0)
+        audio = convert_audio(audio_sr, self.get_sample_rate(), self.get_channels())
+        audio = audio.unsqueeze(0)
+        with torch.no_grad():
+            return self.model(audio).squeeze(0)
 
     @abstractmethod
     def get_net_path(self, net_type: NetTypeEnum) -> str:

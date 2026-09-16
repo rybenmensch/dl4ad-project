@@ -7,7 +7,7 @@ import rave
 import torch
 import torch.nn as nn
 
-from lib import convert_audio, get_in_channels_from_state_dict
+from lib import get_in_channels_from_state_dict
 from model import NetTypeEnum, NNModel
 
 Conv1d: TypeAlias = cached_conv.convs.Conv1d | cached_conv.convs.CachedConv1d
@@ -40,11 +40,6 @@ class RAVEModel(NNModel):
     def get_first_layer(self, net_type: NetTypeEnum) -> Conv1d:
         return cast(Conv1d, self.get_net(net_type)[0])
 
-    def process_audio(self, audio_sr: Tuple[torch.Tensor, int]) -> torch.Tensor:
-        audio = convert_audio(audio_sr, self.get_sample_rate(), self.get_channels())
-        torch.manual_seed(0)
-        return self.model(audio)
-
     def get_net_path(self, net_type: NetTypeEnum) -> str:
         """Returns the path of the net."""
         net_type_name = net_type.value
@@ -66,6 +61,9 @@ def raw_rave_model(run_path: Path | str) -> rave.RAVE:
     checkpoint = torch.load(checkpoint_path, map_location="cpu")
 
     state_dict = checkpoint["state_dict"]
+    # TODO: move get_in_channels_from_state_dict to this file
+    # as it is specific to RAVE and then rework it to fit
+    # the current state of the library
     n_channels = get_in_channels_from_state_dict(state_dict)
 
     model = rave.RAVE(n_channels=n_channels)

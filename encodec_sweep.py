@@ -3,10 +3,9 @@ from pathlib import Path
 import torch
 import torch.nn as nn
 import torchaudio
-from encodec.utils import convert_audio
 
-from encodec_lib import EncodecNNModel, process_audio, raw_encodec_model
-from lib import check_path
+from encodec_lib import EncodecNNModel
+from lib import check_path, convert_audio
 from model import NetTypeEnum
 from plotting import plot_comparison
 from torch_lib import get_shape_preserving_layers
@@ -44,9 +43,11 @@ reconstructed_root: Path = check_path("audio/reconstructed")
 base_source, sr = torchaudio.load("audio/source/GLM.wav")
 
 model = EncodecNNModel()
-processed = model.process_audio((base_source, sr))
 
-# torchaudio.save(reconstructed_root / "lmao.wav", processed, model.get_sample_rate())
+
+audio = convert_audio((base_source, sr), model.get_sample_rate(), model.get_channels())
+processed = model.process_audio((base_source, sr))
+torchaudio.save(reconstructed_root / "lmao.wav", processed, model.get_sample_rate())
 
 exit()
 
