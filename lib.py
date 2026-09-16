@@ -95,67 +95,6 @@ def convert_audio(wav: tuple[torch.Tensor, int], target_sr: int, target_chans: i
     return audio
 
 
-def process_audio(model, waveform: torch.Tensor) -> torch.Tensor:
-    model_channels = get_in_channels(model)
-    audio_channels = waveform.shape[0]
-
-    if model_channels == 2:
-        if audio_channels == 1:
-            waveform = torch.cat([waveform, waveform], dim=0)
-            audio_channels = 2
-
-        if audio_channels == 2:
-            input_tensor = waveform.unsqueeze(0)
-            with torch.no_grad():
-                torch.manual_seed(0)
-                output_tensor = model(input_tensor)
-                output_waveform = output_tensor.squeeze(0)
-                return output_waveform
-        else:
-            processed_channels = []
-            for i in range(0, audio_channels, 2):
-                if i + 1 < audio_channels:
-                    pair = waveform[i : i + 2, ...]
-                else:
-                    pair = torch.cat(
-                        [waveform[i : i + 1, ...], waveform[i : i + 1, ...]], dim=0
-                    )
-                input_tensor = pair.unsqueeze(0)
-                with torch.no_grad():
-
-                    torch.manual_seed(0)
-                    output_tensor = model(input_tensor)
-                    output_waveform = output_tensor.squeeze(0)
-                    if i + 1 >= audio_channels:
-                        output_waveform = output_waveform[0:1, ...]
-                    processed_channels.append(output_waveform)
-            return torch.cat(processed_channels, dim=0)
-
-    else:
-        processed_channels = []
-        for i in range(audio_channels):
-            # (channels, timesteps) -> (1, timesteps)
-            channel = waveform[i : i + 1, ...]
-
-            # (1, timesteps) -> (batch, 1, timesteps)
-            input_tensor = channel.unsqueeze(0)
-
-            with torch.no_grad():
-                # (batch, num_chans, timesteps)
-                torch.manual_seed(0)
-                output_tensor = model(input_tensor)
-                # (batch, num_chans, timesteps) -> (num_chans, timesteps)
-                output_waveform = output_tensor.squeeze(0)
-                # (num_chans, timesteps) -> (1, timesteps)
-                output_waveform = output_waveform[0:1, ...]
-                processed_channels.append(output_waveform)
-
-        # [(1, timesteps), ..., (1, timesteps)] -> (num_audio_channels, timesteps)
-        output_tensor = torch.cat(processed_channels, dim=0)
-
-        return output_tensor
-
-
 class JITModel:
     # useful for JIT-compiled .ts models
     def __init__(self, path: Path | str) -> None:
