@@ -47,7 +47,7 @@ class NNModel(ABC):
     def get_layer_channels(self, layer: Module) -> tuple[int, int] | None:
         raise TypeError(f"Layer has unhandled type {get_layer_name(layer)}!")
 
-    def process_audio(self, wav: tuple[torch.Tensor, int]) -> torch.Tensor:
+    def __call__(self, wav: tuple[torch.Tensor, int]) -> torch.Tensor:
         torch.manual_seed(0)
         audio = convert_audio(wav, self.get_sample_rate(), self.get_channels())
         audio = audio.unsqueeze(0)

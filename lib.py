@@ -118,8 +118,11 @@ class JITModel:
         for k in self.get_model_keys():
             print(k)
 
-    def process_audio(self, waveform: torch.Tensor) -> torch.Tensor:
-        return process_audio(self.model, waveform)
+    def __call__(self, waveform: torch.Tensor) -> torch.Tensor:
+        # TODO(low priority): go digging in git history for that old
+        # process_audio function or re-implement anew with `convert_audio`
+        # return process_audio(self.model, waveform)
+        raise NotImplementedError
 
     def get_state_dict(self):
         return self.model.state_dict()

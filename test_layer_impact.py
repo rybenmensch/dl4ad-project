@@ -26,8 +26,6 @@ warnings.filterwarnings(
     message=".*return_complex.*argument is now deprecated.*",
 )
 
-# TODO: model should support __call__()
-
 source_path: Path = check_path("audio/source")
 reconstructed_root: Path = check_path("audio/reconstructed")
 file_name: str = "GLM.wav"
@@ -35,37 +33,9 @@ base_wav = torchaudio.load("audio/source/GLM.wav")
 base_source, base_sr = base_wav
 
 model = RAVEModel("models/satyr/")
-base_recon = model.process_audio(base_wav)
+base_recon = model(base_wav)
 
-encoder, decoder = model.get_nets()
-
-# print(encoder)
-# print("=================================")
-# print(decoder)
-# exit()
-
-# for layer in encoder:
-#     c = model.get_layer_channels(layer)
-#     if c == None:
-#         continue
-#     x = torch.zeros(1, c[0], 64)
-#     x = layer(x)
-#     print(x.shape[1] == c[1])
-# for layer in decoder:
-#     c = model.get_layer_channels(layer)
-#     if c == None:
-#         continue
-#     x = torch.zeros(1, c[0], 64)
-#     x = layer(x)
-#     print(x.shape[1] == c[1])
-
-layers = get_shape_preserving_layers_from_net(model, encoder)
-# for l in layers:
-#     print(l.name)
-print(len(layers))
-exit()
-
-processed = model.process_audio(base_wav)
+processed = model(base_wav)
 torchaudio.save(reconstructed_root / "lmao.wav", processed, model.get_sample_rate())
 
 torchaudio.save(
