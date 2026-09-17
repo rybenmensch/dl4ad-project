@@ -1,11 +1,12 @@
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 from enum import Enum
 from typing import Protocol, TypeAlias, runtime_checkable
 
 import torch
 from torch import nn
 
-from lib import convert_audio, getattr_from_attr_string
+from lib import convert_audio, getattr_from_attr_string, setattr_from_attr_string
 from torch_lib import IterableModule
 
 Net: TypeAlias = IterableModule
@@ -31,7 +32,6 @@ class NNModel(ABC):
         self.from_net_path = NetPath(self)
         self.from_layer_path = LayerPath(self)
         self.from_layer = Layer(self)
-        self.layer_adapter_type = None
 
     @abstractmethod
     def reset(self) -> None:
@@ -39,7 +39,7 @@ class NNModel(ABC):
 
     @abstractmethod
     def get_sample_rate(self) -> int:
-        pass
+        """Returns the sample rate the model is intended to run on."""
 
     # TODO: rename, possibly confusing because doesn't refer to model channels
     # but input channels for first conv layer
@@ -133,7 +133,7 @@ class NetPath:
         for net_type in NetTypeEnum:
             if net_path == self.model.get_net_path(net_type):
                 return net_type
-        raise Exception(f"Unsupported NetPath {net_path}!")
+        raise ValueError(f"Unsupported NetPath {net_path}!")
 
     def get_net(self, net_path: str) -> Net:
         net_type = self.get_net_type(net_path)
@@ -155,7 +155,7 @@ class Layer:
             # that will still work if we have shuffled some things around
             if n == net:
                 return t
-        raise Exception("Layer not found!")
+        raise ValueError("Layer not found!")
 
     def get_net(self, layer: Module) -> Net:
         for net in self.model.get_nets():
@@ -164,7 +164,7 @@ class Layer:
                 # that will still work if we have shuffled some things around
                 if l == layer:
                     return net
-        raise Exception("Layer not found!")
+        raise ValueError("Layer not found!")
 
     def get_net_path(self, layer: Module) -> str:
         net_type: NetTypeEnum = self.get_net_type(layer)
@@ -184,7 +184,10 @@ class Layer:
         for i, l in enumerate(self.model.get_net(net_type)):
             if l == layer:
                 return (net_type, i)
-        raise Exception("Layer not found!")
+        raise ValueError("Layer not found!")
+
+    def get_layer_name(self, layer: Module) -> str:
+        return type(layer).__name__
 
 
 class LayerPath:
@@ -195,7 +198,7 @@ class LayerPath:
         for net_type in NetTypeEnum:
             if layer_path.startswith(self.model.get_net_path(net_type)):
                 return net_type
-        raise Exception(f"Unsupported LayerPath {layer_path}!")
+        raise ValueError(f"Unsupported LayerPath {layer_path}!")
 
     def get_net(self, layer_path: str) -> Net:
         """Returns the net that the layer corresponding to the path belongs to."""
@@ -223,12 +226,25 @@ class LayerPath:
         return net[index]
 
 
-def get_shape_preserving_layers(model: NNModel, net_type: NetTypeEnum):
+# TODO: think about what information is returned,
+# path? net_type? the layer itself?
+@dataclass(frozen=True)
+class ShapePreservingLayer:
+    index: int
+    name: str
+    net_type: NetTypeEnum
+    layer_path: str
+
+
+def get_shape_preserving_layers_from_net(
+    model: NNModel, net_type: NetTypeEnum
+) -> list[ShapePreservingLayer]:
     """
     Returns information about every layer that preserves the input shape.
     Input:  NNModel
-    Output: List of dicts with content {index, name}
+    Output: List of ShapePreservingLayer dataclasses
     """
+
     net: Net = model.get_net(net_type)
 
     results = []
@@ -237,20 +253,37 @@ def get_shape_preserving_layers(model: NNModel, net_type: NetTypeEnum):
     x = torch.zeros(1, input_size, 64)
 
     for idx, layer in enumerate(net):
-        layer_name = type(layer).__name__
+        layer_name = model.from_layer.get_layer_name(layer)
+        layer_path = model.from_layer.get_layer_path(layer)
         try:
             with torch.no_grad():
                 out = layer(x)
                 if out.shape == x.shape:
-                    # layer preserves shape
-                    results.append({"index": idx, "name": layer_name})
-                    print(layer_name)
+                    # layer DOES preserve shape
+                    results.append(
+                        ShapePreservingLayer(
+                            index=idx,
+                            name=layer_name,
+                            net_type=net_type,
+                            layer_path=layer_path,
+                        )
+                    )
                 else:
-                    # layer does not preserve shape
+                    # layer does NOT preserve shape
                     pass
                 x = out
         except Exception as e:
             print(f"Layer nr {idx} of type {layer_name} raised {e}")
+
+    return results
+
+
+# TODO: should this be a method of the class?
+def get_shape_preserving_layers(model: NNModel) -> list[ShapePreservingLayer]:
+    results = []
+    for _, net_type in model.get_nets_and_types():
+        net_type: NetTypeEnum
+        results += get_shape_preserving_layers_from_net(model, net_type)
 
     return results
 
