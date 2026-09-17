@@ -157,6 +157,9 @@ class Layer:
 
     def get_net(self, layer: Module) -> Net:
         for net in self.model.get_nets():
+            if net == layer:
+                # the layer is the net itself
+                return net
             for l in net:
                 # i have no clue how this equality check works, don't know if
                 # that will still work if we have shuffled some things around
@@ -170,6 +173,9 @@ class Layer:
 
     def get_layer_path(self, layer: Module) -> str:
         net_path, index = self.get_net_path_and_index(layer)
+        if index == -1:
+            # the layer is the net itself
+            return net_path
         return f"{net_path}.{index}"
 
     def get_net_path_and_index(self, layer: Module) -> tuple[str, int]:
@@ -179,6 +185,10 @@ class Layer:
 
     def get_net_type_and_index(self, layer: Module) -> tuple[NetTypeEnum, int]:
         net_type: NetTypeEnum = self.get_net_type(layer)
+        net: Net = self.model.get_net(net_type)
+        if net == layer:
+            # the layer is the net itself
+            return (net_type, -1)
         for i, l in enumerate(self.model.get_net(net_type)):
             if l == layer:
                 return (net_type, i)
@@ -235,15 +245,13 @@ class ShapePreservingLayer:
 
 
 def get_shape_preserving_layers_from_net(
-    model: NNModel, net_type: NetTypeEnum
+    model: NNModel, net: Net
 ) -> list[ShapePreservingLayer]:
     """
     Returns information about every layer that preserves the input shape.
     Input:  NNModel
     Output: List of ShapePreservingLayer dataclasses
     """
-
-    net: Net = model.get_net(net_type)
 
     results = []
 
@@ -268,6 +276,7 @@ def get_shape_preserving_layers(model: NNModel) -> list[ShapePreservingLayer]:
     results = []
     for _, net_type in model.get_nets_and_types():
         net_type: NetTypeEnum
+        net: Net = model.get_net(net_type)
         results += get_shape_preserving_layers_from_net(model, net_type)
 
     return results

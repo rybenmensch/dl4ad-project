@@ -37,9 +37,6 @@ base_source, base_sr = base_wav
 model = RAVEModel("models/satyr/")
 base_recon = model.process_audio(base_wav)
 
-model = EncodecNNModel()
-
-
 encoder, decoder = model.get_nets()
 
 # print(encoder)
