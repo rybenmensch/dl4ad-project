@@ -44,17 +44,8 @@ class NNModel(ABC):
     def get_sample_rate(self) -> int:
         """Returns the sample rate the model is intended to run on."""
 
-    # TODO: rename, possibly confusing because doesn't refer to model channels
-    # but input channels for first conv layer
-    def get_in_channels(self, net_type: NetTypeEnum) -> int:
-        return self.get_first_layer(net_type).in_channels
-
     @abstractmethod
     def get_channels(self) -> int:
-        pass
-
-    @abstractmethod
-    def get_first_layer(self, net_type: NetTypeEnum) -> HasInChannels:
         pass
 
     @abstractmethod

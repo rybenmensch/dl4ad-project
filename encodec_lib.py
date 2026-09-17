@@ -24,10 +24,6 @@ class EncodecNNModel(NNModel):
     def get_channels(self) -> int:
         return self.model.channels
 
-    def get_first_layer(self, net_type: NetTypeEnum) -> Conv1d:
-        first_layer = cast(SConv1d, self.get_net(net_type)[0])
-        return cast(Conv1d, first_layer.conv.conv)
-
     def get_layer_channels(self, layer: nn.Module) -> tuple[int, int] | None:
         if isinstance(layer, SConv1d):
             conv = cast(Conv1d, layer.conv.conv)

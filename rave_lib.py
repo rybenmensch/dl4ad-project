@@ -44,9 +44,6 @@ class RAVEModel(NNModel):
     def get_channels(self) -> int:
         return self.model.n_channels
 
-    def get_first_layer(self, net_type: NetTypeEnum) -> Conv1d:
-        return cast(Conv1d, self.get_net(net_type)[0])
-
     def get_layer_channels(self, layer: nn.Module) -> tuple[int, int] | None:
         """Returns `None` if layer accepts any input/output size."""
         if isinstance(layer, Conv1d):
