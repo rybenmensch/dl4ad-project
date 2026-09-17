@@ -255,6 +255,8 @@ def get_shape_preserving_layers_from_net(
 
     results = []
 
+    net_type = model.from_layer.get_net_type(net)
+
     for idx, layer in enumerate(net):
         layer_name = model.from_layer.get_layer_name(layer)
         layer_path = model.from_layer.get_layer_path(layer)
@@ -274,11 +276,8 @@ def get_shape_preserving_layers_from_net(
 # TODO: should this be a method of the class?
 def get_shape_preserving_layers(model: NNModel) -> list[ShapePreservingLayer]:
     results = []
-    for _, net_type in model.get_nets_and_types():
-        net_type: NetTypeEnum
-        net: Net = model.get_net(net_type)
-        results += get_shape_preserving_layers_from_net(model, net_type)
-
+    for net in model.get_nets():
+        results += get_shape_preserving_layers_from_net(model, net)
     return results
 
 

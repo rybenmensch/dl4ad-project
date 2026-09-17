@@ -59,7 +59,7 @@ encoder, decoder = model.get_nets()
 #     x = layer(x)
 #     print(x.shape[1] == c[1])
 
-layers = get_shape_preserving_layers_from_net(model, NetTypeEnum.Encoder)
+layers = get_shape_preserving_layers_from_net(model, encoder)
 # for l in layers:
 #     print(l.name)
 print(len(layers))
