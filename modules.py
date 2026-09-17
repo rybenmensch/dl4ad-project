@@ -2,6 +2,31 @@ from torch import Tensor
 from torch.nn import Module
 
 
+class SkippingLayer(Module):
+    """Layer that forwards its input unchanged."""
+
+    def __init__(self, layer: Module) -> None:
+        super().__init__()
+        self.layer = layer
+
+    def forward(self, x: Tensor) -> Tensor:
+        return x
+
+
+class RepeatingLayer(Module):
+    """Layer that applies its processing multiple times."""
+
+    def __init__(self, layer: Module, repeats: int = 1) -> None:
+        super().__init__()
+        self.layer = layer
+        self.repeats = repeats
+
+    def forward(self, x: Tensor) -> Tensor:
+        for i in range(self.repeats):
+            x = self.layer(x)
+        return x
+
+
 class SequentialWithSkip(Module):
     def __init__(self, original_net, skips=None) -> None:
         super().__init__()
