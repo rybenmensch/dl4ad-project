@@ -255,33 +255,20 @@ def get_shape_preserving_layers_from_net(
     net: Net = model.get_net(net_type)
 
     results = []
-    input_size = model.get_in_channels(net_type)
-
-    x = torch.zeros(1, input_size, 64)
 
     for idx, layer in enumerate(net):
         layer_name = model.from_layer.get_layer_name(layer)
         layer_path = model.from_layer.get_layer_path(layer)
-        try:
-            with torch.no_grad():
-                out = layer(x)
-                if out.shape == x.shape:
-                    # layer DOES preserve shape
-                    results.append(
-                        ShapePreservingLayer(
-                            index=idx,
-                            name=layer_name,
-                            net_type=net_type,
-                            layer_path=layer_path,
-                        )
-                    )
-                else:
-                    # layer does NOT preserve shape
-                    pass
-                x = out
-        except Exception as e:
-            print(f"Layer nr {idx} of type {layer_name} raised {e}")
-
+        inout = model.get_layer_channels(layer)
+        if inout == None or inout[0] == inout[1]:
+            results.append(
+                ShapePreservingLayer(
+                    index=idx,
+                    name=layer_name,
+                    net_type=net_type,
+                    layer_path=layer_path,
+                )
+            )
     return results
 
 

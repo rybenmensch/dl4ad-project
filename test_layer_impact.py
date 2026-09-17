@@ -47,23 +47,26 @@ encoder, decoder = model.get_nets()
 # print(decoder)
 # exit()
 
-for layer in encoder:
-    c = model.get_layer_channels(layer)
-    if c == None:
-        continue
-    x = torch.zeros(1, c[0], 64)
-    x = layer(x)
-    print(x.shape[1] == c[1])
+# for layer in encoder:
+#     c = model.get_layer_channels(layer)
+#     if c == None:
+#         continue
+#     x = torch.zeros(1, c[0], 64)
+#     x = layer(x)
+#     print(x.shape[1] == c[1])
+# for layer in decoder:
+#     c = model.get_layer_channels(layer)
+#     if c == None:
+#         continue
+#     x = torch.zeros(1, c[0], 64)
+#     x = layer(x)
+#     print(x.shape[1] == c[1])
 
-for layer in decoder:
-    c = model.get_layer_channels(layer)
-    if c == None:
-        continue
-    x = torch.zeros(1, c[0], 64)
-    x = layer(x)
-    print(x.shape[1] == c[1])
-
-# layers = get_shape_preserving_layers_from_net(model, NetTypeEnum.Encoder)
+layers = get_shape_preserving_layers_from_net(model, NetTypeEnum.Encoder)
+# for l in layers:
+#     print(l.name)
+print(len(layers))
+exit()
 
 processed = model.process_audio(base_wav)
 torchaudio.save(reconstructed_root / "lmao.wav", processed, model.get_sample_rate())
