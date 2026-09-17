@@ -1,12 +1,11 @@
-from typing import TypeAlias, cast
+from typing import cast
 
 from encodec.model import EncodecModel
-from encodec.modules.conv import SConv1d
+from encodec.modules.seanet import SLSTM, SConv1d, SConvTranspose1d, SEANetResnetBlock
 from torch import nn
+from torch.nn import LSTM, Conv1d, ConvTranspose1d, Sequential
 
 from model import NetTypeEnum, NNModel
-
-Conv1d: TypeAlias = nn.Conv1d
 
 
 class EncodecNNModel(NNModel):
@@ -28,6 +27,27 @@ class EncodecNNModel(NNModel):
     def get_first_layer(self, net_type: NetTypeEnum) -> Conv1d:
         first_layer = cast(SConv1d, self.get_net(net_type)[0])
         return cast(Conv1d, first_layer.conv.conv)
+
+    def get_layer_channels(self, layer: nn.Module) -> tuple[int, int] | None:
+        if isinstance(layer, SConv1d):
+            conv = cast(Conv1d, layer.conv.conv)
+            return (conv.in_channels, conv.out_channels)
+        elif isinstance(layer, SConvTranspose1d):
+            conv = cast(ConvTranspose1d, layer.convtr.convtr)
+            return (conv.in_channels, conv.out_channels)
+        elif isinstance(layer, SEANetResnetBlock):
+            net = cast(Sequential, layer.block)
+            if (ch_in := self.get_layer_channels(net[1])) and (
+                ch_out := self.get_layer_channels(net[3])
+            ):
+                return (ch_in[0], ch_out[1])
+        elif isinstance(layer, SLSTM):
+            lstm = layer.lstm
+            return (lstm.input_size, lstm.input_size)
+        elif isinstance(layer, nn.ELU):
+            return None
+        else:
+            return super().get_layer_channels(layer)
 
     def get_net_path(self, net_type: NetTypeEnum) -> str:
         """Returns the path of the net specified by net_type."""

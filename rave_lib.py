@@ -5,9 +5,13 @@ import cached_conv
 import gin
 import rave
 import torch
+from cached_conv.convs import CachedSequential
+from rave import Residual
+from torch import nn
 
 from lib import get_in_channels_from_state_dict
 from model import NetTypeEnum, NNModel
+from torch_lib import get_layer_name
 
 Conv1d: TypeAlias = (
     cached_conv.convs.Conv1d
@@ -42,6 +46,21 @@ class RAVEModel(NNModel):
 
     def get_first_layer(self, net_type: NetTypeEnum) -> Conv1d:
         return cast(Conv1d, self.get_net(net_type)[0])
+
+    def get_layer_channels(self, layer: nn.Module) -> tuple[int, int] | None:
+        """Returns `None` if layer accepts any input/output size."""
+        if isinstance(layer, Conv1d):
+            return (layer.in_channels, layer.out_channels)
+        elif isinstance(layer, Residual):
+            net = cast(CachedSequential, layer.aligned.branches[0].net)
+            if (ch_in := self.get_layer_channels(net[1])) and (
+                ch_out := self.get_layer_channels(net[3])
+            ):
+                return (ch_in[0], ch_out[1])
+        elif isinstance(layer, nn.LeakyReLU):
+            return None
+        else:
+            return super().get_layer_channels(layer)
 
     def get_net_path(self, net_type: NetTypeEnum) -> str:
         """Returns the path of the net specified by net_type."""

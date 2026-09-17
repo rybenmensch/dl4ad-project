@@ -7,7 +7,7 @@ import torch
 from torch import nn
 
 from lib import convert_audio, getattr_from_attr_string, setattr_from_attr_string
-from torch_lib import IterableModule
+from torch_lib import IterableModule, get_layer_name
 
 Net: TypeAlias = IterableModule
 Module: TypeAlias = nn.Module
@@ -56,6 +56,10 @@ class NNModel(ABC):
     @abstractmethod
     def get_first_layer(self, net_type: NetTypeEnum) -> HasInChannels:
         pass
+
+    @abstractmethod
+    def get_layer_channels(self, layer: Module) -> tuple[int, int] | None:
+        raise TypeError(f"Layer has unhandled type {get_layer_name(layer)}!")
 
     def process_audio(self, wav: tuple[torch.Tensor, int]) -> torch.Tensor:
         torch.manual_seed(0)
@@ -190,7 +194,7 @@ class Layer:
         raise ValueError("Layer not found!")
 
     def get_layer_name(self, layer: Module) -> str:
-        return type(layer).__name__
+        return get_layer_name(layer)
 
 
 class LayerPath:

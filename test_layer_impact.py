@@ -7,11 +7,13 @@ import numpy as np
 import torch
 import torchaudio
 
+from encodec_lib import EncodecNNModel
 from lib import *
 from model import Net, NetTypeEnum, get_shape_preserving_layers_from_net
 from modules import *
 from plotting import plot_comparison
 from rave_lib import RAVEModel
+from torch_lib import get_layer_name
 
 # Suppress the lightning_fabric pkg_resources warning
 warnings.filterwarnings("ignore", category=UserWarning, message=".*pkg_resources.*")
@@ -33,23 +35,42 @@ base_wav = torchaudio.load("audio/source/GLM.wav")
 base_source, base_sr = base_wav
 
 model = RAVEModel("models/satyr/")
-
-
 base_recon = model.process_audio(base_wav)
 
-encoder = model.get_net(NetTypeEnum.Encoder)
-layers = get_shape_preserving_layers_from_net(model, NetTypeEnum.Encoder)
+model = EncodecNNModel()
 
-resid = encoder[layers[0].index]
-resid_net = resid.aligned.branches[0].net
 
+encoder, decoder = model.get_nets()
+
+# print(encoder)
+# print("=================================")
+# print(decoder)
+# exit()
+
+for layer in encoder:
+    c = model.get_layer_channels(layer)
+    if c == None:
+        continue
+    x = torch.zeros(1, c[0], 64)
+    x = layer(x)
+    print(x.shape[1] == c[1])
+
+for layer in decoder:
+    c = model.get_layer_channels(layer)
+    if c == None:
+        continue
+    x = torch.zeros(1, c[0], 64)
+    x = layer(x)
+    print(x.shape[1] == c[1])
+
+# layers = get_shape_preserving_layers_from_net(model, NetTypeEnum.Encoder)
 
 processed = model.process_audio(base_wav)
 torchaudio.save(reconstructed_root / "lmao.wav", processed, model.get_sample_rate())
 
-# torchaudio.save(
-#     reconstructed_root / "base_reconstruction.wav", base_recon, model.get_sample_rate()
-# )
+torchaudio.save(
+    reconstructed_root / "base_reconstruction.wav", base_recon, model.get_sample_rate()
+)
 
 # - weight:
 #     - shuffling
@@ -144,10 +165,10 @@ def process_audio_with_repeated_layer(layer: Layer) -> torch.Tensor:
     )
 
 
-for l in shape_preserving_layers:
+for layer in shape_preserving_layers:
 
     def bruh(op, audiofile):
-        net_path = f"{l.net_path}_{l.index}"
+        net_path = f"{layer.net_path}_{layer.index}"
         net_path = "_".join(net_path.split("."))
         net_path = f"{op}_{net_path}"
         fn_a = str(reconstructed_root / (net_path + ".wav"))
@@ -159,8 +180,8 @@ for l in shape_preserving_layers:
     def norm(x):
         return x / torch.max(x)
 
-    skip_recon = process_audio_with_skipped_layer(l)
-    repeat_recon = process_audio_with_repeated_layer(l)
+    skip_recon = process_audio_with_skipped_layer(layer)
+    repeat_recon = process_audio_with_repeated_layer(layer)
 
     skip_recon = norm(skip_recon)
     repeat_recon = norm(repeat_recon)
@@ -172,14 +193,14 @@ for l in shape_preserving_layers:
 
 exit()
 
-for l in shape_preserving_layers:
-    l.skip_recon = process_audio_with_skipped_layer(l)
-    l.repeat_recon = process_audio_with_repeated_layer(l)
+for layer in shape_preserving_layers:
+    layer.skip_recon = process_audio_with_skipped_layer(layer)
+    layer.repeat_recon = process_audio_with_repeated_layer(layer)
     # l.skip_recon = torch.zeros_like(base_reconstruction)
     # l.repeat_recon = torch.zeros_like(base_reconstruction)
 
-    l.stats.append(Stats(base_recon, l.skip_recon, Mode.skip))
-    l.stats.append(Stats(base_recon, l.repeat_recon, Mode.repeat))
+    layer.stats.append(Stats(base_recon, layer.skip_recon, Mode.skip))
+    layer.stats.append(Stats(base_recon, layer.repeat_recon, Mode.repeat))
 
 
 # thx gemini
