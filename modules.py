@@ -1,13 +1,14 @@
-from torch import nn
+from torch import Tensor
+from torch.nn import Module
 
 
-class SequentialWithSkip(nn.Module):
-    def __init__(self, original_net, skips=None):
+class SequentialWithSkip(Module):
+    def __init__(self, original_net, skips=None) -> None:
         super().__init__()
         self.original_net = original_net
         self.skips = set(skips) if skips else set()
 
-    def forward(self, x):
+    def forward(self, x: Tensor) -> Tensor:
         for i, layer in enumerate(self.original_net):
             if i in self.skips:
                 continue
@@ -15,28 +16,29 @@ class SequentialWithSkip(nn.Module):
         return x
 
 
-class SequentialWithRepeat(nn.Module):
-    def __init__(self, original_net, repeats=None):
+class SequentialWithRepeat(Module):
+    def __init__(self, original_net, repeats=None) -> None:
         super().__init__()
         self.original_net = original_net
         self.repeats = repeats or {}
 
-    def forward(self, x):
+    def forward(self, x: Tensor) -> Tensor:
         for i, layer in enumerate(self.original_net):
             r = self.repeats.get(i, 1)
             for _ in range(r):
                 x = layer(x)
-            return x
+        # TODO: check if bug? return x was indented in one more
+        return x
 
 
-class ManipulatedSequential(nn.Module):
-    def __init__(self, original_net, skips=None, repeats=None):
+class ManipulatedSequential(Module):
+    def __init__(self, original_net, skips=None, repeats=None) -> None:
         super().__init__()
         self.original_net = original_net
         self.skips = set(skips) if skips else set()
         self.repeats = repeats or {}
 
-    def forward(self, x):
+    def forward(self, x: Tensor) -> Tensor:
         for i, layer in enumerate(self.original_net):
             if i in self.skips:
                 continue

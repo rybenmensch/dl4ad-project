@@ -33,6 +33,9 @@ class NNModel(ABC):
         self.from_layer_path = LayerPath(self)
         self.from_layer = Layer(self)
 
+    def __str__(self) -> str:
+        return str(self.model)
+
     @abstractmethod
     def reset(self) -> None:
         pass
@@ -54,9 +57,9 @@ class NNModel(ABC):
     def get_first_layer(self, net_type: NetTypeEnum) -> HasInChannels:
         pass
 
-    def process_audio(self, audio_sr: tuple[torch.Tensor, int]) -> torch.Tensor:
+    def process_audio(self, wav: tuple[torch.Tensor, int]) -> torch.Tensor:
         torch.manual_seed(0)
-        audio = convert_audio(audio_sr, self.get_sample_rate(), self.get_channels())
+        audio = convert_audio(wav, self.get_sample_rate(), self.get_channels())
         audio = audio.unsqueeze(0)
         with torch.no_grad():
             return self.model(audio).squeeze(0)

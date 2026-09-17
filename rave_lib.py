@@ -5,12 +5,15 @@ import cached_conv
 import gin
 import rave
 import torch
-from torch import nn
 
 from lib import get_in_channels_from_state_dict
 from model import NetTypeEnum, NNModel
 
-Conv1d: TypeAlias = cached_conv.convs.Conv1d | cached_conv.convs.CachedConv1d
+Conv1d: TypeAlias = (
+    cached_conv.convs.Conv1d
+    | cached_conv.convs.CachedConv1d
+    | cached_conv.convs.ConvTranspose1d
+)
 
 
 class RAVEModel(NNModel):

@@ -2,14 +2,13 @@ import warnings
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Optional
 
 import numpy as np
 import torch
 import torchaudio
 
 from lib import *
-from model import Net, NetTypeEnum, get_shape_preserving_layers
+from model import Net, NetTypeEnum, get_shape_preserving_layers_from_net
 from modules import *
 from plotting import plot_comparison
 from rave_lib import RAVEModel
@@ -25,19 +24,32 @@ warnings.filterwarnings(
     message=".*return_complex.*argument is now deprecated.*",
 )
 
+# TODO: model should support __call__()
+
 source_path: Path = check_path("audio/source")
 reconstructed_root: Path = check_path("audio/reconstructed")
 file_name: str = "GLM.wav"
-base_source, sr = torchaudio.load("audio/source/GLM.wav")
+base_wav = torchaudio.load("audio/source/GLM.wav")
+base_source, base_sr = base_wav
 
-model = RAVEModel("models/satyr")
-
-processed = model.process_audio((base_source, sr))
-# torchaudio.save(reconstructed_root / "lmao.wav", processed, model.get_sample_rate())
+model = RAVEModel("models/satyr/")
 
 
-# base_recon = process_audio(model.model, base_source)
-# torchaudio.save(reconstructed_root / "base_reconstruction.wav", base_recon, sr)
+base_recon = model.process_audio(base_wav)
+
+encoder = model.get_net(NetTypeEnum.Encoder)
+layers = get_shape_preserving_layers_from_net(model, NetTypeEnum.Encoder)
+
+resid = encoder[layers[0].index]
+resid_net = resid.aligned.branches[0].net
+
+
+processed = model.process_audio(base_wav)
+torchaudio.save(reconstructed_root / "lmao.wav", processed, model.get_sample_rate())
+
+# torchaudio.save(
+#     reconstructed_root / "base_reconstruction.wav", base_recon, model.get_sample_rate()
+# )
 
 # - weight:
 #     - shuffling
