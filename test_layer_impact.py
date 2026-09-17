@@ -9,7 +9,7 @@ import torchaudio
 
 from encodec_lib import EncodecNNModel
 from lib import *
-from model import Net, NetTypeEnum, get_shape_preserving_layers_from_net
+from model import Net, NetTypeEnum, get_shape_preserving_layers
 from modules import *
 from plotting import plot_comparison
 from rave_lib import RAVEModel
@@ -33,6 +33,7 @@ base_wav = torchaudio.load("audio/source/GLM.wav")
 base_source, base_sr = base_wav
 
 model = RAVEModel("models/satyr/")
+print(len(get_shape_preserving_layers(model)))
 base_recon = model(base_wav)
 
 processed = model(base_wav)

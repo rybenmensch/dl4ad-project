@@ -232,44 +232,42 @@ class LayerPath:
 # TODO: think about what information is returned,
 # path? net_type? the layer itself?
 @dataclass(frozen=True)
-class ShapePreservingLayer:
+class LayerInfo:
     index: int
     name: str
-    net_type: NetTypeEnum
     layer_path: str
+    inout: tuple[int, int] | None
+    net_type: NetTypeEnum
 
 
-def get_shape_preserving_layers_from_net(
-    model: NNModel, net: Net
-) -> list[ShapePreservingLayer]:
+def layer_info_from_net(model, net: Net, idx: int, layer: Module) -> LayerInfo:
+    return LayerInfo(
+        index=idx,
+        name=model.from_layer.get_layer_name(layer),
+        layer_path=model.from_layer.get_layer_path(layer),
+        inout=model.get_layer_channels(layer),
+        net_type=model.from_layer.get_net_type(net),
+    )
+
+
+def get_shape_preserving_layers_from_net(model: NNModel, net: Net) -> list[LayerInfo]:
     """
     Returns information about every layer that preserves the input shape.
     Input:  NNModel
-    Output: List of ShapePreservingLayer dataclasses
+    Output: List of LayerInfo dataclasses
     """
 
     results = []
 
-    net_type = model.from_layer.get_net_type(net)
-
     for idx, layer in enumerate(net):
-        layer_name = model.from_layer.get_layer_name(layer)
-        layer_path = model.from_layer.get_layer_path(layer)
         inout = model.get_layer_channels(layer)
         if inout == None or inout[0] == inout[1]:
-            results.append(
-                ShapePreservingLayer(
-                    index=idx,
-                    name=layer_name,
-                    net_type=net_type,
-                    layer_path=layer_path,
-                )
-            )
+            results.append(layer_info_from_net(model, net, idx, layer))
     return results
 
 
 # TODO: should this be a method of the class?
-def get_shape_preserving_layers(model: NNModel) -> list[ShapePreservingLayer]:
+def get_shape_preserving_layers(model: NNModel) -> list[LayerInfo]:
     results = []
     for net in model.get_nets():
         results += get_shape_preserving_layers_from_net(model, net)
