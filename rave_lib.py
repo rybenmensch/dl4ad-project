@@ -41,7 +41,7 @@ class RAVEModel(NNModel):
         return cast(Conv1d, self.get_net(net_type)[0])
 
     def get_net_path(self, net_type: NetTypeEnum) -> str:
-        """Returns the path of the net."""
+        """Returns the path of the net specified by net_type."""
         net_type_name = net_type.value
         net = getattr(self.model, net_type_name)
         path_str = net_type_name  # 'encoder' or 'decoder'

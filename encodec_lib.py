@@ -30,7 +30,7 @@ class EncodecNNModel(NNModel):
         return cast(Conv1d, first_layer.conv.conv)
 
     def get_net_path(self, net_type: NetTypeEnum) -> str:
-        """Returns the path of the net."""
+        """Returns the path of the net specified by net_type."""
         return net_type.value + ".model"
 
 
