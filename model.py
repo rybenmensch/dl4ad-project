@@ -5,7 +5,7 @@ from typing import Protocol, TypeAlias, runtime_checkable
 import torch
 from torch import nn
 
-from lib import convert_audio, getattr_from_attr_string, setattr_from_attr_string
+from lib import convert_audio, getattr_from_attr_string
 from torch_lib import IterableModule
 
 Net: TypeAlias = IterableModule

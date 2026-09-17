@@ -39,6 +39,15 @@ processed = model.process_audio((base_source, sr))
 # base_recon = process_audio(model.model, base_source)
 # torchaudio.save(reconstructed_root / "base_reconstruction.wav", base_recon, sr)
 
+# - weight:
+#     - shuffling
+#     - multiplication
+#     - roll
+#     - oscillate
+#     - invert
+#     - ablate
+# - skip layers
+# - repeat layers
 
 exit()
 

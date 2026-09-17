@@ -6,6 +6,9 @@ from torch import nn
 
 from lib import hasattr_from_attr_string
 
+# TODO:
+# clean up lib and torch_lib
+
 
 class IterableModule(Protocol):
     def __iter__(self) -> Iterator[nn.Module]: ...
