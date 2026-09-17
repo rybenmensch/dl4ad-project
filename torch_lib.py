@@ -1,5 +1,5 @@
 from collections.abc import Iterator
-from typing import Protocol, cast, runtime_checkable
+from typing import Protocol, TypeVar, cast, runtime_checkable
 
 import torch
 from torch import nn
@@ -11,11 +11,22 @@ from lib import hasattr_from_attr_string
 
 
 # TODO: maybe just rename `IterableModule` to `Net`?
-@runtime_checkable
-class IterableModule(Protocol):
-    def __iter__(self) -> Iterator[nn.Module]: ...
-    def __getitem__(self, idx: int) -> nn.Module: ...
-    def __setitem__(self, idx: int, value: nn.Module) -> None: ...
+# @runtime_checkable
+# class IterableModule(Protocol):
+#     def __iter__(self) -> Iterator[nn.Module]: ...
+#     def __getitem__(self, idx: int) -> nn.Module: ...
+#     def __setitem__(self, idx: int, value: nn.Module) -> None: ...
+
+
+class IterableModule(nn.Module):
+    def __iter__(self) -> Iterator[nn.Module]:
+        raise NotImplementedError
+
+    def __getitem__(self, idx: int) -> nn.Module:
+        raise NotImplementedError
+
+    def __setitem__(self, idx: int, value: nn.Module) -> None:
+        raise NotImplementedError
 
 
 def is_layer_iterable(net: nn.Module | IterableModule) -> bool:
