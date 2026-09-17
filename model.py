@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
-from typing import Protocol, TypeAlias, runtime_checkable
+from typing import TypeAlias
 
 import torch
 from torch import nn
@@ -11,11 +11,6 @@ from torch_lib import IterableModule, get_layer_name
 
 Net: TypeAlias = IterableModule
 Module: TypeAlias = nn.Module
-
-
-@runtime_checkable
-class HasInChannels(Protocol):
-    in_channels: int
 
 
 class NetTypeEnum(str, Enum):
