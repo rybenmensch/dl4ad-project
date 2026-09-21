@@ -4,7 +4,7 @@ from enum import Enum
 from typing import TypeAlias
 
 import torch
-from torch import nn
+from torch import Tensor, nn
 
 from lib import convert_audio, getattr_from_attr_string, setattr_from_attr_string
 from torch_lib import IterableModule, get_layer_name
@@ -16,6 +16,12 @@ Module: TypeAlias = nn.Module
 class NetTypeEnum(str, Enum):
     Encoder = "encoder"
     Decoder = "decoder"
+
+
+@dataclass
+class WeightAndBias:
+    weight: Tensor
+    bias: Tensor | None
 
 
 class NNModel(ABC):
@@ -43,6 +49,7 @@ class NNModel(ABC):
     def get_channels(self) -> int:
         pass
 
+    # TODO: rename to layer_get_channels
     @abstractmethod
     def get_layer_channels(self, layer: Module) -> tuple[int, int] | None:
         raise TypeError(f"Layer has unhandled type {get_layer_name(layer)}!")
@@ -53,6 +60,20 @@ class NNModel(ABC):
         audio = audio.unsqueeze(0)
         with torch.no_grad():
             return self.model(audio).squeeze(0)
+
+    # TODO: think if this is actually needed?
+    @abstractmethod
+    def layer_has_subnet(self, layer: nn.Module) -> bool:
+        pass
+
+    # TODO: think if this is actually needed?
+    @abstractmethod
+    def layer_has_weights(self, layer: nn.Module) -> bool:
+        pass
+
+    @abstractmethod
+    def layer_get_weight_and_bias(self, layer: nn.Module) -> list[WeightAndBias]:
+        raise TypeError(f"Layer has unhandled type {get_layer_name(layer)}!")
 
     @abstractmethod
     def get_net_path(self, net_type: NetTypeEnum) -> str:

@@ -1,11 +1,13 @@
 from typing import cast
 
+import torch
 from encodec.model import EncodecModel
 from encodec.modules.seanet import SLSTM, SConv1d, SConvTranspose1d, SEANetResnetBlock
-from torch import nn
-from torch.nn import LSTM, Conv1d, ConvTranspose1d, Sequential
+from torch import Tensor, nn
+from torch.nn import ELU, Conv1d, ConvTranspose1d, Sequential
+from torch.nn.utils import remove_weight_norm
 
-from model import NetTypeEnum, NNModel
+from model import NetTypeEnum, NNModel, WeightAndBias
 
 
 class EncodecNNModel(NNModel):
@@ -40,10 +42,39 @@ class EncodecNNModel(NNModel):
         elif isinstance(layer, SLSTM):
             lstm = layer.lstm
             return (lstm.input_size, lstm.input_size)
-        elif isinstance(layer, nn.ELU):
+        elif isinstance(layer, ELU):
             return None
         else:
             return super().get_layer_channels(layer)
+
+    def layer_has_subnet(self, layer: nn.Module) -> bool:
+        return isinstance(layer, (SConv1d, SEANetResnetBlock))
+
+    def layer_has_weights(self, layer: nn.Module) -> bool:
+        return isinstance(layer, (SConv1d, SConvTranspose1d, SEANetResnetBlock))
+
+    def layer_get_weight_and_bias(self, layer: nn.Module) -> list[WeightAndBias]:
+        try:
+            remove_weight_norm(layer)
+        except (ValueError, AttributeError):
+            pass
+
+        if isinstance(layer, SConv1d):
+            conv = cast(Conv1d, layer.conv.conv)
+            return [WeightAndBias(weight=conv.weight, bias=conv.bias)]
+        elif isinstance(layer, SConvTranspose1d):
+            conv = cast(ConvTranspose1d, layer.convtr.convtr)
+            return [WeightAndBias(weight=conv.weight, bias=conv.bias)]
+        elif isinstance(layer, SEANetResnetBlock):
+            net = cast(Sequential, layer.block)
+            all = []
+            for l in net:
+                all += self.layer_get_weight_and_bias(l)
+            return all
+        elif isinstance(layer, (SLSTM, ELU)):
+            return [WeightAndBias(weight=torch.empty((0, 0)), bias=torch.empty((0, 0)))]
+        else:
+            return super().layer_get_weight_and_bias(layer)
 
     def get_net_path(self, net_type: NetTypeEnum) -> str:
         """Returns the path of the net specified by net_type."""

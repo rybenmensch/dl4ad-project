@@ -6,10 +6,12 @@ import rave
 import torch
 from cached_conv.convs import CachedSequential, Conv1d, ConvTranspose1d
 from rave import Residual
-from torch import nn
+from torch import Tensor, nn
+from torch.nn import LeakyReLU
+from torch.nn.utils import remove_weight_norm
 
 from lib import get_in_channels_from_state_dict
-from model import NetTypeEnum, NNModel
+from model import NetTypeEnum, NNModel, WeightAndBias
 
 
 class RAVEModel(NNModel):
@@ -46,10 +48,36 @@ class RAVEModel(NNModel):
                 ch_out := self.get_layer_channels(net[3])
             ):
                 return (ch_in[0], ch_out[1])
-        elif isinstance(layer, nn.LeakyReLU):
+        elif isinstance(layer, LeakyReLU):
             return None
         else:
             return super().get_layer_channels(layer)
+
+    def layer_has_subnet(self, layer: nn.Module) -> bool:
+        return isinstance(layer, Residual)
+
+    def layer_has_weights(self, layer: nn.Module) -> bool:
+        return not isinstance(layer, LeakyReLU)
+
+    def layer_get_weight_and_bias(self, layer: nn.Module) -> list[WeightAndBias]:
+        """Returns `None` if layer does not have any weights"""
+        try:
+            remove_weight_norm(layer)
+        except (ValueError, AttributeError):
+            pass
+
+        if isinstance(layer, (Conv1d, ConvTranspose1d)):
+            return [WeightAndBias(weight=layer.weight, bias=layer.bias)]
+        elif isinstance(layer, Residual):
+            net = cast(CachedSequential, layer.aligned.branches[0].net)
+            all = []
+            for l in net:
+                all += self.layer_get_weight_and_bias(l)
+            return all
+        elif isinstance(layer, LeakyReLU):
+            return [WeightAndBias(weight=torch.empty((0, 0)), bias=torch.empty((0, 0)))]
+        else:
+            return super().layer_get_weight_and_bias(layer)
 
     def get_net_path(self, net_type: NetTypeEnum) -> str:
         """Returns the path of the net specified by net_type."""
