@@ -262,6 +262,9 @@ class LayerInfo:
     inout: tuple[int, int] | None
     net_type: NetTypeEnum
 
+    def get_layer(self):
+        return self.model.from_layer_path.get_layer(self.layer_path)
+
 
 def layer_info_from_net(model: NNModel, net: Net, idx: int, layer: Module) -> LayerInfo:
     return LayerInfo(

@@ -9,7 +9,7 @@ class SkippingLayer(Module):
 
     def __init__(self, layer: LayerInfo) -> None:
         super().__init__()
-        self.layer = layer.model.from_layer_path.get_layer(layer.layer_path)
+        self.layer = layer.get_layer()
 
     def forward(self, x: Tensor) -> Tensor:
         return x
@@ -20,7 +20,7 @@ class RepeatingLayer(Module):
 
     def __init__(self, layer: LayerInfo, repeats: int = 1) -> None:
         super().__init__()
-        self.layer = layer.model.from_layer_path.get_layer(layer.layer_path)
+        self.layer = layer.get_layer()
         self.repeats = repeats
 
     def forward(self, x: Tensor) -> Tensor:
