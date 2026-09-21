@@ -266,6 +266,19 @@ class LayerInfo:
         return self.model.from_layer_path.get_layer(self.layer_path)
 
     @classmethod
+    def from_layer(cls, model: NNModel, layer: Module) -> "LayerInfo":
+        model.from_layer.get_layer_path(layer)
+        net_type, index = model.from_layer.get_net_type_and_index(layer)
+        return cls(
+            model=model,
+            index=index,
+            name=get_layer_name(layer),
+            layer_path=model.from_layer.get_layer_path(layer),
+            inout=model.get_layer_channels(layer),
+            net_type=net_type,
+        )
+
+    @classmethod
     def from_net_and_index(cls, model: NNModel, net: Net, idx: int) -> "LayerInfo":
         layer = net[idx]
         return cls(
