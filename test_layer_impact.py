@@ -47,20 +47,9 @@ model = RAVEModel("models/satyr/")
 base_recon = model(base_wav)
 encoder, decoder = model.get_nets()
 
-layers = get_shape_preserving_layers_from_net(model, encoder)
 
-layer_info = layers[5]
-print(layer_info)
-
-encoder[layer_info.index] = RepeatingLayer(layer_info, 5)
-
-
-# for l in decoder:
-#     with torch.no_grad():
-#         for w_b in model.layer_get_weight_and_bias(l):
-#             w_b.weight.mul_(3)
-
-# exit()
+lol = LayerInfo.from_net_and_index(model, encoder, 1)
+encoder[1] = MultiplierLayer(lol, weight_mul=3, bias_mul=1)
 
 processed = model(base_wav)
 torchaudio.save(

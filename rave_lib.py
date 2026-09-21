@@ -60,14 +60,14 @@ class RAVEModel(NNModel):
         return not isinstance(layer, LeakyReLU)
 
     def layer_get_weight_and_bias(self, layer: nn.Module) -> list[WeightAndBias]:
-        """Returns `None` if layer does not have any weights"""
         try:
             remove_weight_norm(layer)
         except (ValueError, AttributeError):
             pass
 
         if isinstance(layer, (Conv1d, ConvTranspose1d)):
-            return [WeightAndBias(weight=layer.weight, bias=layer.bias)]
+            bias = layer.bias if layer.bias != None else torch.empty((0, 0))
+            return [WeightAndBias(weight=layer.weight, bias=bias)]
         elif isinstance(layer, Residual):
             net = cast(CachedSequential, layer.aligned.branches[0].net)
             all = []

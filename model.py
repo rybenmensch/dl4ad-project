@@ -21,7 +21,7 @@ class NetTypeEnum(str, Enum):
 @dataclass
 class WeightAndBias:
     weight: Tensor
-    bias: Tensor | None
+    bias: Tensor
 
 
 class NNModel(ABC):
@@ -265,7 +265,20 @@ class LayerInfo:
     def get_layer(self):
         return self.model.from_layer_path.get_layer(self.layer_path)
 
+    @classmethod
+    def from_net_and_index(cls, model: NNModel, net: Net, idx: int) -> "LayerInfo":
+        layer = net[idx]
+        return cls(
+            model=model,
+            index=idx,
+            name=get_layer_name(layer),
+            layer_path=model.from_layer.get_layer_path(layer),
+            inout=model.get_layer_channels(layer),
+            net_type=model.from_layer.get_net_type(layer),
+        )
 
+
+# TODO: deprecate this
 def layer_info_from_net(model: NNModel, net: Net, idx: int, layer: Module) -> LayerInfo:
     return LayerInfo(
         model=model,
@@ -409,7 +422,3 @@ def swap_layers(model: NNModel, swapList: list[SwapInfo], swap: Swap) -> list[Sw
 
     # basically just re-calculate swapList as swapping invalidates most of the list
     return get_swappable_layers(model)
-
-
-def get_weighted_layers():
-    pass
