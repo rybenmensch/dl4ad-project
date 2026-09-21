@@ -42,15 +42,23 @@ base_wav = torchaudio.load("audio/source/GLM.wav")
 base_source, base_sr = base_wav
 
 model = RAVEModel("models/satyr/")
-model = EncodecNNModel()
+# model = EncodecNNModel()
 
 base_recon = model(base_wav)
 encoder, decoder = model.get_nets()
 
-for l in decoder:
-    with torch.no_grad():
-        for w_b in model.layer_get_weight_and_bias(l):
-            w_b.weight.mul_(3)
+layers = get_shape_preserving_layers_from_net(model, encoder)
+
+layer_info = layers[5]
+print(layer_info)
+
+encoder[layer_info.index] = RepeatingLayer(layer_info, 5)
+
+
+# for l in decoder:
+#     with torch.no_grad():
+#         for w_b in model.layer_get_weight_and_bias(l):
+#             w_b.weight.mul_(3)
 
 # exit()
 

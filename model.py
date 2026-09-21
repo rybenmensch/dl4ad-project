@@ -252,6 +252,7 @@ class LayerPath:
 
 @dataclass(frozen=True)
 class LayerInfo:
+    model: NNModel
     index: int
     name: str
     layer_path: str
@@ -264,6 +265,7 @@ class LayerInfo:
 
 def layer_info_from_net(model: NNModel, net: Net, idx: int, layer: Module) -> LayerInfo:
     return LayerInfo(
+        model=model,
         index=idx,
         name=model.from_layer.get_layer_name(layer),
         layer_path=model.from_layer.get_layer_path(layer),

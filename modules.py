@@ -1,13 +1,15 @@
 from torch import Tensor
 from torch.nn import Module
 
+from model import LayerInfo
+
 
 class SkippingLayer(Module):
     """Layer that forwards its input unchanged."""
 
-    def __init__(self, layer: Module) -> None:
+    def __init__(self, layer: LayerInfo) -> None:
         super().__init__()
-        self.layer = layer
+        self.layer = layer.model.from_layer_path.get_layer(layer.layer_path)
 
     def forward(self, x: Tensor) -> Tensor:
         return x
@@ -16,9 +18,9 @@ class SkippingLayer(Module):
 class RepeatingLayer(Module):
     """Layer that applies its processing multiple times."""
 
-    def __init__(self, layer: Module, repeats: int = 1) -> None:
+    def __init__(self, layer: LayerInfo, repeats: int = 1) -> None:
         super().__init__()
-        self.layer = layer
+        self.layer = layer.model.from_layer_path.get_layer(layer.layer_path)
         self.repeats = repeats
 
     def forward(self, x: Tensor) -> Tensor:
