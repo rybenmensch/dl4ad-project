@@ -1,3 +1,36 @@
+# new stuff (17.9.26 - ...)
+
+## `LeakyReLu`'s
+
+- 'negative_slope' can be modified 
+- can just take any amount of input channels
+
+
+## `Residual`
+
+- is layered, net can be accessed by path `residual_layer.aligned.branches[0].net`
+- always seem to follow this structure
+- as they have a subnet
+
+```
+Residual(
+  (aligned): Branches(
+    (branches): ModuleList(
+      (0): DilatedUnit(
+        (net): CachedSequential(
+          (0): LeakyReLU(negative_slope=0.2)
+          (1): Conv1d(96, 96, kernel_size=(3,), stride=(1,), bias=False)
+          (2): LeakyReLU(negative_slope=0.2)
+          (3): Conv1d(96, 96, kernel_size=(1,), stride=(1,), bias=False)
+        )
+      )
+      (1): Identity()
+    )
+  )
+)
+```
+
+
 # things to try out
 
 - print out all the dimensions to see where we could swap/skip/repeat
