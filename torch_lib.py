@@ -28,6 +28,9 @@ class IterableModule(nn.Module):
     def __setitem__(self, idx: int, value: nn.Module) -> None:
         raise NotImplementedError
 
+    def __len__(self) -> int:
+        raise NotImplementedError
+
 
 def is_layer_iterable(net: nn.Module | IterableModule) -> bool:
     try:

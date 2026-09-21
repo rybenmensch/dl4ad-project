@@ -9,7 +9,14 @@ import torchaudio
 
 from encodec_lib import EncodecNNModel
 from lib import *
-from model import Net, NetTypeEnum, get_shape_preserving_layers
+from model import (
+    Net,
+    NetTypeEnum,
+    Swap,
+    get_shape_preserving_layers,
+    get_swappable_layers_from_net,
+    swap_layers,
+)
 from modules import *
 from plotting import plot_comparison
 from rave_lib import RAVEModel
@@ -33,15 +40,17 @@ base_wav = torchaudio.load("audio/source/GLM.wav")
 base_source, base_sr = base_wav
 
 model = RAVEModel("models/satyr/")
-print(len(get_shape_preserving_layers(model)))
+# model = EncodecNNModel()
 base_recon = model(base_wav)
 
-processed = model(base_wav)
-torchaudio.save(reconstructed_root / "lmao.wav", processed, model.get_sample_rate())
 
+exit()
+
+processed = model(base_wav)
 torchaudio.save(
     reconstructed_root / "base_reconstruction.wav", base_recon, model.get_sample_rate()
 )
+torchaudio.save(reconstructed_root / "lmao.wav", processed, model.get_sample_rate())
 
 # - weight:
 #     - shuffling

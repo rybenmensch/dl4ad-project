@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from enum import Enum
 from typing import TypeAlias
 
@@ -229,18 +229,19 @@ class LayerPath:
         return net[index]
 
 
-# TODO: think about what information is returned,
-# path? net_type? the layer itself?
 @dataclass(frozen=True)
 class LayerInfo:
     index: int
     name: str
     layer_path: str
+    # TODO: instead of this type, it could have a more descriptive type
+    # for the None connections. e.g. a type that tells us that the layer can be
+    # put into any position, but that also tells us the inouts at the current position
     inout: tuple[int, int] | None
     net_type: NetTypeEnum
 
 
-def layer_info_from_net(model, net: Net, idx: int, layer: Module) -> LayerInfo:
+def layer_info_from_net(model: NNModel, net: Net, idx: int, layer: Module) -> LayerInfo:
     return LayerInfo(
         index=idx,
         name=model.from_layer.get_layer_name(layer),
@@ -272,6 +273,116 @@ def get_shape_preserving_layers(model: NNModel) -> list[LayerInfo]:
     for net in model.get_nets():
         results += get_shape_preserving_layers_from_net(model, net)
     return results
+
+
+def info_replace_inout(infos: list[LayerInfo]) -> list[LayerInfo]:
+    """
+    If `inout` was previously `None`, replace `inout` with the output size of the previous
+    and the input size of the next layer
+    """
+    result = []
+    for i in infos:
+        in_chans: int | None = None
+        out_chans: int | None = None
+
+        if i.inout == None:
+            index = i.index
+
+            # check if we are about to commit an out-of-bounds read
+            if i.index != 0:
+                inout = infos[index - 1].inout
+                in_chans = inout[0] if inout != None else None
+            if i.index != len(infos) - 1:
+                inout = infos[index + 1].inout
+                out_chans = inout[1] if inout != None else None
+        else:
+            in_chans, out_chans = i.inout
+
+        result.append(replace(i, inout=(in_chans, out_chans)))
+    return result
+
+
+@dataclass(frozen=True)
+class SwapInfo:
+    source: LayerInfo
+    targets: list[LayerInfo]
+
+    def __str__(self) -> str:
+        s = self.source
+        s_str = f"({s.index}) {s.name} {s.inout} <-> "
+        space = " " * len(s_str)
+        t_strs = [f"({t.index}) {t.name} {t.inout} " for t in self.targets]
+
+        first = s_str + t_strs[0]
+        following = [space + t for t in t_strs[1:]]
+        return "\n".join([first, *following])
+
+
+def get_swappable_layers_from_net(model: NNModel, net: Net) -> list[SwapInfo]:
+    infos = [layer_info_from_net(model, net, i, l) for i, l in enumerate(net)]
+    infos_corrected = info_replace_inout(infos)
+
+    results = []
+    for source in infos:
+        targets = []
+
+        source_corr = infos_corrected[source.index]
+        source_inout = source_corr.inout if source.inout == None else source.inout
+
+        for target in infos:
+            if source == target:
+                continue
+            if source.inout == target.inout:
+                targets.append(target)
+                continue
+
+            target_corr = infos_corrected[target.index]
+            target_inout = target_corr.inout if target.inout == None else target.inout
+
+            if source_inout == target_inout:
+                targets.append(target)
+
+        if len(targets):
+            test = SwapInfo(source=source, targets=targets)
+            results.append(test)
+
+    return results
+
+
+def get_swappable_layers(model: NNModel) -> list[SwapInfo]:
+    results = []
+    for net in model.get_nets():
+        results += get_swappable_layers_from_net(model, net)
+    return results
+
+
+@dataclass(frozen=True)
+class Swap:
+    source: LayerInfo
+    target: LayerInfo
+
+    @classmethod
+    def from_info(cls, info: SwapInfo, index: int = 0) -> "Swap":
+        return cls(source=info.source, target=info.targets[index])
+
+
+def swap_layers(model: NNModel, swapList: list[SwapInfo], swap: Swap) -> list[SwapInfo]:
+    """
+    Rather unholyly, this both in-place modifies the model, along with
+    returning a modified swaplist...
+    """
+    source = swap.source
+    target = swap.target
+    source_net = model.get_net(source.net_type)
+    target_net = model.get_net(target.net_type)
+
+    # first, do the actual swap
+    source_tmp = source_net[source.index]
+    source_net[source.index] = target_net[target.index]
+    target_net[target.index] = source_tmp
+
+    # basically just re-calculate swapList as swapping invalidates most of the list
+    return get_swappable_layers(model)
 
 
 def get_weighted_layers():
