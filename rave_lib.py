@@ -1,23 +1,15 @@
 from pathlib import Path
-from typing import TypeAlias, cast
+from typing import cast
 
-import cached_conv
 import gin
 import rave
 import torch
-from cached_conv.convs import CachedSequential
+from cached_conv.convs import CachedSequential, Conv1d, ConvTranspose1d
 from rave import Residual
 from torch import nn
 
 from lib import get_in_channels_from_state_dict
 from model import NetTypeEnum, NNModel
-from torch_lib import get_layer_name
-
-Conv1d: TypeAlias = (
-    cached_conv.convs.Conv1d
-    | cached_conv.convs.CachedConv1d
-    | cached_conv.convs.ConvTranspose1d
-)
 
 
 class RAVEModel(NNModel):
@@ -46,7 +38,7 @@ class RAVEModel(NNModel):
 
     def get_layer_channels(self, layer: nn.Module) -> tuple[int, int] | None:
         """Returns `None` if layer accepts any input/output size."""
-        if isinstance(layer, Conv1d):
+        if isinstance(layer, (Conv1d, ConvTranspose1d)):
             return (layer.in_channels, layer.out_channels)
         elif isinstance(layer, Residual):
             net = cast(CachedSequential, layer.aligned.branches[0].net)
