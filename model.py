@@ -291,18 +291,6 @@ class LayerInfo:
         )
 
 
-# TODO: deprecate this
-def layer_info_from_net(model: NNModel, net: Net, idx: int, layer: Module) -> LayerInfo:
-    return LayerInfo(
-        model=model,
-        index=idx,
-        name=model.from_layer.get_layer_name(layer),
-        layer_path=model.from_layer.get_layer_path(layer),
-        inout=model.get_layer_channels(layer),
-        net_type=model.from_layer.get_net_type(net),
-    )
-
-
 def get_shape_preserving_layers_from_net(model: NNModel, net: Net) -> list[LayerInfo]:
     """
     Returns information about every layer that preserves the input shape.
@@ -311,11 +299,11 @@ def get_shape_preserving_layers_from_net(model: NNModel, net: Net) -> list[Layer
     """
 
     results = []
-
-    for idx, layer in enumerate(net):
-        inout = model.get_layer_channels(layer)
+    for l in net:
+        inout = model.get_layer_channels(l)
         if inout == None or inout[0] == inout[1]:
-            results.append(layer_info_from_net(model, net, idx, layer))
+            results.append(LayerInfo.from_layer(model, l))
+
     return results
 
 
@@ -330,7 +318,7 @@ def get_shape_preserving_layers(model: NNModel) -> list[LayerInfo]:
 def info_replace_inout(infos: list[LayerInfo]) -> list[LayerInfo]:
     """
     If `inout` was previously `None`, replace `inout` with the output size of the previous
-    and the input size of the next layer
+    and the input size of the next layer.
     """
     result = []
     for i in infos:
@@ -371,7 +359,7 @@ class SwapInfo:
 
 
 def get_swappable_layers_from_net(model: NNModel, net: Net) -> list[SwapInfo]:
-    infos = [layer_info_from_net(model, net, i, l) for i, l in enumerate(net)]
+    infos = [LayerInfo.from_layer(model, l) for l in net]
     infos_corrected = info_replace_inout(infos)
 
     results = []
