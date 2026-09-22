@@ -26,7 +26,7 @@ class EncodecNNModel(NNModel):
     def get_channels(self) -> int:
         return self.model.channels
 
-    def get_layer_channels(self, layer: nn.Module) -> tuple[int, int] | None:
+    def layer_get_channels(self, layer: nn.Module) -> tuple[int, int] | None:
         if isinstance(layer, SConv1d):
             conv = cast(Conv1d, layer.conv.conv)
             return (conv.in_channels, conv.out_channels)
@@ -35,8 +35,8 @@ class EncodecNNModel(NNModel):
             return (conv.in_channels, conv.out_channels)
         elif isinstance(layer, SEANetResnetBlock):
             net = cast(Sequential, layer.block)
-            if (ch_in := self.get_layer_channels(net[1])) and (
-                ch_out := self.get_layer_channels(net[3])
+            if (ch_in := self.layer_get_channels(net[1])) and (
+                ch_out := self.layer_get_channels(net[3])
             ):
                 return (ch_in[0], ch_out[1])
         elif isinstance(layer, SLSTM):
@@ -45,7 +45,7 @@ class EncodecNNModel(NNModel):
         elif isinstance(layer, ELU):
             return None
         else:
-            return super().get_layer_channels(layer)
+            return super().layer_get_channels(layer)
 
     def layer_has_subnet(self, layer: nn.Module) -> bool:
         return isinstance(layer, (SConv1d, SEANetResnetBlock))

@@ -49,9 +49,8 @@ class NNModel(ABC):
     def get_channels(self) -> int:
         pass
 
-    # TODO: rename to layer_get_channels
     @abstractmethod
-    def get_layer_channels(self, layer: Module) -> tuple[int, int] | None:
+    def layer_get_channels(self, layer: Module) -> tuple[int, int] | None:
         raise TypeError(f"Layer has unhandled type {get_layer_name(layer)}!")
 
     def __call__(self, wav: tuple[torch.Tensor, int]) -> torch.Tensor:
@@ -274,7 +273,7 @@ class LayerInfo:
             index=index,
             name=get_layer_name(layer),
             layer_path=model.from_layer.get_layer_path(layer),
-            inout=model.get_layer_channels(layer),
+            inout=model.layer_get_channels(layer),
             net_type=net_type,
         )
 
@@ -286,7 +285,7 @@ class LayerInfo:
             index=idx,
             name=get_layer_name(layer),
             layer_path=model.from_layer.get_layer_path(layer),
-            inout=model.get_layer_channels(layer),
+            inout=model.layer_get_channels(layer),
             net_type=model.from_layer.get_net_type(layer),
         )
 
@@ -300,7 +299,7 @@ def get_shape_preserving_layers_from_net(model: NNModel, net: Net) -> list[Layer
 
     results = []
     for l in net:
-        inout = model.get_layer_channels(l)
+        inout = model.layer_get_channels(l)
         if inout == None or inout[0] == inout[1]:
             results.append(LayerInfo.from_layer(model, l))
 
