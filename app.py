@@ -16,15 +16,13 @@ AUDIO_EXTENSIONS = {
 
 def add_common_options(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
-        "-m",
-        "--model-path",
+        "-r",
+        "--rave-path",
         type=Path,
         metavar="DIR",
         help=(
-            "RAVE model directory. The directory is only checked for existence; "
-            "its internal structure is not verified. Supplying --model-path "
-            "automatically implies --type RAVE. Combining --model-path with "
-            "--type Encodec is always an error."
+            "RAVE model directory. Supplying this option automatically implies --type RAVE."
+            "Combining --model-path with --type Encodec is always an error."
         ),
     )
 
@@ -33,9 +31,9 @@ def add_common_options(parser: argparse.ArgumentParser) -> None:
         "--type",
         choices=("RAVE", "Encodec"),
         help=(
-            "Model type. May be omitted when --model-path is supplied, in which "
+            "Model type. May be omitted when --rave-path is supplied, in which "
             "case RAVE is selected automatically. --type Encodec cannot be used "
-            "together with --model-path."
+            "together with --rave-path."
         ),
     )
 
@@ -49,12 +47,7 @@ def add_common_options(parser: argparse.ArgumentParser) -> None:
     )
 
 
-def add_input_option(parser: argparse.ArgumentParser, *, analyze: bool) -> None:
-    if analyze:
-        help_text = "Input audio file."
-    else:
-        help_text = "Input audio file or directory containing audio files."
-
+def add_input_option(parser: argparse.ArgumentParser, help_text: str) -> None:
     parser.add_argument(
         "-i",
         "--input",
@@ -65,28 +58,10 @@ def add_input_option(parser: argparse.ArgumentParser, *, analyze: bool) -> None:
     )
 
 
-def add_generate_options(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument(
-        "--job",
-        action="append",
-        metavar="JOB",
-        help=("Job to execute. Repeatable, e.g. " "'--job encode --job normalize'."),
-    )
-
-    parser.add_argument(
-        "--tasks",
-        metavar="TASKS",
-        help=(
-            "Tasks as a single string. Alternative to repeated --job, "
-            "e.g. '--tasks \"encode normalize\"'."
-        ),
-    )
-
-
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="audio-cli",
-        description="Generate and analyze audio using RAVE or Encodec.",
+        prog="networkbend-cli",
+        description="Analyze and bend networks using RAVE or Encodec.",
     )
 
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -97,30 +72,36 @@ def build_parser() -> argparse.ArgumentParser:
         description="Generate audio from an audio file or directory.",
     )
     add_common_options(generate)
-    add_input_option(generate, analyze=False)
-    add_generate_options(generate)
+    add_input_option(generate, "Input audio file.")
 
     analyze = subparsers.add_parser(
         "analyze",
-        help="Analyze an audio file.",
-        description="Analyze a single audio file.",
+        help="Analyze a model using an audio file.",
+        description="Analyze a model using an audio file.",
     )
     add_common_options(analyze)
-    add_input_option(analyze, analyze=True)
+    add_input_option(analyze, "Input audio file or directory containing audio files.")
+
+    export = subparsers.add_parser(
+        "export",
+        help="Export bended network as torchscript.",
+        description="Export bended network as torchscript.",
+    )
+    add_common_options(export)
 
     return parser
 
 
 def validate_and_normalize(args: argparse.Namespace) -> argparse.Namespace:
-    # --model-path always implies RAVE.
-    if args.model_path is not None:
-        if not args.model_path.is_dir():
+    # --rave-path always implies RAVE.
+    if args.rave_path is not None:
+        if not args.rave_path.is_dir():
             raise ValueError(
-                f"--model-path must be an existing directory: {args.model_path}"
+                f"--rave-path must be an existing directory: {args.rave_path}"
             )
 
         if args.type == "Encodec":
-            raise ValueError("--type Encodec cannot be used with --model-path")
+            raise ValueError("--type Encodec cannot be used with --rave-path")
 
         args.type = "RAVE"
 
@@ -133,9 +114,8 @@ def validate_and_normalize(args: argparse.Namespace) -> argparse.Namespace:
 
     # Validate input according to the subcommand.
     if args.command == "generate":
-        if args.input.is_file():
-            if args.input.suffix.lower() not in AUDIO_EXTENSIONS:
-                raise ValueError(f"Not a supported audio file: {args.input}")
+        if args.input.is_file() and args.input.suffix.lower() not in AUDIO_EXTENSIONS:
+            raise ValueError(f"Not a supported audio file: {args.input}")
         elif not args.input.is_dir():
             raise ValueError(
                 f"--input must be an audio file or directory: {args.input}"
@@ -165,6 +145,10 @@ def analyze(args: argparse.Namespace) -> None:
     print(f"output: {args.output}")
 
 
+def export(args: argparse.Namespace) -> None:
+    print("Not implemented yet!")
+
+
 def main() -> None:
     parser = build_parser()
     args = parser.parse_args()
@@ -178,6 +162,8 @@ def main() -> None:
         generate(args)
     elif args.command == "analyze":
         analyze(args)
+    elif args.command == "export":
+        export(args)
 
 
 if __name__ == "__main__":
