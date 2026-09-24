@@ -1,4 +1,5 @@
 from cli import build_parser, parse_args, validate_and_normalize
+from generate import generate_loop
 from state import AppState, Command
 
 
@@ -14,7 +15,7 @@ def main() -> None:
     app = AppState(args)
 
     if args.command == Command.GENERATE:
-        pass
+        generate_loop(app)
     elif args.command == Command.ANALYZE:
         pass
     elif args.command == Command.EXPORT:
