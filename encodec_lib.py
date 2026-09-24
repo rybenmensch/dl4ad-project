@@ -61,10 +61,12 @@ class EncodecNNModel(NNModel):
 
         if isinstance(layer, SConv1d):
             conv = cast(Conv1d, layer.conv.conv)
-            return [WeightAndBias(weight=conv.weight, bias=conv.bias)]
+            bias = conv.bias if conv.bias != None else torch.empty((0, 0))
+            return [WeightAndBias(weight=conv.weight, bias=bias)]
         elif isinstance(layer, SConvTranspose1d):
             conv = cast(ConvTranspose1d, layer.convtr.convtr)
-            return [WeightAndBias(weight=conv.weight, bias=conv.bias)]
+            bias = conv.bias if conv.bias != None else torch.empty((0, 0))
+            return [WeightAndBias(weight=conv.weight, bias=bias)]
         elif isinstance(layer, SEANetResnetBlock):
             net = cast(Sequential, layer.block)
             all = []
