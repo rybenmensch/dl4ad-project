@@ -1,0 +1,101 @@
+import os
+import os.path
+from dataclasses import dataclass
+from enum import Enum
+from pathlib import Path
+
+from encodec_lib import EncodecNNModel
+from rave_lib import RAVEModel
+
+AUDIO_EXTENSIONS = {
+    ".wav",
+    ".aif",
+    ".aiff",
+    ".mp3",
+}
+
+
+class ModelType(str, Enum):
+    RAVE = "RAVE"
+    ENCODEC = "Encodec"
+
+
+class Command(str, Enum):
+    GENERATE = "generate"
+    ANALYZE = "analyze"
+    EXPORT = "export"
+
+
+@dataclass
+class CommonArgs:
+    command: Command
+    rave_path: Path | None
+    model_type: ModelType | None
+    output: Path
+
+
+@dataclass
+class GenerateArgs(CommonArgs):
+    input: Path
+
+
+@dataclass
+class AnalyzeArgs(CommonArgs):
+    input: Path
+
+
+@dataclass
+class ExportArgs(CommonArgs):
+    pass
+
+
+Args = GenerateArgs | AnalyzeArgs | ExportArgs
+
+
+class AppState:
+    def __init__(self, args: Args) -> None:
+        self.args = args
+        self.__create_input_list()
+        self.__load_model()
+        self.__handle_output_dir()
+
+    def __load_model(self) -> None:
+        if self.args.model_type == ModelType.RAVE:
+            assert self.args.rave_path != None
+            self.model = RAVEModel(self.args.rave_path)
+        else:
+            self.model = EncodecNNModel()
+
+    def __handle_output_dir(self) -> None:
+        self.output = self.args.output
+        command_name = self.args.command.value
+        self.output = self.output / command_name
+
+        if not self.output.exists():
+            self.output.mkdir(parents=True, exist_ok=True)
+
+    def __create_input_list(self) -> None:
+        if isinstance(self.args, ExportArgs):
+            self.input_list = None
+            return
+
+        path = self.args.input
+
+        if not path.exists():
+            raise ValueError(f"Path does not exist: {path}")
+        if path.is_file():
+            if path.suffix.lower() not in AUDIO_EXTENSIONS:
+                raise ValueError(f"Not a supported audio file: {path}")
+            self.results = [path]
+
+        if path.is_dir():
+            self.results = []
+            for f in os.listdir(path):
+                file_path = Path(os.path.join(path, f))
+                if file_path.is_file() and file_path.suffix.lower() in AUDIO_EXTENSIONS:
+                    self.results.append(file_path)
+
+            if len(self.results) == 0:
+                raise FileNotFoundError(
+                    f"Path does not contain any valid audio files: {path}"
+                )
