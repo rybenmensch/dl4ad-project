@@ -31,4 +31,13 @@ def is_layer_iterable(net: nn.Module | IterableModule) -> bool:
 
 
 def get_layer_name(layer: nn.Module) -> str:
+    if type(layer).__repr__ is not nn.Module.__repr__:
+        return repr(layer)
     return type(layer).__name__
+
+
+def unwrap_layer(layer: nn.Module) -> nn.Module:
+    while hasattr(layer, "layer"):
+        assert isinstance(layer.layer, nn.Module)
+        layer = layer.layer
+    return layer

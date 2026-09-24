@@ -12,6 +12,7 @@ from torch.nn.utils import remove_weight_norm
 
 from lib import get_in_channels_from_state_dict
 from model import NetTypeEnum, NNModel, WeightAndBias
+from torch_lib import unwrap_layer
 
 
 class RAVEModel(NNModel):
@@ -40,6 +41,7 @@ class RAVEModel(NNModel):
 
     def layer_get_channels(self, layer: nn.Module) -> tuple[int, int] | None:
         """Returns `None` if layer accepts any input/output size."""
+        layer = unwrap_layer(layer)
         if isinstance(layer, (Conv1d, ConvTranspose1d)):
             return (layer.in_channels, layer.out_channels)
         elif isinstance(layer, Residual):
@@ -54,12 +56,15 @@ class RAVEModel(NNModel):
             return super().layer_get_channels(layer)
 
     def layer_has_subnet(self, layer: nn.Module) -> bool:
+        layer = unwrap_layer(layer)
         return isinstance(layer, Residual)
 
     def layer_has_weights(self, layer: nn.Module) -> bool:
+        layer = unwrap_layer(layer)
         return not isinstance(layer, LeakyReLU)
 
     def layer_get_weight_and_bias(self, layer: nn.Module) -> list[WeightAndBias]:
+        layer = unwrap_layer(layer)
         try:
             remove_weight_norm(layer)
         except (ValueError, AttributeError):

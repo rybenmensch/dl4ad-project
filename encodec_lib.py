@@ -3,11 +3,12 @@ from typing import cast
 import torch
 from encodec.model import EncodecModel
 from encodec.modules.seanet import SLSTM, SConv1d, SConvTranspose1d, SEANetResnetBlock
-from torch import Tensor, nn
+from torch import nn
 from torch.nn import ELU, Conv1d, ConvTranspose1d, Sequential
 from torch.nn.utils import remove_weight_norm
 
 from model import NetTypeEnum, NNModel, WeightAndBias
+from torch_lib import unwrap_layer
 
 
 class EncodecNNModel(NNModel):
@@ -27,6 +28,7 @@ class EncodecNNModel(NNModel):
         return self.model.channels
 
     def layer_get_channels(self, layer: nn.Module) -> tuple[int, int] | None:
+        layer = unwrap_layer(layer)
         if isinstance(layer, SConv1d):
             conv = cast(Conv1d, layer.conv.conv)
             return (conv.in_channels, conv.out_channels)
@@ -48,12 +50,15 @@ class EncodecNNModel(NNModel):
             return super().layer_get_channels(layer)
 
     def layer_has_subnet(self, layer: nn.Module) -> bool:
+        layer = unwrap_layer(layer)
         return isinstance(layer, (SConv1d, SEANetResnetBlock))
 
     def layer_has_weights(self, layer: nn.Module) -> bool:
+        layer = unwrap_layer(layer)
         return isinstance(layer, (SConv1d, SConvTranspose1d, SEANetResnetBlock))
 
     def layer_get_weight_and_bias(self, layer: nn.Module) -> list[WeightAndBias]:
+        layer = unwrap_layer(layer)
         try:
             remove_weight_norm(layer)
         except (ValueError, AttributeError):
