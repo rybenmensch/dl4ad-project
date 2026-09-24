@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from dataclasses import dataclass, replace
 from enum import Enum
-from typing import TypeAlias
+from typing import Any, TypeAlias
 
 import torch
 from torch import Tensor, nn
@@ -121,6 +122,12 @@ class NNModel(ABC):
             (self.get_net(NetTypeEnum.Encoder), NetTypeEnum.Encoder),
             (self.get_net(NetTypeEnum.Decoder), NetTypeEnum.Decoder),
         )
+
+    def get_from_nets(self, fn: Callable) -> Any:
+        results = []
+        for net in self.get_nets():
+            results += fn(self, net)
+        return results
 
 
 class NetType:
@@ -306,12 +313,8 @@ def get_shape_preserving_layers_from_net(model: NNModel, net: Net) -> list[Layer
     return results
 
 
-# TODO: should this be a method of the class?
 def get_shape_preserving_layers(model: NNModel) -> list[LayerInfo]:
-    results = []
-    for net in model.get_nets():
-        results += get_shape_preserving_layers_from_net(model, net)
-    return results
+    return model.get_from_nets(get_shape_preserving_layers_from_net)
 
 
 def info_replace_inout(infos: list[LayerInfo]) -> list[LayerInfo]:
@@ -389,10 +392,7 @@ def get_swappable_layers_from_net(model: NNModel, net: Net) -> list[SwapInfo]:
 
 
 def get_swappable_layers(model: NNModel) -> list[SwapInfo]:
-    results = []
-    for net in model.get_nets():
-        results += get_swappable_layers_from_net(model, net)
-    return results
+    return model.get_from_nets(get_swappable_layers_from_net)
 
 
 @dataclass(frozen=True)
@@ -422,3 +422,15 @@ def swap_layers(model: NNModel, swapList: list[SwapInfo], swap: Swap) -> list[Sw
 
     # basically just re-calculate swapList as swapping invalidates most of the list
     return get_swappable_layers(model)
+
+
+def get_weighted_layers_from_net(model: NNModel, net: Net) -> list[LayerInfo]:
+    results = []
+    for layer in net:
+        if model.layer_has_weights(layer):
+            results.append(LayerInfo.from_layer(model, layer))
+    return results
+
+
+def get_weighted_layers(model: NNModel) -> list[LayerInfo]:
+    return model.get_from_nets(get_weighted_layers_from_net)
