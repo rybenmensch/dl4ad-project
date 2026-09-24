@@ -2,14 +2,14 @@ import argparse
 from pathlib import Path
 
 from state import (
-    Args,
+    AUDIO_EXTENSIONS,
     AnalyzeArgs,
+    Args,
     Command,
+    CommonArgs,
     ExportArgs,
     GenerateArgs,
     ModelType,
-    CommonArgs,
-    AUDIO_EXTENSIONS
 )
 
 

@@ -4,8 +4,17 @@ from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
 
+import torch
+import torchaudio
+
 from encodec_lib import EncodecNNModel
-from model import get_all_layers, get_shape_preserving_layers, get_weighted_layers
+from model import (
+    LayerInfo,
+    NNModel,
+    get_all_layers,
+    get_shape_preserving_layers,
+    get_weighted_layers,
+)
 from rave_lib import RAVEModel
 
 AUDIO_EXTENSIONS = {
@@ -50,15 +59,27 @@ class ExportArgs(CommonArgs):
     pass
 
 
+@dataclass(frozen=True)
+class File:
+    path: Path
+    wav: tuple[torch.Tensor, int]
+
+
 Args = GenerateArgs | AnalyzeArgs | ExportArgs
 
 
 class AppState:
     def __init__(self, args: Args) -> None:
+        self.shape_preserving_layers: list[LayerInfo] = []
+        self.weighted_layers: list[LayerInfo] = []
+        self.all_layers: list[LayerInfo] = []
+        self.files: list[File] = []
+        self.model: NNModel
+
         self.args = args
-        self.__create_input_list()
         self.__load_model()
         self.__handle_output_dir()
+        self.__load_files()
         self.update_layer_lists()
 
     def update_layer_lists(self) -> None:
@@ -70,8 +91,10 @@ class AppState:
         if self.args.model_type == ModelType.RAVE:
             assert self.args.rave_path != None
             self.model = RAVEModel(self.args.rave_path)
+            self.backup_model = RAVEModel(self.args.rave_path)
         else:
             self.model = EncodecNNModel()
+            self.backup_model = EncodecNNModel()
 
     def __handle_output_dir(self) -> None:
         self.output = self.args.output
@@ -81,7 +104,7 @@ class AppState:
         if not self.output.exists():
             self.output.mkdir(parents=True, exist_ok=True)
 
-    def __create_input_list(self) -> None:
+    def __load_files(self) -> None:
         if isinstance(self.args, ExportArgs):
             self.input_list = None
             return
@@ -93,16 +116,19 @@ class AppState:
         if path.is_file():
             if path.suffix.lower() not in AUDIO_EXTENSIONS:
                 raise ValueError(f"Not a supported audio file: {path}")
-            self.results = [path]
+
+            self.files.append(File(wav=torchaudio.load(path), path=path))
 
         if path.is_dir():
-            self.results = []
+            self.paths = []
             for f in os.listdir(path):
                 file_path = Path(os.path.join(path, f))
                 if file_path.is_file() and file_path.suffix.lower() in AUDIO_EXTENSIONS:
-                    self.results.append(file_path)
+                    self.files.append(
+                        File(wav=torchaudio.load(file_path), path=file_path)
+                    )
 
-            if len(self.results) == 0:
+            if len(self.files) == 0:
                 raise FileNotFoundError(
                     f"Path does not contain any valid audio files: {path}"
                 )
