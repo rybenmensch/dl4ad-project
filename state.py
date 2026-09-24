@@ -59,6 +59,12 @@ class AppState:
         self.__create_input_list()
         self.__load_model()
         self.__handle_output_dir()
+        self.update_layer_lists()
+
+    def update_layer_lists(self) -> None:
+        self.shape_preserving_layers = get_shape_preserving_layers(self.model)
+        self.weighted_layers = get_weighted_layers(self.model)
+        self.all_layers = get_all_layers(self.model)
 
     def __load_model(self) -> None:
         if self.args.model_type == ModelType.RAVE:
