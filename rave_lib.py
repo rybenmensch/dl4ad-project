@@ -93,6 +93,8 @@ class RAVEModel(NNModel):
 def raw_rave_model(run_path: Path | str) -> rave.RAVE:
     """Create a full RAVE model from the path to a run."""
 
+    if isinstance(run_path, Path):
+        run_path = run_path.as_posix()
     config_file = rave.core.search_for_config(run_path)
     gin.parse_config_file(config_file)
 
