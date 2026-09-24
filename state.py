@@ -5,6 +5,7 @@ from enum import Enum
 from pathlib import Path
 
 from encodec_lib import EncodecNNModel
+from model import get_all_layers, get_shape_preserving_layers, get_weighted_layers
 from rave_lib import RAVEModel
 
 AUDIO_EXTENSIONS = {

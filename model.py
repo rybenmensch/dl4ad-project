@@ -434,3 +434,11 @@ def get_weighted_layers_from_net(model: NNModel, net: Net) -> list[LayerInfo]:
 
 def get_weighted_layers(model: NNModel) -> list[LayerInfo]:
     return model.get_from_nets(get_weighted_layers_from_net)
+
+
+def get_all_layers_from_net(model: NNModel, net: Net) -> list[LayerInfo]:
+    return [LayerInfo.from_layer(model, layer) for layer in net]
+
+
+def get_all_layers(model: NNModel) -> list[LayerInfo]:
+    return model.get_from_nets(get_all_layers_from_net)
