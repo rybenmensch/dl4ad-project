@@ -33,17 +33,17 @@ DEFAULT_ANALYSIS_VARIENTS = [
     Variant("skip", {}),
 
     # Total applications; 1 is the unchanged control.
-    *[Variant("repeat", {"repeats": n}) for n in (3, 5)],
+    *[Variant("repeat", {"repeats": n}) for n in (3, 5, 10)],
 
     # Change weights while keeping biases unchanged.
     *[
         Variant("multiply", {"weight_mul": factor, "bias_mul": 1.0})
-        for factor in (2.0, 5.0)
+        for factor in (5.0, 10.0, 20.0)
     ],
 
     *[
         Variant("add", {"weight_add": 0.0, "bias_add": offset})
-        for offset in (-0.1, 0.1, -1.0, 1.0)
+        for offset in (-10.0, 10.0)
     ],
 ]
 

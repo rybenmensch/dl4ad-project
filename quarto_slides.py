@@ -1,5 +1,3 @@
-"""Export module impact results as Quarto slides without audio dependencies."""
-
 from html import escape
 from pathlib import Path
 from urllib.parse import quote
@@ -11,12 +9,6 @@ def write_impact_slides(
     *,
     title: str = "Module impact analysis",
 ) -> Path:
-    """Write slides.qmd beside existing plot/audio artifacts and return its path.
-
-    Accepts analyze_module_impact results or rows loaded from results.csv.
-    Trials are ordered by descending MAE. Missing plots and failed trials get
-    explanatory slides. Render with `quarto render slides.qmd`.
-    """
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     ranked = sorted(
