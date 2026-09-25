@@ -1,4 +1,5 @@
 import argparse
+import math
 from pathlib import Path
 
 from state import (
@@ -84,6 +85,30 @@ def build_parser() -> argparse.ArgumentParser:
     )
     add_common_options(analyze)
     analyze.add_argument(
+        "--optimized",
+        action="store_true",
+        help="Use adaptive parameter search ranked by MRSTFT instead of the fixed sweep.",
+    )
+    analyze.add_argument(
+        "--trials",
+        type=int,
+        default=24,
+        metavar="N",
+        help="Optimized search evaluations per layer and scalar parameter (default: 24).",
+    )
+    analyze.add_argument(
+        "--seed",
+        type=int,
+        default=0,
+        help="Optimized search random seed (default: 0).",
+    )
+    analyze.add_argument(
+        "--seconds",
+        type=float,
+        metavar="SECONDS",
+        help="Analyze only the first N seconds in optimized mode. Omit for full audio.",
+    )
+    analyze.add_argument(
         "-s",
         "--save-depth",
         type=int,
@@ -134,6 +159,10 @@ def parse_args(parser: argparse.ArgumentParser) -> Args:
             **common.__dict__,
             input=namespace.input,
             save_depth=namespace.save_depth,
+            optimized=namespace.optimized,
+            trials=namespace.trials,
+            seed=namespace.seed,
+            seconds=namespace.seconds,
         )
 
     if command == Command.EXPORT:
@@ -170,6 +199,15 @@ def validate_and_normalize(args: Args) -> Args:
 
     elif args.command == Command.ANALYZE:
         assert isinstance(args, AnalyzeArgs)
+
+        if args.trials < 2:
+            raise ValueError("--trials must be at least 2")
+
+        if args.seconds is not None and (not math.isfinite(args.seconds) or args.seconds <= 0):
+            raise ValueError("--seconds must be positive and finite")
+
+        if not args.optimized and (args.seconds is not None or args.trials != 24 or args.seed != 0):
+            raise ValueError("--trials, --seed, and --seconds require --optimized")
 
         if args.save_depth is not None and args.save_depth < 0:
             raise ValueError("--save-depth must be a nonnegative integer")

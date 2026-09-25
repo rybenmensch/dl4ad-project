@@ -53,6 +53,10 @@ class GenerateArgs(CommonArgs):
 class AnalyzeArgs(CommonArgs):
     input: Path
     save_depth: int | None = None
+    optimized: bool = False
+    trials: int = 24
+    seed: int = 0
+    seconds: float | None = None
 
 
 @dataclass

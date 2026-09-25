@@ -42,7 +42,7 @@ DEFAULT_ANALYSIS_VARIENTS = [
 
     *[
         Variant("add", {"weight_add": 0.0, "bias_add": offset})
-        for offset in (-10.0, 10.0)
+        for offset in (0.2, -0.2, 0.5, -0.5)
     ],
 ]
 
@@ -56,14 +56,6 @@ def analyze_module_impact(
     slides: bool = True,
     max_artifacts: int | None = None,
 ) -> list[dict]:
-    """Evaluate interventions and rank results by decreasing MAE.
-
-    Multiply/add use all weighted layers; skip/repeat use shape-preserving
-    layers. max_artifacts limits saved trial WAVs, plots, and slide entries
-    to the highest-MAE successful trials (ties retain evaluation order).
-    None saves all; 0 saves no trial artifacts. The baseline and complete CSV
-    are always saved. Use a fresh output directory to avoid older artifacts.
-    """
     if max_artifacts is not None and (
         isinstance(max_artifacts, bool)
         or not isinstance(max_artifacts, int)
