@@ -1,7 +1,6 @@
 import csv
 import json
 import math
-import logging
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -9,7 +8,7 @@ import torch
 import torchaudio
 
 from lib import mean_absolute_error, mrstft
-from model import NNModel, get_shape_preserving_layers_from_net
+from model import NNModel, get_shape_preserving_layers_from_net, get_weighted_layers_from_net
 from modules import AdditionLayer, MultiplierLayer, RepeatingLayer, SkippingLayer
 
 MODULES = {
@@ -55,31 +54,62 @@ def analyze_module_impact(
     nets = ("encoder", "decoder"),
     plots: bool = True,
     slides: bool = True,
+    max_artifacts: int | None = None,
 ) -> list[dict]:
+    """Evaluate interventions and rank results by decreasing MAE.
+
+    Multiply/add use all weighted layers; skip/repeat use shape-preserving
+    layers. max_artifacts limits saved trial WAVs, plots, and slide entries
+    to the highest-MAE successful trials (ties retain evaluation order).
+    None saves all; 0 saves no trial artifacts. The baseline and complete CSV
+    are always saved. Use a fresh output directory to avoid older artifacts.
+    """
+    if max_artifacts is not None and (
+        isinstance(max_artifacts, bool)
+        or not isinstance(max_artifacts, int)
+        or max_artifacts < 0
+    ):
+        raise ValueError("max_artifacts must be a nonnegative integer or None")
+    if not variants:
+        raise ValueError("Provide at least one variant")
     if slides:
         plots = True
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     rows = []
+    artifacts = []
     model.reset()
     try:
         model.model.eval()
-        layers = []
+        layers = {}
+        eligible = {"skip": set(), "repeat": set(), "multiply": set(), "add": set()}
+        operations = {variant.operation for variant in variants}
         for net, net_type in model.get_nets_and_types():
-            if net_type.value in nets:
-                found = get_shape_preserving_layers_from_net(model, net)
-                layers.extend(found)
+            if net_type.value not in nets:
+                continue
+            selections = []
+            if operations & {"skip", "repeat"}:
+                selections.append((get_shape_preserving_layers_from_net(model, net), ("skip", "repeat")))
+            if operations & {"multiply", "add"}:
+                selections.append((get_weighted_layers_from_net(model, net), ("multiply", "add")))
+            for found, supported in selections:
+                for layer in found:
+                    layers[layer.layer_path] = layer
+                    for operation in supported:
+                        eligible[operation].add(layer.layer_path)
+        if not layers:
+            raise ValueError("No eligible layers found in the selected nets")
         baseline = model(wav).detach().cpu().clone()
         sr = model.get_sample_rate()
         if output_dir is not None:
             save_audio(output_dir / "baseline.wav", baseline, sr)
-        for layer in layers:
+        for layer in layers.values():
             for variant in variants:
+                if layer.layer_path not in eligible[variant.operation]:
+                    continue
                 model.reset()
                 model.model.eval()
                 net = model.get_net(layer.net_type)
-                if variant.operation in ("multiply", "add") and not model.layer_has_weights(net[layer.index]):
-                    continue
                 stem = f"{len(rows):04d}_{layer.net_type.value}_{layer.index}_{variant.operation}"
                 row = {
                     "layer_path": layer.layer_path,
@@ -106,18 +136,11 @@ def analyze_module_impact(
                     if not math.isfinite(mae) or not math.isfinite(spectral):
                         raise ValueError("Comparison produced non-finite metrics")
                     row.update(mae=mae, mrstft=spectral)
-                    if output_dir is not None:
-                        audio_path = output_dir / f"{stem}.wav"
-                        save_audio(audio_path, reconstruction, sr)
-                        row["audio"] = audio_path.name
-                    if plots:
-                        from plotting import plot_comparison
-
-                        plot_path = output_dir / f"{stem}.png"
-                        plot_comparison(baseline, reconstruction, sr,
-                                        title=f"{layer.layer_path}: {variant.operation} {variant.parameters}",
-                                        save_path=str(plot_path), show=False)
-                        row["plot"] = plot_path.name
+                    if max_artifacts != 0:
+                        artifacts.append((row, stem, reconstruction.clone()))
+                        artifacts.sort(key=lambda item: item[0]["mae"], reverse=True)
+                        if max_artifacts is not None:
+                            del artifacts[max_artifacts:]
                 except Exception as exc:
                     row["error"] = f"{type(exc).__name__}: {exc}"
                 rows.append(row)
@@ -127,10 +150,28 @@ def analyze_module_impact(
     finally:
         model.reset()
     rows.sort(key=lambda row: row["mae"] if row["mae"] is not None else -1, reverse=True)
-    if slides:
+    for row, stem, reconstruction in artifacts:
+        try:
+            audio_path = output_dir / f"{stem}.wav"
+            save_audio(audio_path, reconstruction, sr)
+            row["audio"] = audio_path.name
+            if plots:
+                from plotting import plot_comparison
+
+                plot_path = output_dir / f"{stem}.png"
+                plot_comparison(
+                    baseline, reconstruction, sr,
+                    title=f"{row['layer_path']}: {row['operation']} {row['parameters']}",
+                    save_path=str(plot_path), show=False,
+                )
+                row["plot"] = plot_path.name
+        except Exception as exc:
+            row["error"] = f"Artifact export failed: {type(exc).__name__}: {exc}"
+    write_results(output_dir / "results.csv", rows)
+    if slides and artifacts:
         from quarto_slides import write_impact_slides
 
-        write_impact_slides(rows, output_dir)
+        write_impact_slides([item[0] for item in artifacts], output_dir)
     return rows
 
 

@@ -83,6 +83,16 @@ def build_parser() -> argparse.ArgumentParser:
         description="Analyze a model using an audio file.",
     )
     add_common_options(analyze)
+    analyze.add_argument(
+        "-s",
+        "--save-depth",
+        type=int,
+        metavar="N",
+        help=(
+            "Number of highest-impact trials to save as audio, plots, and slides. "
+            "Omit to save all trials. Use 0 to save only the baseline and results."
+        ),
+    )
     add_input_option(
         analyze,
         "Input audio file or directory containing audio files.",
@@ -123,6 +133,7 @@ def parse_args(parser: argparse.ArgumentParser) -> Args:
         return AnalyzeArgs(
             **common.__dict__,
             input=namespace.input,
+            save_depth=namespace.save_depth,
         )
 
     if command == Command.EXPORT:
@@ -159,6 +170,9 @@ def validate_and_normalize(args: Args) -> Args:
 
     elif args.command == Command.ANALYZE:
         assert isinstance(args, AnalyzeArgs)
+
+        if args.save_depth is not None and args.save_depth < 0:
+            raise ValueError("--save-depth must be a nonnegative integer")
 
         if not args.input.is_file():
             raise ValueError(f"--input must be an audio file: {args.input}")

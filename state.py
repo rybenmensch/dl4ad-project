@@ -52,6 +52,7 @@ class GenerateArgs(CommonArgs):
 @dataclass
 class AnalyzeArgs(CommonArgs):
     input: Path
+    save_depth: int | None = None
 
 
 @dataclass
