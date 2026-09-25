@@ -375,6 +375,7 @@ def restore_model(app: AppState) -> None:
 
 
 class WriteFileMode(PromptEnum):
+    Keep = "keep"
     Prepend = "prepend"
     Append = "append"
     Individual = "individual"
@@ -384,7 +385,8 @@ def write_file(app: AppState) -> None:
     mode = WriteFileMode.get_param()
 
     prep_or_app = ""
-    if mode != WriteFileMode.Individual:
+    if mode == WriteFileMode.Prepend or mode == WriteFileMode.Append:
+        print_menu("WRITE")
         prep_or_app = str(get_param(lambda x: x, f"file name {mode.value}"))
 
     parent = Path(app.output)
@@ -392,11 +394,14 @@ def write_file(app: AppState) -> None:
         path = f.path
         stem, suffix = path.stem, path.suffix
 
-        if mode == WriteFileMode.Prepend:
+        if mode == WriteFileMode.Keep:
+            name = stem + suffix
+        elif mode == WriteFileMode.Prepend:
             name = prep_or_app + "_" + stem + suffix
         elif mode == WriteFileMode.Append:
             name = stem + "_" + prep_or_app + suffix
         else:
+            print_menu("WRITE")
             name = cast(
                 Path, get_param(Path, f"new file name for modified file {path.name}")
             )
@@ -406,6 +411,8 @@ def write_file(app: AppState) -> None:
         path = parent / name
         processed = app.model(f.wav)
         torchaudio.save(path, processed, app.model.get_sample_rate())
+        print_menu("WRITE")
+        print(f"Wrote file {path}")
 
 
 commands = [
