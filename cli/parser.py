@@ -64,7 +64,7 @@ def add_input_option(
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="networkbend-cli",
+        prog="nbform",
         description="Analyze and bend networks using RAVE or Encodec.",
     )
 

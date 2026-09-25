@@ -1,8 +1,9 @@
 [project]
-name = "dl4ad-project"
+name = "nbform"
 version = "0.1.0"
 description = "Deep learning audio project with RAVE"
 requires-python = ">=3.12"
+scripts = { nbform = "cli.app:main" }
 dependencies = [
     # PyTorch and torchaudio must use matching minor versions.
     "torch>=2.2.0,<2.3.0",
@@ -17,6 +18,13 @@ dependencies = [
     # Lightning 1.9 and its dependencies still import pkg_resources.
     "setuptools<81",
 ]
+
+[build-system]
+requires = ["setuptools>=61,<81"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["cli", "library"]
 
 [dependency-groups]
 dev = ["black>=24.0", "ruff>=0.11.0"]

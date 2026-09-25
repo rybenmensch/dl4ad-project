@@ -8,10 +8,10 @@ Install [uv](https://docs.astral.sh/uv/getting-started/installation/) and Python
 uv sync --group dev
 ```
 
-uv creates a local `.venv` and installs the versions recorded in `uv.lock`. To run Python commands in that environment, prefix them with `uv run`, for example:
+uv creates a local `.venv` and installs the versions recorded in `uv.lock`. Run the application with its command name:
 
 ```sh
-uv run python app.py
+uv run nbform --help
 ```
 
 ## Lint and format
@@ -25,7 +25,7 @@ uv run black .
 
 ## Project layout
 
-- `app.py` is the application entry point.
+- `nbform` is the application command, implemented in `cli/app.py`.
 - `cli/` contains argument handling and the generate and analyze flows.
 - `library/` contains reusable audio, model, plotting, and RAVE components.
 - `experiments/` contains standalone research scripts.

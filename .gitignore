@@ -9,3 +9,4 @@ audio/results
 audio/reconstructed
 *.ckpt
 .ruff_cache/
+*.egg-info/
