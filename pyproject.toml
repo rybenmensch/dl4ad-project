@@ -19,7 +19,7 @@ dependencies = [
 ]
 
 [dependency-groups]
-dev = ["ruff>=0.11.0"]
+dev = ["black>=24.0", "ruff>=0.11.0"]
 
 [tool.uv]
 # Force uv to resolve scipy to 1.11.2+ across all dependencies, 
@@ -34,3 +34,7 @@ line-length = 88
 
 [tool.ruff.lint]
 select = ["E", "F", "I"]
+
+[tool.black]
+target-version = ["py312"]
+line-length = 88

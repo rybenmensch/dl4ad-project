@@ -33,30 +33,29 @@ class Variant:
         if self.operation not in MODULES:
             raise ValueError(f"Unknown operation: {self.operation}")
 
+
 DEFAULT_ANALYSIS_VARIENTS = [
     Variant("skip", {}),
-
     # Total applications; 1 is the unchanged control.
     *[Variant("repeat", {"repeats": n}) for n in (3, 5, 10)],
-
     # Change weights while keeping biases unchanged.
     *[
         Variant("multiply", {"weight_mul": factor, "bias_mul": 1.0})
         for factor in (5.0, 10.0, 20.0)
     ],
-
     *[
         Variant("add", {"weight_add": 0.0, "bias_add": offset})
         for offset in (0.2, -0.2, 0.5, -0.5)
     ],
 ]
 
+
 def analyze_module_impact(
     model: NNModel,
     wav: tuple[torch.Tensor, int],
     output_dir: str | Path,
     variants: list[Variant] = DEFAULT_ANALYSIS_VARIENTS,
-    nets = ("encoder", "decoder"),
+    nets=("encoder", "decoder"),
     plots: bool = True,
     slides: bool = True,
     max_artifacts: int | None = None,
@@ -86,9 +85,16 @@ def analyze_module_impact(
                 continue
             selections = []
             if operations & {"skip", "repeat"}:
-                selections.append((get_shape_preserving_layers_from_net(model, net), ("skip", "repeat")))
+                selections.append(
+                    (
+                        get_shape_preserving_layers_from_net(model, net),
+                        ("skip", "repeat"),
+                    )
+                )
             if operations & {"multiply", "add"}:
-                selections.append((get_weighted_layers_from_net(model, net), ("multiply", "add")))
+                selections.append(
+                    (get_weighted_layers_from_net(model, net), ("multiply", "add"))
+                )
             for found, supported in selections:
                 for layer in found:
                     layers[layer.layer_path] = layer
@@ -120,11 +126,15 @@ def analyze_module_impact(
                     "error": "",
                 }
                 try:
-                    net[layer.index] = MODULES[variant.operation](layer, **variant.parameters)
+                    net[layer.index] = MODULES[variant.operation](
+                        layer, **variant.parameters
+                    )
                     net[layer.index].eval()
                     reconstruction = model(wav).detach().cpu()
                     if reconstruction.shape != baseline.shape:
-                        raise ValueError(f"Output shape {tuple(reconstruction.shape)} differs from baseline {tuple(baseline.shape)}")
+                        raise ValueError(
+                            f"Output shape {tuple(reconstruction.shape)} differs from baseline {tuple(baseline.shape)}"
+                        )
                     if not torch.isfinite(reconstruction).all():
                         raise ValueError("Reconstruction contains non-finite samples")
                     mae = mean_absolute_error(baseline, reconstruction)
@@ -146,7 +156,9 @@ def analyze_module_impact(
                     write_results(output_dir / "results.csv", rows)
     finally:
         model.reset()
-    rows.sort(key=lambda row: row["mae"] if row["mae"] is not None else -1, reverse=True)
+    rows.sort(
+        key=lambda row: row["mae"] if row["mae"] is not None else -1, reverse=True
+    )
     for row, stem, reconstruction in artifacts:
         try:
             audio_path = output_dir / f"{stem}.wav"
@@ -157,9 +169,12 @@ def analyze_module_impact(
 
                 plot_path = output_dir / f"{stem}.png"
                 plot_comparison(
-                    baseline, reconstruction, sr,
+                    baseline,
+                    reconstruction,
+                    sr,
                     title=f"{row['layer_path']}: {row['operation']} {row['parameters']}",
-                    save_path=str(plot_path), show=False,
+                    save_path=str(plot_path),
+                    show=False,
                 )
                 row["plot"] = plot_path.name
         except Exception as exc:
@@ -177,7 +192,9 @@ def save_audio(path: Path, audio: torch.Tensor, sr: int) -> None:
 
 
 def write_results(path: Path, rows: list[dict]) -> None:
-    ranked = sorted(rows, key=lambda row: row["mae"] if row["mae"] is not None else -1, reverse=True)
+    ranked = sorted(
+        rows, key=lambda row: row["mae"] if row["mae"] is not None else -1, reverse=True
+    )
     with path.open("w", newline="") as stream:
         writer = csv.DictWriter(stream, fieldnames=list(rows[0]))
         writer.writeheader()

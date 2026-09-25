@@ -16,11 +16,11 @@ uv run python app.py
 
 ## Lint and format
 
-Check the code with Ruff and apply formatting with:
+Use Ruff for linting and Black for formatting:
 
 ```sh
 uv run ruff check .
-uv run ruff format .
+uv run black .
 ```
 
 ## Project layout

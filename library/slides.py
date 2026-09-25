@@ -29,20 +29,28 @@ def write_impact_slides(
     if baseline.is_file():
         parts.append(_audio("baseline.wav", "Baseline"))
     for row in ranked:
-        parts.extend([
-            f"## {escape(str(row['layer_path']))} · {escape(str(row['operation']))}\n",
-            f"<p style=\"font-size:0.65em\">{escape(str(row['layer_type']))} "
-            f"· <code>{escape(str(row['parameters']))}</code></p>\n",
-        ])
+        parts.extend(
+            [
+                f"## {escape(str(row['layer_path']))} · {escape(str(row['operation']))}\n",
+                f"<p style=\"font-size:0.65em\">{escape(str(row['layer_type']))} "
+                f"· <code>{escape(str(row['parameters']))}</code></p>\n",
+            ]
+        )
         if row.get("mae") not in (None, "") and row.get("mrstft") not in (None, ""):
-            parts.append(f"MAE **{float(row['mae']):.6g}** · MRSTFT **{float(row['mrstft']):.6g}**\n")
+            parts.append(
+                f"MAE **{float(row['mae']):.6g}** · MRSTFT **{float(row['mrstft']):.6g}**\n"
+            )
         plot = row.get("plot")
         if plot and (output_dir / plot).is_file():
-            parts.append(f'![Baseline and warped audio comparison]({quote(str(plot), safe="/")}){{height=600px}}\n')
+            parts.append(
+                f'![Baseline and warped audio comparison]({quote(str(plot), safe="/")}){{height=600px}}\n'
+            )
         else:
             parts.append("Comparison plot unavailable for this trial.\n")
         if row.get("error"):
-            parts.append(f"<p style=\"font-size:0.6em\">{escape(str(row['error']))}</p>\n")
+            parts.append(
+                f"<p style=\"font-size:0.6em\">{escape(str(row['error']))}</p>\n"
+            )
         audio = row.get("audio")
         if audio and (output_dir / audio).is_file():
             parts.append(_audio(str(audio), "Warped audio"))
