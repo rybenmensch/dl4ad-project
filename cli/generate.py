@@ -9,7 +9,7 @@ from typing import Self, cast
 import sounddevice as sd
 import torchaudio
 
-from model import (
+from library.model import (
     LayerInfo,
     Net,
     NetTypeEnum,
@@ -18,8 +18,8 @@ from model import (
     get_shape_preserving_layers,
     get_weighted_layers,
 )
-from modules import AdditionLayer, MultiplierLayer, RepeatingLayer, SkippingLayer
-from state import AppState
+from library.layers import AdditionLayer, MultiplierLayer, RepeatingLayer, SkippingLayer
+from cli.state import AppState
 
 
 class PromptEnum(StrEnum):

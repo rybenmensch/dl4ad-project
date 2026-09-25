@@ -7,8 +7,8 @@ from torch import nn
 from torch.nn import ELU, Conv1d, ConvTranspose1d, Sequential
 from torch.nn.utils import remove_weight_norm
 
-from model import NetTypeEnum, NNModel, WeightAndBias
-from torch_lib import unwrap_layer
+from library.model import NetTypeEnum, NNModel, WeightAndBias
+from library.torch_utils import unwrap_layer
 
 
 class EncodecNNModel(NNModel):

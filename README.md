@@ -22,3 +22,11 @@ Check the code with Ruff and apply formatting with:
 uv run ruff check .
 uv run ruff format .
 ```
+
+## Project layout
+
+- `app.py` is the application entry point.
+- `cli/` contains argument handling and the generate and analyze flows.
+- `library/` contains reusable audio, model, plotting, and RAVE components.
+- `experiments/` contains standalone research scripts.
+- `tests/` contains project tests.

@@ -1,4 +1,4 @@
-from state import AnalyzeArgs, AppState
+from cli.state import AnalyzeArgs, AppState
 import csv
 import json
 import math
@@ -8,9 +8,13 @@ from pathlib import Path
 import torch
 import torchaudio
 
-from lib import mean_absolute_error, mrstft
-from model import NNModel, get_shape_preserving_layers_from_net, get_weighted_layers_from_net
-from modules import AdditionLayer, MultiplierLayer, RepeatingLayer, SkippingLayer
+from library.audio import mean_absolute_error, mrstft
+from library.model import (
+    NNModel,
+    get_shape_preserving_layers_from_net,
+    get_weighted_layers_from_net,
+)
+from library.layers import AdditionLayer, MultiplierLayer, RepeatingLayer, SkippingLayer
 
 MODULES = {
     "skip": SkippingLayer,
@@ -149,7 +153,7 @@ def analyze_module_impact(
             save_audio(audio_path, reconstruction, sr)
             row["audio"] = audio_path.name
             if plots:
-                from plotting import plot_comparison
+                from library.plotting import plot_comparison
 
                 plot_path = output_dir / f"{stem}.png"
                 plot_comparison(
@@ -162,7 +166,7 @@ def analyze_module_impact(
             row["error"] = f"Artifact export failed: {type(exc).__name__}: {exc}"
     write_results(output_dir / "results.csv", rows)
     if slides and artifacts:
-        from quarto_slides import write_impact_slides
+        from library.slides import write_impact_slides
 
         write_impact_slides([item[0] for item in artifacts], output_dir)
     return rows

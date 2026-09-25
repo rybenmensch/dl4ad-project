@@ -13,8 +13,8 @@ import torch
 import torchaudio
 from torch.nn.utils import remove_weight_norm
 
-from lib import *
-from rave_lib import *
+from library.audio import *
+from library.rave import *
 
 # ============================================================
 # 1. CONFIGURATION

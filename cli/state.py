@@ -7,15 +7,15 @@ from pathlib import Path
 import torch
 import torchaudio
 
-from encodec_lib import EncodecNNModel
-from model import (
+from library.encodec import EncodecNNModel
+from library.model import (
     LayerInfo,
     NNModel,
     get_all_layers,
     get_shape_preserving_layers,
     get_weighted_layers,
 )
-from rave_lib import RAVEModel
+from library.rave import RAVEModel
 
 AUDIO_EXTENSIONS = {
     ".wav",

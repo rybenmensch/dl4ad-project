@@ -2,7 +2,7 @@ import argparse
 import math
 from pathlib import Path
 
-from state import (
+from cli.state import (
     AUDIO_EXTENSIONS,
     AnalyzeArgs,
     Args,

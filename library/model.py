@@ -7,8 +7,8 @@ from typing import Any, TypeAlias
 import torch
 from torch import Tensor, nn
 
-from lib import convert_audio, getattr_from_attr_string, setattr_from_attr_string
-from torch_lib import IterableModule, get_layer_name
+from library.audio import convert_audio, getattr_from_attr_string, setattr_from_attr_string
+from library.torch_utils import IterableModule, get_layer_name
 
 Net: TypeAlias = IterableModule
 Module: TypeAlias = nn.Module

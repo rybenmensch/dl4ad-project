@@ -2,8 +2,8 @@ import torch
 from torch import Tensor
 from torch.nn import Module
 
-from model import LayerInfo
-from torch_lib import get_layer_name
+from library.model import LayerInfo
+from library.torch_utils import get_layer_name
 
 
 class WrapLayer(Module):

@@ -6,8 +6,8 @@ import torchaudio
 from encodec import encodec_from_pretrained
 from torch.nn.utils import remove_weight_norm
 
-from lib import *
-from plotting import plot_comparison
+from library.audio import *
+from library.plotting import plot_comparison
 
 # same factors as RAVE weight_analysis_v1.py skript
 scaling_factors = [0.50, 0.75, 1.00, 1.50, 2.00, 3.00, 4.00, 6.00, 8.00, 10.00]

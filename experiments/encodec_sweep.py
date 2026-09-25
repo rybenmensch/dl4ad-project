@@ -4,11 +4,11 @@ import torch
 import torchaudio
 from torch import nn
 
-from encodec_lib import EncodecNNModel
-from lib import check_path, convert_audio
-from model import NetTypeEnum
-from plotting import plot_comparison
-from torch_lib import get_shape_preserving_layers
+from library.encodec import EncodecNNModel
+from library.audio import check_path, convert_audio
+from library.model import NetTypeEnum
+from library.plotting import plot_comparison
+from library.torch_utils import get_shape_preserving_layers
 
 
 def make_skipped_modulelist(original_net, skip_index: int) -> nn.ModuleList:

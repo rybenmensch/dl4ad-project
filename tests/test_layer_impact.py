@@ -8,9 +8,9 @@ import torch
 import torchaudio
 from torch.nn.utils import remove_weight_norm
 
-from encodec_lib import EncodecNNModel
-from lib import *
-from model import (
+from library.encodec import EncodecNNModel
+from library.audio import *
+from library.model import (
     Net,
     NetTypeEnum,
     Swap,
@@ -19,10 +19,10 @@ from model import (
     get_swappable_layers_from_net,
     swap_layers,
 )
-from modules import *
-from plotting import plot_comparison
-from rave_lib import RAVEModel
-from torch_lib import get_layer_name
+from library.layers import *
+from library.plotting import plot_comparison
+from library.rave import RAVEModel
+from library.torch_utils import get_layer_name
 
 # Suppress the lightning_fabric pkg_resources warning
 warnings.filterwarnings("ignore", category=UserWarning, message=".*pkg_resources.*")

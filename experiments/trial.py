@@ -1,7 +1,7 @@
 from rave import RAVE, Residual, nn
 
-from lib import check_path
-from rave_lib import RAVEModel, is_layer_iterable, raw_rave_model
+from library.audio import check_path
+from library.rave import RAVEModel, is_layer_iterable, raw_rave_model
 
 # from weight_analysis_v1 import parameter_key_to_module_path
 

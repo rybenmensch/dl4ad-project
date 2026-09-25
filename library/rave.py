@@ -10,9 +10,9 @@ from torch import Tensor, nn
 from torch.nn import LeakyReLU
 from torch.nn.utils import remove_weight_norm
 
-from lib import get_in_channels_from_state_dict
-from model import NetTypeEnum, NNModel, WeightAndBias
-from torch_lib import unwrap_layer
+from library.audio import get_in_channels_from_state_dict
+from library.model import NetTypeEnum, NNModel, WeightAndBias
+from library.torch_utils import unwrap_layer
 
 
 class RAVEModel(NNModel):
