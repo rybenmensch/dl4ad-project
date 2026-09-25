@@ -28,5 +28,3 @@ uv run black .
 - `nbform` is the application command, implemented in `cli/app.py`.
 - `cli/` contains argument handling and the generate and analyze flows.
 - `library/` contains reusable audio, model, plotting, and RAVE components.
-- `experiments/` contains standalone research scripts.
-- `tests/` contains project tests.
