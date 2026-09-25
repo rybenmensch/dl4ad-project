@@ -43,6 +43,9 @@ line-length = 88
 [tool.ruff.lint]
 select = ["E", "F", "I"]
 
+[tool.ruff.lint.isort]
+known-first-party = ["cli", "library"]
+
 [tool.black]
 target-version = ["py312"]
 line-length = 88

@@ -1,4 +1,3 @@
-from cli.state import AnalyzeArgs, AppState
 import csv
 import json
 import math
@@ -8,13 +7,14 @@ from pathlib import Path
 import torch
 import torchaudio
 
+from cli.state import AnalyzeArgs, AppState
 from library.audio import mean_absolute_error, mrstft
+from library.layers import AdditionLayer, MultiplierLayer, RepeatingLayer, SkippingLayer
 from library.model import (
     NNModel,
     get_shape_preserving_layers_from_net,
     get_weighted_layers_from_net,
 )
-from library.layers import AdditionLayer, MultiplierLayer, RepeatingLayer, SkippingLayer
 
 MODULES = {
     "skip": SkippingLayer,

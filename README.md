@@ -16,9 +16,10 @@ uv run nbform --help
 
 ## Lint and format
 
-Use Ruff for linting and Black for formatting:
+Ruff checks the code and sorts imports; Black formats the code:
 
 ```sh
+uv run ruff check --select I --fix .
 uv run ruff check .
 uv run black .
 ```
