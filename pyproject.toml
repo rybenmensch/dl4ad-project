@@ -1,0 +1,36 @@
+[project]
+name = "dl4ad-project"
+version = "0.1.0"
+description = "Deep learning audio project with RAVE"
+requires-python = ">=3.12"
+dependencies = [
+    # PyTorch and torchaudio must use matching minor versions.
+    "torch>=2.2.0,<2.3.0",
+    "torchaudio>=2.2.0,<2.3.0",
+    "acids-rave",
+    "encodec",
+    "auraloss",
+    "matplotlib",
+    "sounddevice",
+    # Torch 2.2 and the older RAVE stack require NumPy 1.x.
+    "numpy<2",
+    # Lightning 1.9 and its dependencies still import pkg_resources.
+    "setuptools<81",
+]
+
+[dependency-groups]
+dev = ["ruff>=0.11.0"]
+
+[tool.uv]
+# Force uv to resolve scipy to 1.11.2+ across all dependencies, 
+# overriding the legacy upper-bound constraint in acids-rave.
+override-dependencies = [
+    "scipy>=1.11.2,<1.13",
+]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
