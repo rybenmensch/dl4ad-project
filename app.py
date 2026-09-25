@@ -19,7 +19,6 @@ def main() -> None:
         generate_loop(app)
     elif args.command == Command.ANALYZE:
         analyze_loop(app)
-        pass
     elif args.command == Command.EXPORT:
         pass
 

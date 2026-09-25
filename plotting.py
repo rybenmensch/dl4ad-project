@@ -12,7 +12,6 @@ def _to_mono_numpy(x: torch.Tensor) -> np.ndarray:
 
 def plot_comparison(
     clean: torch.Tensor,
-    aksdjf
     degraded: torch.Tensor,
     sr: int,
     title: str = "Comparison: clean vs. degraded)",

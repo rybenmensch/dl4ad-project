@@ -178,9 +178,6 @@ def validate_and_normalize(args: Args) -> Args:
         if args.seconds is not None and (not math.isfinite(args.seconds) or args.seconds <= 0):
             raise ValueError("--seconds must be positive and finite")
 
-        if not args.optimized and (args.seconds is not None or args.trials != 24 or args.seed != 0):
-            raise ValueError("--trials, --seed, and --seconds require --optimized")
-
         if args.save_depth is not None and args.save_depth < 0:
             raise ValueError("--save-depth must be a nonnegative integer")
 
