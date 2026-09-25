@@ -85,30 +85,6 @@ def build_parser() -> argparse.ArgumentParser:
     )
     add_common_options(analyze)
     analyze.add_argument(
-        "--optimized",
-        action="store_true",
-        help="Use adaptive parameter search ranked by MRSTFT instead of the fixed sweep.",
-    )
-    analyze.add_argument(
-        "--trials",
-        type=int,
-        default=24,
-        metavar="N",
-        help="Optimized search evaluations per layer and scalar parameter (default: 24).",
-    )
-    analyze.add_argument(
-        "--seed",
-        type=int,
-        default=0,
-        help="Optimized search random seed (default: 0).",
-    )
-    analyze.add_argument(
-        "--seconds",
-        type=float,
-        metavar="SECONDS",
-        help="Analyze only the first N seconds in optimized mode. Omit for full audio.",
-    )
-    analyze.add_argument(
         "-s",
         "--save-depth",
         type=int,
@@ -159,10 +135,6 @@ def parse_args(parser: argparse.ArgumentParser) -> Args:
             **common.__dict__,
             input=namespace.input,
             save_depth=namespace.save_depth,
-            optimized=namespace.optimized,
-            trials=namespace.trials,
-            seed=namespace.seed,
-            seconds=namespace.seconds,
         )
 
     if command == Command.EXPORT:
