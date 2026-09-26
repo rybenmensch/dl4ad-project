@@ -172,9 +172,6 @@ def validate_and_normalize(args: Args) -> Args:
     elif args.command == Command.ANALYZE:
         assert isinstance(args, AnalyzeArgs)
 
-        if args.trials < 2:
-            raise ValueError("--trials must be at least 2")
-
         if args.seconds is not None and (
             not math.isfinite(args.seconds) or args.seconds <= 0
         ):
