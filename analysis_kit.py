@@ -57,7 +57,7 @@ def evaluate_transformation(audio_output: torch.Tensor, baseline: torch.Tensor, 
     
     # 2. Stille-Check: Wenn das Netz stirbt und nur noch Nullen ausgibt
     rms = torch.sqrt(torch.mean(audio_output**2))
-    if rms < 1e-5:  # Entspricht ca. -100 dB (Totstille)
+    if rms < 1e-5:  # Entspricht ca. -100 dB 
         return {"status": "SILENT", "error": f"Silence detected (RMS: {rms.item():.6f})"}
     
     # 3. Clipping-Erkennung: Nur als Flag mitgeben, NICHT löschen (Clipping ist beim Bending erwünscht!)
