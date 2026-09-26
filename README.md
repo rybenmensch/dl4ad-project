@@ -2,7 +2,7 @@
 
 ## Setup
 
-Install [uv](https://docs.astral.sh/uv/getting-started/installation/) and Python 3.12 or newer. From the project directory, install the project dependencies and development tools:
+Install [uv](https://docs.astral.sh/uv/getting-started/installation/) and Python 3.12. The pinned PyTorch 2.2 dependencies do not provide wheels for Python 3.13 or newer. From the project directory, install the project dependencies and development tools:
 
 ```sh
 uv sync --group dev

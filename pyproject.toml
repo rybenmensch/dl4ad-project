@@ -2,7 +2,7 @@
 name = "nbform"
 version = "0.1.0"
 description = "Deep learning audio project with RAVE"
-requires-python = ">=3.12"
+requires-python = ">=3.12,<3.13"
 scripts = { nbform = "cli.app:main" }
 dependencies = [
     # PyTorch and torchaudio must use matching minor versions.
