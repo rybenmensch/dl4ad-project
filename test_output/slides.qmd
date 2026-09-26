@@ -1,0 +1,980 @@
+---
+format:
+  revealjs:
+    theme: dark
+    slide-number: true
+    transition: fade
+    width: 1600
+    height: 1000
+    margin: 0.08
+    center: false
+    slide-level: 2
+---
+
+## Module impact analysis
+
+80 trials · ranked by decreasing MAE
+
+Reference: the unmodified model reconstruction. Metrics use all channels without amplitude normalization; plots show the first channel.
+
+<div style="font-size:0.55em">Baseline <audio controls preload="none" src="baseline.wav" aria-label="Baseline"></audio></div>
+
+## decoder.model.13 · skip
+
+<p style="font-size:0.65em">SEANetResnetBlock · <code>{}</code></p>
+
+MAE **1.00881** · MRSTFT **8.3522**
+
+Comparison plot unavailable for this trial.
+
+<p style="font-size:0.6em">ModuleNotFoundError: No module named &#x27;matplotlib&#x27;</p>
+
+<div style="font-size:0.55em">Warped audio <audio controls preload="none" src="0072_decoder_13_skip.wav" aria-label="Warped audio"></audio></div>
+
+## encoder.model.4 · skip
+
+<p style="font-size:0.65em">SEANetResnetBlock · <code>{}</code></p>
+
+MAE **0.205877** · MRSTFT **2.4267**
+
+Comparison plot unavailable for this trial.
+
+<p style="font-size:0.6em">ModuleNotFoundError: No module named &#x27;matplotlib&#x27;</p>
+
+<div style="font-size:0.55em">Warped audio <audio controls preload="none" src="0008_encoder_4_skip.wav" aria-label="Warped audio"></audio></div>
+
+## encoder.model.4 · repeat
+
+<p style="font-size:0.65em">SEANetResnetBlock · <code>{&quot;repeats&quot;: 10}</code></p>
+
+MAE **0.193937** · MRSTFT **3.65122**
+
+Comparison plot unavailable for this trial.
+
+<p style="font-size:0.6em">ModuleNotFoundError: No module named &#x27;matplotlib&#x27;</p>
+
+<div style="font-size:0.55em">Warped audio <audio controls preload="none" src="0011_encoder_4_repeat.wav" aria-label="Warped audio"></audio></div>
+
+## encoder.model.10 · skip
+
+<p style="font-size:0.65em">SEANetResnetBlock · <code>{}</code></p>
+
+MAE **0.187523** · MRSTFT **2.66409**
+
+Comparison plot unavailable for this trial.
+
+<p style="font-size:0.6em">ModuleNotFoundError: No module named &#x27;matplotlib&#x27;</p>
+
+<div style="font-size:0.55em">Warped audio <audio controls preload="none" src="0024_encoder_10_skip.wav" aria-label="Warped audio"></audio></div>
+
+## encoder.model.1 · skip
+
+<p style="font-size:0.65em">SEANetResnetBlock · <code>{}</code></p>
+
+MAE **0.187505** · MRSTFT **2.01006**
+
+Comparison plot unavailable for this trial.
+
+<p style="font-size:0.6em">ModuleNotFoundError: No module named &#x27;matplotlib&#x27;</p>
+
+<div style="font-size:0.55em">Warped audio <audio controls preload="none" src="0000_encoder_1_skip.wav" aria-label="Warped audio"></audio></div>
+
+## encoder.model.7 · repeat
+
+<p style="font-size:0.65em">SEANetResnetBlock · <code>{&quot;repeats&quot;: 5}</code></p>
+
+MAE **0.175942** · MRSTFT **2.40647**
+
+Comparison plot unavailable for this trial.
+
+<p style="font-size:0.6em">ModuleNotFoundError: No module named &#x27;matplotlib&#x27;</p>
+
+<div style="font-size:0.55em">Warped audio <audio controls preload="none" src="0018_encoder_7_repeat.wav" aria-label="Warped audio"></audio></div>
+
+## decoder.model.4 · repeat
+
+<p style="font-size:0.65em">SEANetResnetBlock · <code>{&quot;repeats&quot;: 3}</code></p>
+
+MAE **0.172148** · MRSTFT **3.89926**
+
+Comparison plot unavailable for this trial.
+
+<p style="font-size:0.6em">ModuleNotFoundError: No module named &#x27;matplotlib&#x27;</p>
+
+<div style="font-size:0.55em">Warped audio <audio controls preload="none" src="0049_decoder_4_repeat.wav" aria-label="Warped audio"></audio></div>
+
+## encoder.model.1 · repeat
+
+<p style="font-size:0.65em">SEANetResnetBlock · <code>{&quot;repeats&quot;: 5}</code></p>
+
+MAE **0.166261** · MRSTFT **3.12101**
+
+Comparison plot unavailable for this trial.
+
+<p style="font-size:0.6em">ModuleNotFoundError: No module named &#x27;matplotlib&#x27;</p>
+
+<div style="font-size:0.55em">Warped audio <audio controls preload="none" src="0002_encoder_1_repeat.wav" aria-label="Warped audio"></audio></div>
+
+## decoder.model.7 · skip
+
+<p style="font-size:0.65em">SEANetResnetBlock · <code>{}</code></p>
+
+MAE **0.165611** · MRSTFT **2.80117**
+
+Comparison plot unavailable for this trial.
+
+<p style="font-size:0.6em">ModuleNotFoundError: No module named &#x27;matplotlib&#x27;</p>
+
+<div style="font-size:0.55em">Warped audio <audio controls preload="none" src="0056_decoder_7_skip.wav" aria-label="Warped audio"></audio></div>
+
+## encoder.model.7 · skip
+
+<p style="font-size:0.65em">SEANetResnetBlock · <code>{}</code></p>
+
+MAE **0.163281** · MRSTFT **2.01015**
+
+Comparison plot unavailable for this trial.
+
+<p style="font-size:0.6em">ModuleNotFoundError: No module named &#x27;matplotlib&#x27;</p>
+
+<div style="font-size:0.55em">Warped audio <audio controls preload="none" src="0016_encoder_7_skip.wav" aria-label="Warped audio"></audio></div>
+
+## decoder.model.4 · skip
+
+<p style="font-size:0.65em">SEANetResnetBlock · <code>{}</code></p>
+
+MAE **0.162568** · MRSTFT **2.28173**
+
+Comparison plot unavailable for this trial.
+
+<p style="font-size:0.6em">ModuleNotFoundError: No module named &#x27;matplotlib&#x27;</p>
+
+<div style="font-size:0.55em">Warped audio <audio controls preload="none" src="0048_decoder_4_skip.wav" aria-label="Warped audio"></audio></div>
+
+## encoder.model.7 · repeat
+
+<p style="font-size:0.65em">SEANetResnetBlock · <code>{&quot;repeats&quot;: 3}</code></p>
+
+MAE **0.160999** · MRSTFT **2.36676**
+
+Comparison plot unavailable for this trial.
+
+<p style="font-size:0.6em">ModuleNotFoundError: No module named &#x27;matplotlib&#x27;</p>
+
+<div style="font-size:0.55em">Warped audio <audio controls preload="none" src="0017_encoder_7_repeat.wav" aria-label="Warped audio"></audio></div>
+
+## encoder.model.7 · repeat
+
+<p style="font-size:0.65em">SEANetResnetBlock · <code>{&quot;repeats&quot;: 10}</code></p>
+
+MAE **0.160885** · MRSTFT **2.49898**
+
+Comparison plot unavailable for this trial.
+
+<p style="font-size:0.6em">ModuleNotFoundError: No module named &#x27;matplotlib&#x27;</p>
+
+<div style="font-size:0.55em">Warped audio <audio controls preload="none" src="0019_encoder_7_repeat.wav" aria-label="Warped audio"></audio></div>
+
+## decoder.model.10 · skip
+
+<p style="font-size:0.65em">SEANetResnetBlock · <code>{}</code></p>
+
+MAE **0.160452** · MRSTFT **3.19191**
+
+Comparison plot unavailable for this trial.
+
+<p style="font-size:0.6em">ModuleNotFoundError: No module named &#x27;matplotlib&#x27;</p>
+
+<div style="font-size:0.55em">Warped audio <audio controls preload="none" src="0064_decoder_10_skip.wav" aria-label="Warped audio"></audio></div>
+
+## encoder.model.10 · repeat
+
+<p style="font-size:0.65em">SEANetResnetBlock · <code>{&quot;repeats&quot;: 5}</code></p>
+
+MAE **0.157814** · MRSTFT **2.60597**
+
+Comparison plot unavailable for this trial.
+
+<p style="font-size:0.6em">ModuleNotFoundError: No module named &#x27;matplotlib&#x27;</p>
+
+<div style="font-size:0.55em">Warped audio <audio controls preload="none" src="0026_encoder_10_repeat.wav" aria-label="Warped audio"></audio></div>
+
+## encoder.model.10 · repeat
+
+<p style="font-size:0.65em">SEANetResnetBlock · <code>{&quot;repeats&quot;: 3}</code></p>
+
+MAE **0.155874** · MRSTFT **2.49386**
+
+Comparison plot unavailable for this trial.
+
+<p style="font-size:0.6em">ModuleNotFoundError: No module named &#x27;matplotlib&#x27;</p>
+
+<div style="font-size:0.55em">Warped audio <audio controls preload="none" src="0025_encoder_10_repeat.wav" aria-label="Warped audio"></audio></div>
+
+## decoder.model.7 · repeat
+
+<p style="font-size:0.65em">SEANetResnetBlock · <code>{&quot;repeats&quot;: 3}</code></p>
+
+MAE **0.154713** · MRSTFT **3.6096**
+
+Comparison plot unavailable for this trial.
+
+<p style="font-size:0.6em">ModuleNotFoundError: No module named &#x27;matplotlib&#x27;</p>
+
+<div style="font-size:0.55em">Warped audio <audio controls preload="none" src="0057_decoder_7_repeat.wav" aria-label="Warped audio"></audio></div>
+
+## decoder.model.7 · repeat
+
+<p style="font-size:0.65em">SEANetResnetBlock · <code>{&quot;repeats&quot;: 5}</code></p>
+
+MAE **0.153654** · MRSTFT **3.70788**
+
+Comparison plot unavailable for this trial.
+
+<p style="font-size:0.6em">ModuleNotFoundError: No module named &#x27;matplotlib&#x27;</p>
+
+<div style="font-size:0.55em">Warped audio <audio controls preload="none" src="0058_decoder_7_repeat.wav" aria-label="Warped audio"></audio></div>
+
+## encoder.model.4 · repeat
+
+<p style="font-size:0.65em">SEANetResnetBlock · <code>{&quot;repeats&quot;: 5}</code></p>
+
+MAE **0.152489** · MRSTFT **2.70772**
+
+Comparison plot unavailable for this trial.
+
+<p style="font-size:0.6em">ModuleNotFoundError: No module named &#x27;matplotlib&#x27;</p>
+
+<div style="font-size:0.55em">Warped audio <audio controls preload="none" src="0010_encoder_4_repeat.wav" aria-label="Warped audio"></audio></div>
+
+## encoder.model.1 · repeat
+
+<p style="font-size:0.65em">SEANetResnetBlock · <code>{&quot;repeats&quot;: 3}</code></p>
+
+MAE **0.149303** · MRSTFT **2.37379**
+
+Comparison plot unavailable for this trial.
+
+<p style="font-size:0.6em">ModuleNotFoundError: No module named &#x27;matplotlib&#x27;</p>
+
+<div style="font-size:0.55em">Warped audio <audio controls preload="none" src="0001_encoder_1_repeat.wav" aria-label="Warped audio"></audio></div>
+
+## encoder.model.1 · repeat
+
+<p style="font-size:0.65em">SEANetResnetBlock · <code>{&quot;repeats&quot;: 10}</code></p>
+
+MAE **0.14868** · MRSTFT **3.6924**
+
+Comparison plot unavailable for this trial.
+
+<p style="font-size:0.6em">ModuleNotFoundError: No module named &#x27;matplotlib&#x27;</p>
+
+<div style="font-size:0.55em">Warped audio <audio controls preload="none" src="0003_encoder_1_repeat.wav" aria-label="Warped audio"></audio></div>
+
+## decoder.model.4 · repeat
+
+<p style="font-size:0.65em">SEANetResnetBlock · <code>{&quot;repeats&quot;: 10}</code></p>
+
+MAE **0.148556** · MRSTFT **2.81152**
+
+Comparison plot unavailable for this trial.
+
+<p style="font-size:0.6em">ModuleNotFoundError: No module named &#x27;matplotlib&#x27;</p>
+
+<div style="font-size:0.55em">Warped audio <audio controls preload="none" src="0051_decoder_4_repeat.wav" aria-label="Warped audio"></audio></div>
+
+## decoder.model.13 · repeat
+
+<p style="font-size:0.65em">SEANetResnetBlock · <code>{&quot;repeats&quot;: 10}</code></p>
+
+MAE **0.147751** · MRSTFT **1.98094**
+
+Comparison plot unavailable for this trial.
+
+<p style="font-size:0.6em">ModuleNotFoundError: No module named &#x27;matplotlib&#x27;</p>
+
+<div style="font-size:0.55em">Warped audio <audio controls preload="none" src="0075_decoder_13_repeat.wav" aria-label="Warped audio"></audio></div>
+
+## encoder.model.4 · repeat
+
+<p style="font-size:0.65em">SEANetResnetBlock · <code>{&quot;repeats&quot;: 3}</code></p>
+
+MAE **0.145906** · MRSTFT **2.56481**
+
+Comparison plot unavailable for this trial.
+
+<p style="font-size:0.6em">ModuleNotFoundError: No module named &#x27;matplotlib&#x27;</p>
+
+<div style="font-size:0.55em">Warped audio <audio controls preload="none" src="0009_encoder_4_repeat.wav" aria-label="Warped audio"></audio></div>
+
+## decoder.model.10 · repeat
+
+<p style="font-size:0.65em">SEANetResnetBlock · <code>{&quot;repeats&quot;: 5}</code></p>
+
+MAE **0.145697** · MRSTFT **2.93354**
+
+Comparison plot unavailable for this trial.
+
+<p style="font-size:0.6em">ModuleNotFoundError: No module named &#x27;matplotlib&#x27;</p>
+
+<div style="font-size:0.55em">Warped audio <audio controls preload="none" src="0066_decoder_10_repeat.wav" aria-label="Warped audio"></audio></div>
+
+## encoder.model.10 · repeat
+
+<p style="font-size:0.65em">SEANetResnetBlock · <code>{&quot;repeats&quot;: 10}</code></p>
+
+MAE **0.145097** · MRSTFT **2.74607**
+
+Comparison plot unavailable for this trial.
+
+<p style="font-size:0.6em">ModuleNotFoundError: No module named &#x27;matplotlib&#x27;</p>
+
+<div style="font-size:0.55em">Warped audio <audio controls preload="none" src="0027_encoder_10_repeat.wav" aria-label="Warped audio"></audio></div>
+
+## decoder.model.4 · repeat
+
+<p style="font-size:0.65em">SEANetResnetBlock · <code>{&quot;repeats&quot;: 5}</code></p>
+
+MAE **0.144437** · MRSTFT **2.77699**
+
+Comparison plot unavailable for this trial.
+
+<p style="font-size:0.6em">ModuleNotFoundError: No module named &#x27;matplotlib&#x27;</p>
+
+<div style="font-size:0.55em">Warped audio <audio controls preload="none" src="0050_decoder_4_repeat.wav" aria-label="Warped audio"></audio></div>
+
+## decoder.model.10 · repeat
+
+<p style="font-size:0.65em">SEANetResnetBlock · <code>{&quot;repeats&quot;: 3}</code></p>
+
+MAE **0.141144** · MRSTFT **2.76113**
+
+Comparison plot unavailable for this trial.
+
+<p style="font-size:0.6em">ModuleNotFoundError: No module named &#x27;matplotlib&#x27;</p>
+
+<div style="font-size:0.55em">Warped audio <audio controls preload="none" src="0065_decoder_10_repeat.wav" aria-label="Warped audio"></audio></div>
+
+## decoder.model.7 · repeat
+
+<p style="font-size:0.65em">SEANetResnetBlock · <code>{&quot;repeats&quot;: 10}</code></p>
+
+MAE **0.140831** · MRSTFT **3.45465**
+
+Comparison plot unavailable for this trial.
+
+<p style="font-size:0.6em">ModuleNotFoundError: No module named &#x27;matplotlib&#x27;</p>
+
+<div style="font-size:0.55em">Warped audio <audio controls preload="none" src="0059_decoder_7_repeat.wav" aria-label="Warped audio"></audio></div>
+
+## decoder.model.13 · repeat
+
+<p style="font-size:0.65em">SEANetResnetBlock · <code>{&quot;repeats&quot;: 3}</code></p>
+
+MAE **0.133971** · MRSTFT **2.22359**
+
+Comparison plot unavailable for this trial.
+
+<p style="font-size:0.6em">ModuleNotFoundError: No module named &#x27;matplotlib&#x27;</p>
+
+<div style="font-size:0.55em">Warped audio <audio controls preload="none" src="0073_decoder_13_repeat.wav" aria-label="Warped audio"></audio></div>
+
+## encoder.model.13 · repeat
+
+<p style="font-size:0.65em">SLSTM · <code>{&quot;repeats&quot;: 10}</code></p>
+
+MAE **0.131848** · MRSTFT **2.02196**
+
+Comparison plot unavailable for this trial.
+
+<p style="font-size:0.6em">ModuleNotFoundError: No module named &#x27;matplotlib&#x27;</p>
+
+<div style="font-size:0.55em">Warped audio <audio controls preload="none" src="0035_encoder_13_repeat.wav" aria-label="Warped audio"></audio></div>
+
+## decoder.model.10 · repeat
+
+<p style="font-size:0.65em">SEANetResnetBlock · <code>{&quot;repeats&quot;: 10}</code></p>
+
+MAE **0.131024** · MRSTFT **3.02903**
+
+Comparison plot unavailable for this trial.
+
+<p style="font-size:0.6em">ModuleNotFoundError: No module named &#x27;matplotlib&#x27;</p>
+
+<div style="font-size:0.55em">Warped audio <audio controls preload="none" src="0067_decoder_10_repeat.wav" aria-label="Warped audio"></audio></div>
+
+## decoder.model.13 · repeat
+
+<p style="font-size:0.65em">SEANetResnetBlock · <code>{&quot;repeats&quot;: 5}</code></p>
+
+MAE **0.126941** · MRSTFT **1.94145**
+
+Comparison plot unavailable for this trial.
+
+<p style="font-size:0.6em">ModuleNotFoundError: No module named &#x27;matplotlib&#x27;</p>
+
+<div style="font-size:0.55em">Warped audio <audio controls preload="none" src="0074_decoder_13_repeat.wav" aria-label="Warped audio"></audio></div>
+
+## encoder.model.13 · repeat
+
+<p style="font-size:0.65em">SLSTM · <code>{&quot;repeats&quot;: 5}</code></p>
+
+MAE **0.112642** · MRSTFT **1.61026**
+
+Comparison plot unavailable for this trial.
+
+<p style="font-size:0.6em">ModuleNotFoundError: No module named &#x27;matplotlib&#x27;</p>
+
+<div style="font-size:0.55em">Warped audio <audio controls preload="none" src="0034_encoder_13_repeat.wav" aria-label="Warped audio"></audio></div>
+
+## decoder.model.1 · repeat
+
+<p style="font-size:0.65em">SLSTM · <code>{&quot;repeats&quot;: 10}</code></p>
+
+MAE **0.100965** · MRSTFT **1.81017**
+
+Comparison plot unavailable for this trial.
+
+<p style="font-size:0.6em">ModuleNotFoundError: No module named &#x27;matplotlib&#x27;</p>
+
+<div style="font-size:0.55em">Warped audio <audio controls preload="none" src="0043_decoder_1_repeat.wav" aria-label="Warped audio"></audio></div>
+
+## encoder.model.13 · repeat
+
+<p style="font-size:0.65em">SLSTM · <code>{&quot;repeats&quot;: 3}</code></p>
+
+MAE **0.100939** · MRSTFT **1.66709**
+
+Comparison plot unavailable for this trial.
+
+<p style="font-size:0.6em">ModuleNotFoundError: No module named &#x27;matplotlib&#x27;</p>
+
+<div style="font-size:0.55em">Warped audio <audio controls preload="none" src="0033_encoder_13_repeat.wav" aria-label="Warped audio"></audio></div>
+
+## decoder.model.14 · repeat
+
+<p style="font-size:0.65em">ELU · <code>{&quot;repeats&quot;: 10}</code></p>
+
+MAE **0.0917231** · MRSTFT **1.23004**
+
+Comparison plot unavailable for this trial.
+
+<p style="font-size:0.6em">ModuleNotFoundError: No module named &#x27;matplotlib&#x27;</p>
+
+<div style="font-size:0.55em">Warped audio <audio controls preload="none" src="0079_decoder_14_repeat.wav" aria-label="Warped audio"></audio></div>
+
+## encoder.model.8 · repeat
+
+<p style="font-size:0.65em">ELU · <code>{&quot;repeats&quot;: 10}</code></p>
+
+MAE **0.0784617** · MRSTFT **1.37873**
+
+Comparison plot unavailable for this trial.
+
+<p style="font-size:0.6em">ModuleNotFoundError: No module named &#x27;matplotlib&#x27;</p>
+
+<div style="font-size:0.55em">Warped audio <audio controls preload="none" src="0023_encoder_8_repeat.wav" aria-label="Warped audio"></audio></div>
+
+## encoder.model.8 · repeat
+
+<p style="font-size:0.65em">ELU · <code>{&quot;repeats&quot;: 5}</code></p>
+
+MAE **0.0691009** · MRSTFT **1.20317**
+
+Comparison plot unavailable for this trial.
+
+<p style="font-size:0.6em">ModuleNotFoundError: No module named &#x27;matplotlib&#x27;</p>
+
+<div style="font-size:0.55em">Warped audio <audio controls preload="none" src="0022_encoder_8_repeat.wav" aria-label="Warped audio"></audio></div>
+
+## encoder.model.13 · skip
+
+<p style="font-size:0.65em">SLSTM · <code>{}</code></p>
+
+MAE **0.0634727** · MRSTFT **1.04422**
+
+Comparison plot unavailable for this trial.
+
+<p style="font-size:0.6em">ModuleNotFoundError: No module named &#x27;matplotlib&#x27;</p>
+
+<div style="font-size:0.55em">Warped audio <audio controls preload="none" src="0032_encoder_13_skip.wav" aria-label="Warped audio"></audio></div>
+
+## encoder.model.11 · repeat
+
+<p style="font-size:0.65em">ELU · <code>{&quot;repeats&quot;: 10}</code></p>
+
+MAE **0.0633949** · MRSTFT **1.45673**
+
+Comparison plot unavailable for this trial.
+
+<p style="font-size:0.6em">ModuleNotFoundError: No module named &#x27;matplotlib&#x27;</p>
+
+<div style="font-size:0.55em">Warped audio <audio controls preload="none" src="0031_encoder_11_repeat.wav" aria-label="Warped audio"></audio></div>
+
+## decoder.model.1 · repeat
+
+<p style="font-size:0.65em">SLSTM · <code>{&quot;repeats&quot;: 5}</code></p>
+
+MAE **0.063085** · MRSTFT **1.40994**
+
+Comparison plot unavailable for this trial.
+
+<p style="font-size:0.6em">ModuleNotFoundError: No module named &#x27;matplotlib&#x27;</p>
+
+<div style="font-size:0.55em">Warped audio <audio controls preload="none" src="0042_decoder_1_repeat.wav" aria-label="Warped audio"></audio></div>
+
+## encoder.model.14 · repeat
+
+<p style="font-size:0.65em">ELU · <code>{&quot;repeats&quot;: 10}</code></p>
+
+MAE **0.0617788** · MRSTFT **0.885146**
+
+Comparison plot unavailable for this trial.
+
+<p style="font-size:0.6em">ModuleNotFoundError: No module named &#x27;matplotlib&#x27;</p>
+
+<div style="font-size:0.55em">Warped audio <audio controls preload="none" src="0039_encoder_14_repeat.wav" aria-label="Warped audio"></audio></div>
+
+## decoder.model.14 · repeat
+
+<p style="font-size:0.65em">ELU · <code>{&quot;repeats&quot;: 5}</code></p>
+
+MAE **0.0609733** · MRSTFT **0.844797**
+
+Comparison plot unavailable for this trial.
+
+<p style="font-size:0.6em">ModuleNotFoundError: No module named &#x27;matplotlib&#x27;</p>
+
+<div style="font-size:0.55em">Warped audio <audio controls preload="none" src="0078_decoder_14_repeat.wav" aria-label="Warped audio"></audio></div>
+
+## encoder.model.11 · repeat
+
+<p style="font-size:0.65em">ELU · <code>{&quot;repeats&quot;: 5}</code></p>
+
+MAE **0.0583887** · MRSTFT **1.28863**
+
+Comparison plot unavailable for this trial.
+
+<p style="font-size:0.6em">ModuleNotFoundError: No module named &#x27;matplotlib&#x27;</p>
+
+<div style="font-size:0.55em">Warped audio <audio controls preload="none" src="0030_encoder_11_repeat.wav" aria-label="Warped audio"></audio></div>
+
+## encoder.model.8 · skip
+
+<p style="font-size:0.65em">ELU · <code>{}</code></p>
+
+MAE **0.0579247** · MRSTFT **2.35687**
+
+Comparison plot unavailable for this trial.
+
+<p style="font-size:0.6em">ModuleNotFoundError: No module named &#x27;matplotlib&#x27;</p>
+
+<div style="font-size:0.55em">Warped audio <audio controls preload="none" src="0020_encoder_8_skip.wav" aria-label="Warped audio"></audio></div>
+
+## encoder.model.8 · repeat
+
+<p style="font-size:0.65em">ELU · <code>{&quot;repeats&quot;: 3}</code></p>
+
+MAE **0.0578697** · MRSTFT **0.994091**
+
+Comparison plot unavailable for this trial.
+
+<p style="font-size:0.6em">ModuleNotFoundError: No module named &#x27;matplotlib&#x27;</p>
+
+<div style="font-size:0.55em">Warped audio <audio controls preload="none" src="0021_encoder_8_repeat.wav" aria-label="Warped audio"></audio></div>
+
+## encoder.model.11 · skip
+
+<p style="font-size:0.65em">ELU · <code>{}</code></p>
+
+MAE **0.0558483** · MRSTFT **1.16603**
+
+Comparison plot unavailable for this trial.
+
+<p style="font-size:0.6em">ModuleNotFoundError: No module named &#x27;matplotlib&#x27;</p>
+
+<div style="font-size:0.55em">Warped audio <audio controls preload="none" src="0028_encoder_11_skip.wav" aria-label="Warped audio"></audio></div>
+
+## encoder.model.14 · repeat
+
+<p style="font-size:0.65em">ELU · <code>{&quot;repeats&quot;: 5}</code></p>
+
+MAE **0.0534335** · MRSTFT **0.779695**
+
+Comparison plot unavailable for this trial.
+
+<p style="font-size:0.6em">ModuleNotFoundError: No module named &#x27;matplotlib&#x27;</p>
+
+<div style="font-size:0.55em">Warped audio <audio controls preload="none" src="0038_encoder_14_repeat.wav" aria-label="Warped audio"></audio></div>
+
+## encoder.model.5 · repeat
+
+<p style="font-size:0.65em">ELU · <code>{&quot;repeats&quot;: 10}</code></p>
+
+MAE **0.0530655** · MRSTFT **1.31778**
+
+Comparison plot unavailable for this trial.
+
+<p style="font-size:0.6em">ModuleNotFoundError: No module named &#x27;matplotlib&#x27;</p>
+
+<div style="font-size:0.55em">Warped audio <audio controls preload="none" src="0015_encoder_5_repeat.wav" aria-label="Warped audio"></audio></div>
+
+## decoder.model.14 · skip
+
+<p style="font-size:0.65em">ELU · <code>{}</code></p>
+
+MAE **0.0523564** · MRSTFT **1.29676**
+
+Comparison plot unavailable for this trial.
+
+<p style="font-size:0.6em">ModuleNotFoundError: No module named &#x27;matplotlib&#x27;</p>
+
+<div style="font-size:0.55em">Warped audio <audio controls preload="none" src="0076_decoder_14_skip.wav" aria-label="Warped audio"></audio></div>
+
+## encoder.model.5 · repeat
+
+<p style="font-size:0.65em">ELU · <code>{&quot;repeats&quot;: 5}</code></p>
+
+MAE **0.0522223** · MRSTFT **1.12655**
+
+Comparison plot unavailable for this trial.
+
+<p style="font-size:0.6em">ModuleNotFoundError: No module named &#x27;matplotlib&#x27;</p>
+
+<div style="font-size:0.55em">Warped audio <audio controls preload="none" src="0014_encoder_5_repeat.wav" aria-label="Warped audio"></audio></div>
+
+## encoder.model.11 · repeat
+
+<p style="font-size:0.65em">ELU · <code>{&quot;repeats&quot;: 3}</code></p>
+
+MAE **0.0503226** · MRSTFT **1.04144**
+
+Comparison plot unavailable for this trial.
+
+<p style="font-size:0.6em">ModuleNotFoundError: No module named &#x27;matplotlib&#x27;</p>
+
+<div style="font-size:0.55em">Warped audio <audio controls preload="none" src="0029_encoder_11_repeat.wav" aria-label="Warped audio"></audio></div>
+
+## encoder.model.5 · skip
+
+<p style="font-size:0.65em">ELU · <code>{}</code></p>
+
+MAE **0.0498313** · MRSTFT **1.29968**
+
+Comparison plot unavailable for this trial.
+
+<p style="font-size:0.6em">ModuleNotFoundError: No module named &#x27;matplotlib&#x27;</p>
+
+<div style="font-size:0.55em">Warped audio <audio controls preload="none" src="0012_encoder_5_skip.wav" aria-label="Warped audio"></audio></div>
+
+## encoder.model.2 · repeat
+
+<p style="font-size:0.65em">ELU · <code>{&quot;repeats&quot;: 10}</code></p>
+
+MAE **0.0488377** · MRSTFT **0.853521**
+
+Comparison plot unavailable for this trial.
+
+<p style="font-size:0.6em">ModuleNotFoundError: No module named &#x27;matplotlib&#x27;</p>
+
+<div style="font-size:0.55em">Warped audio <audio controls preload="none" src="0007_encoder_2_repeat.wav" aria-label="Warped audio"></audio></div>
+
+## encoder.model.14 · skip
+
+<p style="font-size:0.65em">ELU · <code>{}</code></p>
+
+MAE **0.0487697** · MRSTFT **0.799218**
+
+Comparison plot unavailable for this trial.
+
+<p style="font-size:0.6em">ModuleNotFoundError: No module named &#x27;matplotlib&#x27;</p>
+
+<div style="font-size:0.55em">Warped audio <audio controls preload="none" src="0036_encoder_14_skip.wav" aria-label="Warped audio"></audio></div>
+
+## encoder.model.5 · repeat
+
+<p style="font-size:0.65em">ELU · <code>{&quot;repeats&quot;: 3}</code></p>
+
+MAE **0.0473952** · MRSTFT **0.91274**
+
+Comparison plot unavailable for this trial.
+
+<p style="font-size:0.6em">ModuleNotFoundError: No module named &#x27;matplotlib&#x27;</p>
+
+<div style="font-size:0.55em">Warped audio <audio controls preload="none" src="0013_encoder_5_repeat.wav" aria-label="Warped audio"></audio></div>
+
+## encoder.model.14 · repeat
+
+<p style="font-size:0.65em">ELU · <code>{&quot;repeats&quot;: 3}</code></p>
+
+MAE **0.0472135** · MRSTFT **0.678472**
+
+Comparison plot unavailable for this trial.
+
+<p style="font-size:0.6em">ModuleNotFoundError: No module named &#x27;matplotlib&#x27;</p>
+
+<div style="font-size:0.55em">Warped audio <audio controls preload="none" src="0037_encoder_14_repeat.wav" aria-label="Warped audio"></audio></div>
+
+## encoder.model.2 · skip
+
+<p style="font-size:0.65em">ELU · <code>{}</code></p>
+
+MAE **0.0463602** · MRSTFT **0.763322**
+
+Comparison plot unavailable for this trial.
+
+<p style="font-size:0.6em">ModuleNotFoundError: No module named &#x27;matplotlib&#x27;</p>
+
+<div style="font-size:0.55em">Warped audio <audio controls preload="none" src="0004_encoder_2_skip.wav" aria-label="Warped audio"></audio></div>
+
+## encoder.model.2 · repeat
+
+<p style="font-size:0.65em">ELU · <code>{&quot;repeats&quot;: 5}</code></p>
+
+MAE **0.0452266** · MRSTFT **0.762148**
+
+Comparison plot unavailable for this trial.
+
+<p style="font-size:0.6em">ModuleNotFoundError: No module named &#x27;matplotlib&#x27;</p>
+
+<div style="font-size:0.55em">Warped audio <audio controls preload="none" src="0006_encoder_2_repeat.wav" aria-label="Warped audio"></audio></div>
+
+## decoder.model.1 · repeat
+
+<p style="font-size:0.65em">SLSTM · <code>{&quot;repeats&quot;: 3}</code></p>
+
+MAE **0.0419289** · MRSTFT **0.995696**
+
+Comparison plot unavailable for this trial.
+
+<p style="font-size:0.6em">ModuleNotFoundError: No module named &#x27;matplotlib&#x27;</p>
+
+<div style="font-size:0.55em">Warped audio <audio controls preload="none" src="0041_decoder_1_repeat.wav" aria-label="Warped audio"></audio></div>
+
+## encoder.model.2 · repeat
+
+<p style="font-size:0.65em">ELU · <code>{&quot;repeats&quot;: 3}</code></p>
+
+MAE **0.0412749** · MRSTFT **0.659878**
+
+Comparison plot unavailable for this trial.
+
+<p style="font-size:0.6em">ModuleNotFoundError: No module named &#x27;matplotlib&#x27;</p>
+
+<div style="font-size:0.55em">Warped audio <audio controls preload="none" src="0005_encoder_2_repeat.wav" aria-label="Warped audio"></audio></div>
+
+## decoder.model.14 · repeat
+
+<p style="font-size:0.65em">ELU · <code>{&quot;repeats&quot;: 3}</code></p>
+
+MAE **0.038685** · MRSTFT **0.552165**
+
+Comparison plot unavailable for this trial.
+
+<p style="font-size:0.6em">ModuleNotFoundError: No module named &#x27;matplotlib&#x27;</p>
+
+<div style="font-size:0.55em">Warped audio <audio controls preload="none" src="0077_decoder_14_repeat.wav" aria-label="Warped audio"></audio></div>
+
+## decoder.model.1 · skip
+
+<p style="font-size:0.65em">SLSTM · <code>{}</code></p>
+
+MAE **0.0362818** · MRSTFT **0.810141**
+
+Comparison plot unavailable for this trial.
+
+<p style="font-size:0.6em">ModuleNotFoundError: No module named &#x27;matplotlib&#x27;</p>
+
+<div style="font-size:0.55em">Warped audio <audio controls preload="none" src="0040_decoder_1_skip.wav" aria-label="Warped audio"></audio></div>
+
+## decoder.model.8 · skip
+
+<p style="font-size:0.65em">ELU · <code>{}</code></p>
+
+MAE **0.031855** · MRSTFT **0.875561**
+
+Comparison plot unavailable for this trial.
+
+<p style="font-size:0.6em">ModuleNotFoundError: No module named &#x27;matplotlib&#x27;</p>
+
+<div style="font-size:0.55em">Warped audio <audio controls preload="none" src="0060_decoder_8_skip.wav" aria-label="Warped audio"></audio></div>
+
+## decoder.model.5 · skip
+
+<p style="font-size:0.65em">ELU · <code>{}</code></p>
+
+MAE **0.0299248** · MRSTFT **0.660199**
+
+Comparison plot unavailable for this trial.
+
+<p style="font-size:0.6em">ModuleNotFoundError: No module named &#x27;matplotlib&#x27;</p>
+
+<div style="font-size:0.55em">Warped audio <audio controls preload="none" src="0052_decoder_5_skip.wav" aria-label="Warped audio"></audio></div>
+
+## decoder.model.2 · repeat
+
+<p style="font-size:0.65em">ELU · <code>{&quot;repeats&quot;: 10}</code></p>
+
+MAE **0.0278813** · MRSTFT **0.583089**
+
+Comparison plot unavailable for this trial.
+
+<p style="font-size:0.6em">ModuleNotFoundError: No module named &#x27;matplotlib&#x27;</p>
+
+<div style="font-size:0.55em">Warped audio <audio controls preload="none" src="0047_decoder_2_repeat.wav" aria-label="Warped audio"></audio></div>
+
+## decoder.model.5 · repeat
+
+<p style="font-size:0.65em">ELU · <code>{&quot;repeats&quot;: 10}</code></p>
+
+MAE **0.0268514** · MRSTFT **0.586251**
+
+Comparison plot unavailable for this trial.
+
+<p style="font-size:0.6em">ModuleNotFoundError: No module named &#x27;matplotlib&#x27;</p>
+
+<div style="font-size:0.55em">Warped audio <audio controls preload="none" src="0055_decoder_5_repeat.wav" aria-label="Warped audio"></audio></div>
+
+## decoder.model.11 · skip
+
+<p style="font-size:0.65em">ELU · <code>{}</code></p>
+
+MAE **0.0245216** · MRSTFT **0.833494**
+
+Comparison plot unavailable for this trial.
+
+<p style="font-size:0.6em">ModuleNotFoundError: No module named &#x27;matplotlib&#x27;</p>
+
+<div style="font-size:0.55em">Warped audio <audio controls preload="none" src="0068_decoder_11_skip.wav" aria-label="Warped audio"></audio></div>
+
+## decoder.model.5 · repeat
+
+<p style="font-size:0.65em">ELU · <code>{&quot;repeats&quot;: 5}</code></p>
+
+MAE **0.0201528** · MRSTFT **0.442571**
+
+Comparison plot unavailable for this trial.
+
+<p style="font-size:0.6em">ModuleNotFoundError: No module named &#x27;matplotlib&#x27;</p>
+
+<div style="font-size:0.55em">Warped audio <audio controls preload="none" src="0054_decoder_5_repeat.wav" aria-label="Warped audio"></audio></div>
+
+## decoder.model.2 · repeat
+
+<p style="font-size:0.65em">ELU · <code>{&quot;repeats&quot;: 5}</code></p>
+
+MAE **0.0187295** · MRSTFT **0.401575**
+
+Comparison plot unavailable for this trial.
+
+<p style="font-size:0.6em">ModuleNotFoundError: No module named &#x27;matplotlib&#x27;</p>
+
+<div style="font-size:0.55em">Warped audio <audio controls preload="none" src="0046_decoder_2_repeat.wav" aria-label="Warped audio"></audio></div>
+
+## decoder.model.11 · repeat
+
+<p style="font-size:0.65em">ELU · <code>{&quot;repeats&quot;: 10}</code></p>
+
+MAE **0.0161619** · MRSTFT **0.555373**
+
+Comparison plot unavailable for this trial.
+
+<p style="font-size:0.6em">ModuleNotFoundError: No module named &#x27;matplotlib&#x27;</p>
+
+<div style="font-size:0.55em">Warped audio <audio controls preload="none" src="0071_decoder_11_repeat.wav" aria-label="Warped audio"></audio></div>
+
+## decoder.model.5 · repeat
+
+<p style="font-size:0.65em">ELU · <code>{&quot;repeats&quot;: 3}</code></p>
+
+MAE **0.0139787** · MRSTFT **0.311174**
+
+Comparison plot unavailable for this trial.
+
+<p style="font-size:0.6em">ModuleNotFoundError: No module named &#x27;matplotlib&#x27;</p>
+
+<div style="font-size:0.55em">Warped audio <audio controls preload="none" src="0053_decoder_5_repeat.wav" aria-label="Warped audio"></audio></div>
+
+## decoder.model.8 · repeat
+
+<p style="font-size:0.65em">ELU · <code>{&quot;repeats&quot;: 10}</code></p>
+
+MAE **0.0130923** · MRSTFT **0.474663**
+
+Comparison plot unavailable for this trial.
+
+<p style="font-size:0.6em">ModuleNotFoundError: No module named &#x27;matplotlib&#x27;</p>
+
+<div style="font-size:0.55em">Warped audio <audio controls preload="none" src="0063_decoder_8_repeat.wav" aria-label="Warped audio"></audio></div>
+
+## decoder.model.11 · repeat
+
+<p style="font-size:0.65em">ELU · <code>{&quot;repeats&quot;: 5}</code></p>
+
+MAE **0.0127358** · MRSTFT **0.437218**
+
+Comparison plot unavailable for this trial.
+
+<p style="font-size:0.6em">ModuleNotFoundError: No module named &#x27;matplotlib&#x27;</p>
+
+<div style="font-size:0.55em">Warped audio <audio controls preload="none" src="0070_decoder_11_repeat.wav" aria-label="Warped audio"></audio></div>
+
+## decoder.model.2 · skip
+
+<p style="font-size:0.65em">ELU · <code>{}</code></p>
+
+MAE **0.0125649** · MRSTFT **0.329445**
+
+Comparison plot unavailable for this trial.
+
+<p style="font-size:0.6em">ModuleNotFoundError: No module named &#x27;matplotlib&#x27;</p>
+
+<div style="font-size:0.55em">Warped audio <audio controls preload="none" src="0044_decoder_2_skip.wav" aria-label="Warped audio"></audio></div>
+
+## decoder.model.2 · repeat
+
+<p style="font-size:0.65em">ELU · <code>{&quot;repeats&quot;: 3}</code></p>
+
+MAE **0.0119444** · MRSTFT **0.265861**
+
+Comparison plot unavailable for this trial.
+
+<p style="font-size:0.6em">ModuleNotFoundError: No module named &#x27;matplotlib&#x27;</p>
+
+<div style="font-size:0.55em">Warped audio <audio controls preload="none" src="0045_decoder_2_repeat.wav" aria-label="Warped audio"></audio></div>
+
+## decoder.model.8 · repeat
+
+<p style="font-size:0.65em">ELU · <code>{&quot;repeats&quot;: 5}</code></p>
+
+MAE **0.0101684** · MRSTFT **0.380775**
+
+Comparison plot unavailable for this trial.
+
+<p style="font-size:0.6em">ModuleNotFoundError: No module named &#x27;matplotlib&#x27;</p>
+
+<div style="font-size:0.55em">Warped audio <audio controls preload="none" src="0062_decoder_8_repeat.wav" aria-label="Warped audio"></audio></div>
+
+## decoder.model.11 · repeat
+
+<p style="font-size:0.65em">ELU · <code>{&quot;repeats&quot;: 3}</code></p>
+
+MAE **0.00931655** · MRSTFT **0.317345**
+
+Comparison plot unavailable for this trial.
+
+<p style="font-size:0.6em">ModuleNotFoundError: No module named &#x27;matplotlib&#x27;</p>
+
+<div style="font-size:0.55em">Warped audio <audio controls preload="none" src="0069_decoder_11_repeat.wav" aria-label="Warped audio"></audio></div>
+
+## decoder.model.8 · repeat
+
+<p style="font-size:0.65em">ELU · <code>{&quot;repeats&quot;: 3}</code></p>
+
+MAE **0.00732289** · MRSTFT **0.284506**
+
+Comparison plot unavailable for this trial.
+
+<p style="font-size:0.6em">ModuleNotFoundError: No module named &#x27;matplotlib&#x27;</p>
+
+<div style="font-size:0.55em">Warped audio <audio controls preload="none" src="0061_decoder_8_repeat.wav" aria-label="Warped audio"></audio></div>
