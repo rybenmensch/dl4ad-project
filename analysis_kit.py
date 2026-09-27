@@ -11,6 +11,7 @@ import numpy as np
 import librosa
 
 from lib import mean_absolute_error, mrstft
+from metrics import compute_error_metrics
 from model import NNModel, get_shape_preserving_layers_from_net
 from modules import AdditionLayer, MultiplierLayer, RepeatingLayer, SkippingLayer
 
@@ -53,12 +54,20 @@ def evaluate_transformation(audio_output: torch.Tensor, baseline: torch.Tensor, 
     """
     # 1. Technischer Crash-Check: Verhindert, dass NaN/Inf die Statistiken sprengen
     if not torch.isfinite(audio_output).all():
-        return {"status": "CRASH", "error": "Reconstruction contains non-finite samples (NaN/Inf)"}
+        return {
+            "status": "INVALID",
+            "severity": 5,
+            "error": "Reconstruction contains non-finite samples (NaN/Inf)",
+        }
     
     # 2. Stille-Check: Wenn das Netz stirbt und nur noch Nullen ausgibt
     rms = torch.sqrt(torch.mean(audio_output**2))
     if rms < 1e-5:  # Entspricht ca. -100 dB 
-        return {"status": "SILENT", "error": f"Silence detected (RMS: {rms.item():.6f})"}
+        return {
+            "status": "SILENT",
+            "severity": 4,
+            "error": f"Silence detected (RMS: {rms.item():.6f})",
+        }
     
     # 3. Clipping-Erkennung: Nur als Flag mitgeben, NICHT löschen (Clipping ist beim Bending erwünscht!)
     clipping_count = (audio_output.abs() >= 0.99).sum().item()
@@ -67,16 +76,25 @@ def evaluate_transformation(audio_output: torch.Tensor, baseline: torch.Tensor, 
     
     # 4. Standard-Metriken berechnen (MAE & STFT-Loss)
     mae = mean_absolute_error(baseline, audio_output)
+    error_metrics = compute_error_metrics(
+        baseline.detach().cpu().numpy(), audio_output.detach().cpu().numpy()
+    )
     spectral = mrstft(audio_output, baseline)
     
     if not math.isfinite(mae) or not math.isfinite(spectral):
-        return {"status": "CRASH", "error": "Comparison produced non-finite metrics"}
+        return {
+            "status": "INVALID",
+            "severity": 5,
+            "error": "Comparison produced non-finite metrics",
+        }
         
     features = extract_audio_features(audio_output, sr)
     
     return {
-        "status": "VALID",
+        "status": "CLIPPED" if is_clipping else "VALID",
+        "severity": 3 if is_clipping else 0,
         "mae": mae,
+        "mae_normalized": error_metrics["mae_normalized"],
         "mrstft": spectral,
         "clipping": is_clipping,
         **features,
@@ -88,16 +106,20 @@ def run_variant_evaluation(model, layer, variant, wav, baseline, sr, output_dir,
     """Führt eine einzelne Modell-Modifikation aus und schickt das Audio durchs Quality Gate."""
     net = model.get_net(layer.net_type)
     row = {
+        "layer": layer.layer_path,
         "layer_path": layer.layer_path,
         "layer_type": layer.name,
         "operation": variant.operation,
         "parameters": json.dumps(variant.parameters, sort_keys=True),
         "mae": None,
+        "mae_normalized": None,
         "mrstft": None,
         "spectral_centroid": None,
         "spectral_bandwidth": None,
         "spectral_rolloff": None,
         "rms_energy": None,
+        "status": "ERROR",
+        "severity": None,
         "clipping": False,
         "audio": "",
         "plot": "",
@@ -114,19 +136,24 @@ def run_variant_evaluation(model, layer, variant, wav, baseline, sr, output_dir,
         
         # Hier greift unser Quality Gate
         eval_result = evaluate_transformation(reconstruction, baseline, sr)
-        
-        if eval_result["status"] != "VALID":
-            raise ValueError(f"Quality Gate failed: {eval_result.get('error', eval_result['status'])}")
-            
+
         row.update(
-            mae=eval_result["mae"],
-            mrstft=eval_result["mrstft"],
-            clipping=eval_result["clipping"],
-            spectral_centroid=eval_result["spectral_centroid"],
-            spectral_bandwidth=eval_result["spectral_bandwidth"],
-            spectral_rolloff=eval_result["spectral_rolloff"],
-            rms_energy=eval_result["rms_energy"]
+            status=eval_result["status"],
+            severity=eval_result["severity"],
+            mae=eval_result.get("mae"),
+            mae_normalized=eval_result.get("mae_normalized"),
+            mrstft=eval_result.get("mrstft"),
+            clipping=eval_result.get("clipping", False),
+            spectral_centroid=eval_result.get("spectral_centroid"),
+            spectral_bandwidth=eval_result.get("spectral_bandwidth"),
+            spectral_rolloff=eval_result.get("spectral_rolloff"),
+            rms_energy=eval_result.get("rms_energy"),
         )
+
+        if eval_result.get("error"):
+            row["error"] = eval_result["error"]
+        if eval_result["status"] in ("INVALID", "SILENT"):
+            return row
         
         if output_dir is not None:
             audio_path = output_dir / f"{stem}.wav"
@@ -142,6 +169,7 @@ def run_variant_evaluation(model, layer, variant, wav, baseline, sr, output_dir,
             row["plot"] = plot_path.name
             
     except Exception as exc:
+        row["status"] = "ERROR"
         row["error"] = f"{type(exc).__name__}: {exc}"
         
     return row
@@ -154,11 +182,16 @@ def analyze_module_impact(
     nets = ("encoder", "decoder"),
     plots: bool = True,
     slides: bool = True,
+    interventions: tuple[str, ...] = ("skip", "repeat", "multiply"),
+    add_offset: float = 0.1,
 ) -> list[dict]:
     if slides:
         plots = True
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
+    unknown_interventions = set(interventions) - set(MODULES)
+    if unknown_interventions:
+        raise ValueError(f"Unknown interventions: {sorted(unknown_interventions)}")
     rows = []
     model.reset()
     
@@ -176,11 +209,13 @@ def analyze_module_impact(
             save_audio(output_dir / "baseline.wav", baseline, sr)
             
         for layer in layers:
-            # 1. Standard-Varianten durchtesten (Skip & Repeat in versch. Stärken)
-            fixed_variants = [
-                Variant("skip", {}),
-                *[Variant("repeat", {"repeats": n}) for n in (3, 5, 10)]
-            ]
+            fixed_variants = []
+            if "skip" in interventions:
+                fixed_variants.append(Variant("skip", {}))
+            if "repeat" in interventions:
+                fixed_variants.extend(
+                    Variant("repeat", {"repeats": n}) for n in (3, 5, 10)
+                )
             for variant in fixed_variants:
                 model.reset()
                 model.model.eval()
@@ -191,8 +226,10 @@ def analyze_module_impact(
                     write_results(output_dir / "results.csv", rows)
 
             # 2. Multiplikationen mit adaptivem Sampling (Sucht nach Tipping Points)
+            model.reset()
+            model.model.eval()
             net = model.get_net(layer.net_type)
-            if model.layer_has_weights(net[layer.index]):
+            if model.layer_has_weights(net[layer.index]) and "multiply" in interventions:
                 factors_to_test = [1.0, 5.0, 10.0, 20.0]
                 tested_results = []
                 
@@ -222,6 +259,21 @@ def analyze_module_impact(
                             rows.append(row)
                             if output_dir is not None:
                                 write_results(output_dir / "results.csv", rows)
+
+            if model.layer_has_weights(net[layer.index]) and "add" in interventions:
+                model.reset()
+                model.model.eval()
+                variant = Variant(
+                    "add",
+                    {"weight_add": add_offset, "bias_add": add_offset},
+                )
+                stem = f"{len(rows):04d}_{layer.net_type.value}_{layer.index}_add_{add_offset}"
+                row = run_variant_evaluation(
+                    model, layer, variant, wav, baseline, sr, output_dir, stem, plots
+                )
+                rows.append(row)
+                if output_dir is not None:
+                    write_results(output_dir / "results.csv", rows)
 
     finally:
         model.reset()
