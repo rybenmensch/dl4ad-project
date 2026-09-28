@@ -5,18 +5,15 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Self
 
+import sounddevice as sd
 import torch
 import torchaudio
 from numpy._typing import NDArray
-import sounddevice as sd
 
 from library.encodec import EncodecNNModel
 from library.model import (
     LayerInfo,
     NNModel,
-    get_all_layers,
-    get_shape_preserving_layers,
-    get_weighted_layers,
 )
 from library.rave import RAVEModel
 
@@ -65,6 +62,9 @@ class ExportArgs(CommonArgs):
     pass
 
 
+Args = GenerateArgs | AnalyzeArgs | ExportArgs
+
+
 # TODO: replace tuple[torch.Tensor, int] with AudioTensor
 @dataclass(frozen=True)
 class AudioTensor:
@@ -109,9 +109,6 @@ class File:
     wav: tuple[torch.Tensor, int]
 
 
-Args = GenerateArgs | AnalyzeArgs | ExportArgs
-
-
 class AppState:
     def __init__(self, args: Args) -> None:
         self.shape_preserving_layers: list[LayerInfo] = []
@@ -124,12 +121,6 @@ class AppState:
         self.__load_model()
         self.__handle_output_dir()
         self.__load_files()
-        self.update_layer_lists()
-
-    def update_layer_lists(self) -> None:
-        self.shape_preserving_layers = get_shape_preserving_layers(self.model)
-        self.weighted_layers = get_weighted_layers(self.model)
-        self.all_layers = get_all_layers(self.model)
 
     def __load_model(self) -> None:
         if self.args.model_type == ModelType.RAVE:
