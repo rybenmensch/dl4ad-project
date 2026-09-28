@@ -23,8 +23,8 @@ def usage(prev: str = "") -> str:
     return "(" + prev + "<Esc>: abort; <C-c>, <C-d>: quit" + ")"
 
 
-def format_auto_complete(string: str, abbr: str = "") -> str:
-    if len(string) < 2:
+def format_auto_complete(string: str, abbr: str | None = "") -> str:
+    if len(string) < 2 or abbr is None:
         return string
     if abbr != "":
         return f"[{abbr}]{string}"
@@ -92,6 +92,15 @@ class ChoiceOption[T](NamedTuple):
     def from_labels(cls, labels: list[Any]) -> "list[ChoiceOption[int]]":
         return [
             ChoiceOption(value=i, label=l, shortcut=None) for i, l in enumerate(labels)
+        ]
+
+    @classmethod
+    def from_labels_and_number_keys(
+        cls, labels_num_keys: list[tuple[Any, int]]
+    ) -> "list[ChoiceOption[int]]":
+        return [
+            ChoiceOption(value=i, label=l, shortcut=None, number_key=nk)
+            for i, (l, nk) in enumerate(labels_num_keys)
         ]
 
 
@@ -275,7 +284,7 @@ class PromptEnum(StrEnum):
         )
 
 
-def auto_complete(user_string: str, key: str, abbr="") -> bool:
+def auto_complete(user_string: str, key: str, abbr: str | None = "") -> bool:
     ret = False
     if abbr != "":
         ret = abbr == user_string
