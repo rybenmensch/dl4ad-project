@@ -1,5 +1,6 @@
 import copy
 import sys
+import threading
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
@@ -9,6 +10,7 @@ import prompt_toolkit as pt
 import sounddevice as sd
 import torch
 import torchaudio
+from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.shortcuts.progress_bar import formatters as pb_formatters
 
 from cli.lib import (
@@ -16,7 +18,6 @@ from cli.lib import (
     PromptEnum,
     UserCancelledError,
     auto_complete,
-    bindings_with_exit,
     choose,
     format_auto_complete,
     get_input,
@@ -32,10 +33,13 @@ from library.model import (
     Net,
     NetTypeEnum,
     NNModel,
+    Swap,
     get_all_layers,
     get_all_layers_from_net,
     get_shape_preserving_layers,
+    get_swappable_layers,
     get_weighted_layers,
+    swap_layers,
 )
 from library.rave import ExportOptions, RAVEModel
 
@@ -162,10 +166,12 @@ def get_net_type_and_layers(
 def get_net_type_and_index(layers: list[LayerInfo]) -> tuple[NetTypeEnum, int]:
     net_type, layers = get_net_type_and_layers(layers)
     if len(layers) == 0:
-        raise IndexError(f" Net {net_type.value} has no layers of interest.")
+        # TODO: change error type, don't think that really is an indexerror, just
+        # because layers is empty?
+        raise IndexError(f"Net {net_type.value} has no layers of interest.")
 
     index = choose(
-        f" Select layer ({usage(sel("index"))})",
+        f" Select layer {usage(sel("index"))}",
         [
             ChoiceOption(
                 value=layer.index,
@@ -177,6 +183,7 @@ def get_net_type_and_index(layers: list[LayerInfo]) -> tuple[NetTypeEnum, int]:
         ],
     )
 
+    # can this ever actually happen???
     if index not in [layer.index for layer in layers]:
         raise IndexError(f"Index out of bounds: {index}")
 
@@ -205,6 +212,40 @@ def handle_repeat_layer(app: AppState) -> None:
 
     net, layer_info = get_net_and_layer_info(app.model, net_type, index)
     net[index] = RepeatingLayer(layer_info, repeats=cast(int, num_repeats))
+
+
+def handle_swap_layer(app: AppState) -> None:
+    swappable_layers = get_swappable_layers(app.model)
+    swappable_info = [l.source for l in swappable_layers]
+    try:
+        net_type, index = get_net_type_and_index(swappable_info)
+    except IndexError as e:
+        print(e)
+        return
+
+    swap_info = swappable_layers[index]
+    swap_encoder = [l for l in swap_info.targets if l.net_type == NetTypeEnum.Encoder]
+    swap_decoder = [l for l in swap_info.targets if l.net_type == NetTypeEnum.Decoder]
+
+    if len(swap_encoder) and len(swap_decoder):
+        net_type, index = get_net_type_and_index(swappable_info)
+    else:
+        index = choose(
+            f" Select layer {usage(sel("index"))}",
+            ChoiceOption.from_labels_and_number_keys(
+                [
+                    (
+                        f"({layer.net_type.value}) ({layer.index}) {layer.name}"
+                        f" {layer.inout or ''}",
+                        layer.index,
+                    )
+                    for layer in swap_info.targets
+                ],
+            ),
+        )
+
+    swap = Swap.from_info(swap_info, index)
+    swap_layers(app.model, swappable_layers, swap)
 
 
 def handle_multiplier_layer(app: AppState) -> None:
@@ -238,18 +279,22 @@ class ListeningMode(PromptEnum):
     Modified = "modified"
     Baseline = "baseline"
 
-    @classmethod
     def get_audio_tensor(
-        cls, app: AppState, wav: tuple[torch.Tensor, int]
+        self, app: AppState, wav: tuple[torch.Tensor, int]
     ) -> AudioTensor:
-        if cls == ListeningMode.Modified:
+        if self == self.Modified:
             audio = app.model(wav)
             sr = app.model.get_sample_rate()
-        elif cls == ListeningMode.Baseline:
+            print("modified")
+        elif self == self.Baseline:
             audio = app.backup_model(wav)
+            print("baseline")
             sr = app.backup_model.get_sample_rate()
-        else:
+        elif self == self.Original:
+            print("original")
             audio, sr = wav
+        else:
+            raise NotImplementedError
         return AudioTensor(audio=audio, sr=sr)
 
 
@@ -270,10 +315,27 @@ def listen(app: AppState) -> None:
     mode = ListeningMode.get_choice_menu()
     at = mode.get_audio_tensor(app, file.wav)
 
+    cancel_playback = threading.Event()
+    exit_command: str | None = None
+    playback_bindings = KeyBindings()
+
+    def stop_playback(command: str):
+        def handler(event):
+            nonlocal exit_command
+            exit_command = command
+            cancel_playback.set()
+            event.app.exit()
+
+        return handler
+
+    playback_bindings.add("c-c", eager=True)(stop_playback("cancel"))
+    playback_bindings.add("escape", eager=True)(stop_playback("cancel"))
+    playback_bindings.add("c-d", eager=True)(stop_playback("quit"))
+
     def make_progress_bar(length: str) -> pt.shortcuts.ProgressBar:
         custom_formatter = [
-            pb_formatters.Label(),
-            pb_formatters.Text(": "),
+            # pb_formatters.Label(),
+            # pb_formatters.Text(": "),
             pb_formatters.Bar(sym_a="#", sym_b="#", sym_c="."),
             pb_formatters.Text(" "),
             pb_formatters.TimeElapsed(),
@@ -283,7 +345,7 @@ def listen(app: AppState) -> None:
 
         return pt.shortcuts.ProgressBar(
             title="Now playing",
-            key_bindings=bindings_with_exit(),
+            key_bindings=playback_bindings,
             formatters=custom_formatter,
         )
 
@@ -291,11 +353,13 @@ def listen(app: AppState) -> None:
         with make_progress_bar(at.readable_length()) as pb:
             with at.output_stream() as stream:
                 for chunk in pb(at.chunks()):
+                    if cancel_playback.is_set():
+                        break
                     stream.write(chunk)
-    except KeyboardInterrupt:
+    finally:
         sd.stop()
-    except EOFError:
-        sd.stop()
+
+    if exit_command == "quit":
         sys.exit(0)
 
 
@@ -416,12 +480,13 @@ class Command:
     key: str
     fn: Callable[[AppState], None]
     desc: str
-    abbr: str = ""
+    abbr: str | None = ""
 
 
 commands = [
     Command(key="skip", fn=handle_skip_layer, desc="Skip"),
     Command(key="repeat", fn=handle_repeat_layer, desc="Repeat"),
+    Command(key="swap", abbr=None, fn=handle_swap_layer, desc="Swap layers"),
     Command(key="multiply", fn=handle_multiplier_layer, desc="Multiply"),
     Command(key="add", fn=handle_addition_layer, desc="Add"),
     Command(key="quit", fn=lambda _: sys.exit(0), desc="Quit"),
