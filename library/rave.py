@@ -11,6 +11,7 @@ import torch
 from cached_conv.convs import (
     CachedConv1d,
     CachedConvTranspose1d,
+    CachedPadding1d,
     CachedSequential,
     Conv1d,
     ConvTranspose1d,
@@ -171,6 +172,7 @@ def raw_rave_model(run_path: Path | str) -> rave.RAVE:
     model = rave.RAVE(n_channels=n_channels)
     model.load_state_dict(state_dict, strict=False)
     model.eval()
+
     return model
 
 
@@ -206,6 +208,13 @@ def export_rave_model(model: NNModel, options: ExportOptions) -> None:
     x = torch.zeros(1, pretrained.n_channels, 2**14)
     z = scripted_rave.encode(x)
     x = scripted_rave.decode(z)
+
+    # cached_conv creates this buffer lazily on first use. TorchScript still
+    # compiles skipped child modules, so give any not-yet-used cache an empty
+    # buffer attribute before scripting the model.
+    for module in scripted_rave.modules():
+        if isinstance(module, CachedPadding1d) and not hasattr(module, "pad"):
+            module.register_buffer("pad", torch.empty(0))
 
     scripted_rave.export_to_ts(options.path)
 
