@@ -33,7 +33,6 @@ class ModelType(str, Enum):
 class Command(str, Enum):
     GENERATE = "generate"
     ANALYZE = "analyze"
-    EXPORT = "export"
 
 
 @dataclass
@@ -57,12 +56,7 @@ class AnalyzeArgs(CommonArgs):
     seconds: float | None = None
 
 
-@dataclass
-class ExportArgs(CommonArgs):
-    pass
-
-
-Args = GenerateArgs | AnalyzeArgs | ExportArgs
+Args = GenerateArgs | AnalyzeArgs
 
 
 # TODO: replace tuple[torch.Tensor, int] with AudioTensor
@@ -140,10 +134,6 @@ class AppState:
             self.output.mkdir(parents=True, exist_ok=True)
 
     def __load_files(self) -> None:
-        if isinstance(self.args, ExportArgs):
-            self.input_list = None
-            return
-
         path = self.args.input
 
         if not path.exists():

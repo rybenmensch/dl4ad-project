@@ -8,7 +8,6 @@ from cli.state import (
     Args,
     Command,
     CommonArgs,
-    ExportArgs,
     GenerateArgs,
     ModelType,
 )
@@ -99,13 +98,6 @@ def build_parser() -> argparse.ArgumentParser:
         "Input audio file or directory containing audio files.",
     )
 
-    export = subparsers.add_parser(
-        Command.EXPORT.value,
-        help="Export bended network as torchscript.",
-        description="Export bended network as torchscript.",
-    )
-    add_common_options(export)
-
     return parser
 
 
@@ -135,11 +127,6 @@ def parse_args(parser: argparse.ArgumentParser) -> Args:
             **common.__dict__,
             input=namespace.input,
             save_depth=namespace.save_depth,
-        )
-
-    if command == Command.EXPORT:
-        return ExportArgs(
-            **common.__dict__,
         )
 
     raise RuntimeError(f"Unknown command: {command}")

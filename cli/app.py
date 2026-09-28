@@ -19,8 +19,6 @@ def main() -> None:
         generate_loop(app)
     elif args.command == Command.ANALYZE:
         analyze_loop(app)
-    elif args.command == Command.EXPORT:
-        pass
 
 
 if __name__ == "__main__":
