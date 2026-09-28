@@ -57,6 +57,9 @@ def get_input(
             prompt_bindings.add("escape")(
                 lambda event: event.app.exit(exception=UserCancelledError())
             )
+        u_str = "<Esc>: abort;" if escape_cancels else ""
+        u_str = f"({u_str} <C-c>, <C-d>: quit)"
+        msg = f"{msg} {u_str}:\n"
         c = pt.prompt(msg, key_bindings=prompt_bindings).strip().lower()
         if quit_on_q and c == "q":
             raise UserCancelledError
@@ -71,7 +74,7 @@ def get_param[T](fn: Callable[[str], T], thing: str) -> T:
         try:
             cr_and_flush()
             user_input = get_input(
-                f"Enter {thing}:\n", escape_cancels=True, quit_on_q=False
+                f"Enter {thing}", escape_cancels=True, quit_on_q=False
             )
             return fn(user_input)
         except ValueError:
