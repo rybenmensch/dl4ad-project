@@ -144,15 +144,13 @@ def choose[T](
         radio._selected_index = max(0, radio._selected_index - 1)
         radio._handle_enter()
 
-    bindings.add("up", eager=True)(move_up)
-    bindings.add("c-p", eager=True)(move_up)
-
     def move_down(event):
         radio._selected_index = min(len(radio.values) - 1, radio._selected_index + 1)
         radio._handle_enter()
 
-    bindings.add("down", eager=True)(move_down)
-    bindings.add("c-n", eager=True)(move_down)
+    for fn, keys in (move_up, ("up", "c-p", "k")), (move_down, ("down", "c-n", "j")):
+        for k in keys:
+            bindings.add(k, eager=True)(fn)
 
     for option in [o for o in options if o.shortcut is not None]:
         assert option.shortcut is not None
