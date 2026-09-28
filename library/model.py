@@ -413,23 +413,17 @@ class Swap:
         return cls(source=info.source, target=info.targets[index])
 
 
-def swap_layers(model: NNModel, swapList: list[SwapInfo], swap: Swap) -> list[SwapInfo]:
-    """
-    Rather unholyly, this both in-place modifies the model, along with
-    returning a modified swaplist...
-    """
+def swap_layers(model: NNModel, swapList: list[SwapInfo], swap: Swap) -> None:
     source = swap.source
     target = swap.target
     source_net = model.get_net(source.net_type)
     target_net = model.get_net(target.net_type)
 
-    # first, do the actual swap
+    print(hex(id(source_net[source.index])))
     source_tmp = source_net[source.index]
     source_net[source.index] = target_net[target.index]
     target_net[target.index] = source_tmp
-
-    # basically just re-calculate swapList as swapping invalidates most of the list
-    return get_swappable_layers(model)
+    print(hex(id(target_net[target.index])))
 
 
 def get_weighted_layers_from_net(model: NNModel, net: Net) -> list[LayerInfo]:
