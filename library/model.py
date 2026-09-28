@@ -47,6 +47,10 @@ class NNModel(ABC):
         pass
 
     @abstractmethod
+    def export(self, options: Any) -> None:
+        pass
+
+    @abstractmethod
     def get_sample_rate(self) -> int:
         """Returns the sample rate the model is intended to run on."""
 

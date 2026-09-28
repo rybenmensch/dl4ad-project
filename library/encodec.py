@@ -1,4 +1,4 @@
-from typing import cast
+from typing import Any, cast
 
 import torch
 from encodec.model import EncodecModel
@@ -20,6 +20,9 @@ class EncodecNNModel(NNModel):
 
     def reset(self) -> None:
         self.model = raw_encodec_model(self.get_sample_rate())
+
+    def export(self, options: Any) -> None:
+        raise NotImplementedError("Export is not implemented yet for Encodec models!")
 
     def get_sample_rate(self) -> int:
         return self.model.sample_rate

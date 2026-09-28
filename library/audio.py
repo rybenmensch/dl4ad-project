@@ -58,43 +58,6 @@ def convert_audio(wav: tuple[torch.Tensor, int], target_sr: int, target_chans: i
     return audio
 
 
-def get_in_channels(model) -> int:
-    if hasattr(model, "n_channels"):
-        return model.n_channels
-    return get_in_channels_from_state_dict(model.state_dict())
-
-
-def get_in_channels_from_state_dict(state_dict: dict) -> int:
-    """
-    Find the input channels of the encoder's first conv layer from state_dict
-    to detect n_channels. We need this because at this point, we do not have a
-    RAVE model yet, only a state_dict!
-    """
-    in_channels = None
-
-    # first conv layer of state_dict might have a different 'path' depending on
-    # model version
-    for key in [
-        "encoder.encoder.net.0.weight_v",
-        "encoder.net.0.weight_v",
-        "encoder.encoder.net.0.weight",
-    ]:
-        if key in state_dict:
-            in_channels = state_dict[key].shape[1]
-            break
-
-    # actual amount of input channels is input_channels // number of pqmf bands
-    if in_channels is not None:
-        try:
-            n_band = gin.query_parameter("%N_BAND")
-        except Exception:
-            # assume 16 bands as in the paper if the parameter isn't found
-            n_band = 16
-        return in_channels // n_band
-    else:
-        return 1
-
-
 class JITModel:
     # useful for JIT-compiled .ts models
     def __init__(self, path: Path | str) -> None:
