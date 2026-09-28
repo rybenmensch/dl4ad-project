@@ -32,7 +32,6 @@ nbform = "cli.app:main"
 packages = ["cli"]
 py-modules = [
     "analysis_kit",
-    "analysis_pipeline",
     "encodec_lib",
     "lib",
     "metrics",
