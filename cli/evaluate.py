@@ -58,6 +58,10 @@ def evaluate_corpus(args) -> tuple[pd.DataFrame, pd.DataFrame]:
             slides=False,
             interventions=interventions,
             add_offset=args.add_offset,
+            save_baseline=False,
+            save_trial_audio=False,
+            write_intermediate_results=False,
+            write_results_csv=False,
         )
         for result in audio_rows:
             result["audio_file"] = audio_path.name

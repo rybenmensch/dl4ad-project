@@ -2,6 +2,7 @@ import csv
 import json
 import math
 import logging
+from copy import deepcopy
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -102,7 +103,18 @@ def evaluate_transformation(audio_output: torch.Tensor, baseline: torch.Tensor, 
     }
 
 
-def run_variant_evaluation(model, layer, variant, wav, baseline, sr, output_dir, stem, plots) -> dict:
+def run_variant_evaluation(
+    model,
+    layer,
+    variant,
+    wav,
+    baseline,
+    sr,
+    output_dir,
+    stem,
+    plots,
+    save_trial_audio=True,
+) -> dict:
     """Führt eine einzelne Modell-Modifikation aus und schickt das Audio durchs Quality Gate."""
     net = model.get_net(layer.net_type)
     row = {
@@ -155,7 +167,7 @@ def run_variant_evaluation(model, layer, variant, wav, baseline, sr, output_dir,
         if eval_result["status"] in ("INVALID", "SILENT"):
             return row
         
-        if output_dir is not None:
+        if output_dir is not None and save_trial_audio:
             audio_path = output_dir / f"{stem}.wav"
             save_audio(audio_path, reconstruction, sr)
             row["audio"] = audio_path.name
@@ -184,6 +196,10 @@ def analyze_module_impact(
     slides: bool = True,
     interventions: tuple[str, ...] = ("skip", "repeat", "multiply"),
     add_offset: float = 0.1,
+    save_baseline: bool = True,
+    save_trial_audio: bool = True,
+    write_intermediate_results: bool = True,
+    write_results_csv: bool = True,
 ) -> list[dict]:
     if slides:
         plots = True
@@ -194,6 +210,14 @@ def analyze_module_impact(
         raise ValueError(f"Unknown interventions: {sorted(unknown_interventions)}")
     rows = []
     model.reset()
+    pristine_model = None
+
+    def restore_model() -> None:
+        if pristine_model is None:
+            model.reset()
+        else:
+            model.model = deepcopy(pristine_model)
+            model.model.eval()
     
     try:
         model.model.eval()
@@ -205,7 +229,11 @@ def analyze_module_impact(
                 
         baseline = model(wav).detach().cpu().clone()
         sr = model.get_sample_rate()
-        if output_dir is not None:
+        try:
+            pristine_model = deepcopy(model.model)
+        except Exception:
+            pristine_model = None
+        if output_dir is not None and save_baseline:
             save_audio(output_dir / "baseline.wav", baseline, sr)
             
         for layer in layers:
@@ -217,31 +245,34 @@ def analyze_module_impact(
                     Variant("repeat", {"repeats": n}) for n in (3, 5, 10)
                 )
             for variant in fixed_variants:
-                model.reset()
-                model.model.eval()
+                restore_model()
                 stem = f"{len(rows):04d}_{layer.net_type.value}_{layer.index}_{variant.operation}"
-                row = run_variant_evaluation(model, layer, variant, wav, baseline, sr, output_dir, stem, plots)
+                row = run_variant_evaluation(
+                    model, layer, variant, wav, baseline, sr, output_dir, stem,
+                    plots, save_trial_audio
+                )
                 rows.append(row)
-                if output_dir is not None:
+                if output_dir is not None and write_intermediate_results:
                     write_results(output_dir / "results.csv", rows)
 
             # 2. Multiplikationen mit adaptivem Sampling (Sucht nach Tipping Points)
-            model.reset()
-            model.model.eval()
+            restore_model()
             net = model.get_net(layer.net_type)
             if model.layer_has_weights(net[layer.index]) and "multiply" in interventions:
                 factors_to_test = [1.0, 5.0, 10.0, 20.0]
                 tested_results = []
                 
                 for factor in factors_to_test:
-                    model.reset()
-                    model.model.eval()
+                    restore_model()
                     variant = Variant("multiply", {"weight_mul": factor, "bias_mul": 1.0})
                     stem = f"{len(rows):04d}_{layer.net_type.value}_{layer.index}_multiply_{factor}"
-                    row = run_variant_evaluation(model, layer, variant, wav, baseline, sr, output_dir, stem, plots)
+                    row = run_variant_evaluation(
+                        model, layer, variant, wav, baseline, sr, output_dir, stem,
+                        plots, save_trial_audio
+                    )
                     rows.append(row)
                     tested_results.append((factor, row["mae"]))
-                    if output_dir is not None:
+                    if output_dir is not None and write_intermediate_results:
                         write_results(output_dir / "results.csv", rows)
                 
                 # Wenn der Fehler zwischen zwei Testpunkten extrem springt, genauer hinschauen!
@@ -251,34 +282,41 @@ def analyze_module_impact(
                     if mae1 is not None and mae2 is not None:
                         if abs(mae1 - mae2) > 0.5:  # Schwellenwert für Sprungerkennung
                             mid_factor = (f1 + f2) / 2.0
-                            model.reset()
-                            model.model.eval()
+                            restore_model()
                             variant = Variant("multiply", {"weight_mul": mid_factor, "bias_mul": 1.0})
                             stem = f"{len(rows):04d}_{layer.net_type.value}_{layer.index}_multiply_adaptive_{mid_factor}"
-                            row = run_variant_evaluation(model, layer, variant, wav, baseline, sr, output_dir, stem, plots)
+                            row = run_variant_evaluation(
+                                model, layer, variant, wav, baseline, sr, output_dir,
+                                stem, plots, save_trial_audio
+                            )
                             rows.append(row)
-                            if output_dir is not None:
+                            if output_dir is not None and write_intermediate_results:
                                 write_results(output_dir / "results.csv", rows)
 
             if model.layer_has_weights(net[layer.index]) and "add" in interventions:
-                model.reset()
-                model.model.eval()
+                restore_model()
                 variant = Variant(
                     "add",
                     {"weight_add": add_offset, "bias_add": add_offset},
                 )
                 stem = f"{len(rows):04d}_{layer.net_type.value}_{layer.index}_add_{add_offset}"
                 row = run_variant_evaluation(
-                    model, layer, variant, wav, baseline, sr, output_dir, stem, plots
+                    model, layer, variant, wav, baseline, sr, output_dir, stem,
+                    plots, save_trial_audio
                 )
                 rows.append(row)
-                if output_dir is not None:
+                if output_dir is not None and write_intermediate_results:
                     write_results(output_dir / "results.csv", rows)
 
     finally:
-        model.reset()
+        if pristine_model is None:
+            model.reset()
+        else:
+            restore_model()
         
     rows.sort(key=lambda row: row["mae"] if row["mae"] is not None else -1, reverse=True)
+    if output_dir is not None and write_results_csv:
+        write_results(output_dir / "results.csv", rows)
     if slides:
         from quarto_slides import write_impact_slides
         write_impact_slides(rows, output_dir)

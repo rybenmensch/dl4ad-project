@@ -1,0 +1,38 @@
+{
+  "timestamp": "2026-09-28T14:54:34+02:00",
+  "model_name": "encodec",
+  "model_path": null,
+  "model_sample_rate": 48000,
+  "model_channels": 2,
+  "corpus_dir": "/Users/marekmalter/Documents/GitHub/dl4ad-project/audio/source",
+  "audio_files": [
+    "AmenBreak.wav",
+    "Fontane Sprachsignal.wav",
+    "GLM.wav",
+    "tof.wav"
+  ],
+  "nets": [
+    "decoder"
+  ],
+  "interventions": [
+    "skip"
+  ],
+  "parameters": {
+    "repeat_counts": [],
+    "weight_multipliers": [],
+    "add_offset": null
+  },
+  "metrics": [
+    "mae",
+    "mae_normalized",
+    "mrstft"
+  ],
+  "normalization": {
+    "target_rms": 0.1,
+    "peak_limit": 0.99
+  },
+  "quality_thresholds": {
+    "silence_rms": 1e-05,
+    "clipping_ratio": 0.05
+  }
+}

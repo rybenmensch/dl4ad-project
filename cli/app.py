@@ -83,10 +83,11 @@ def build_parser() -> argparse.ArgumentParser:
 def main() -> None:
     parser = build_parser()
     args = parser.parse_args()
+    args.model = ModelType(args.model)
 
-    if args.model == ModelType.RAVE.value and args.rave_path is None:
+    if args.model == ModelType.RAVE and args.rave_path is None:
         parser.error("--model rave requires --rave-path")
-    if args.model == ModelType.ENCODEC.value and args.rave_path is not None:
+    if args.model == ModelType.ENCODEC and args.rave_path is not None:
         parser.error("--rave-path can only be used with --model rave")
 
     try:
