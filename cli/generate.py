@@ -45,7 +45,7 @@ def print_help(_: AppState) -> None:
     print("List of commands:")
     for c in commands:
         key_str = format_auto_complete(c.key, c.abbr)
-        print(f"{key_str:<{ln + padding}} {c.name}")
+        print(f"{key_str:<{ln + padding}} {c.desc}")
 
 
 def print_layer_common(
@@ -368,32 +368,38 @@ def write_file(app: AppState) -> None:
         print(f"Wrote file {path}")
 
 
+def export_model(app: AppState) -> None:
+    pass
+
+
 @dataclass(frozen=True)
 class Command:
     key: str
     fn: Callable[[AppState], None]
-    name: str
+    desc: str
     abbr: str = ""
 
 
 commands = [
-    Command(key="skip", fn=handle_skip_layer, name="Skip"),
-    Command(key="repeat", fn=handle_repeat_layer, name="Repeat"),
-    Command(key="multiply", fn=handle_multiplier_layer, name="Multiply"),
-    Command(key="add", fn=handle_addition_layer, name="Add"),
-    Command(key="quit", fn=lambda _: sys.exit(0), name="Quit"),
-    Command(key="help", fn=print_help, name="Help"),
-    Command(key="print", fn=print_model, name="Print model"),
-    Command(key="diff", fn=print_diff, name="Print difference to baseline model"),
-    Command(key="listen", fn=listen, name="Listen to the current state"),
-    Command(key="restore", abbr="x", fn=restore_model, name="Restore model"),
-    Command(key="write", fn=write_file, name="Write file"),
+    Command(key="skip", fn=handle_skip_layer, desc="Skip"),
+    Command(key="repeat", fn=handle_repeat_layer, desc="Repeat"),
+    Command(key="multiply", fn=handle_multiplier_layer, desc="Multiply"),
+    Command(key="add", fn=handle_addition_layer, desc="Add"),
+    Command(key="quit", fn=lambda _: sys.exit(0), desc="Quit"),
+    Command(key="help", fn=print_help, desc="Help"),
+    Command(key="print", fn=print_model, desc="Print model"),
+    Command(key="diff", fn=print_diff, desc="Print difference to baseline model"),
+    Command(key="listen", fn=listen, desc="Listen to the current state"),
+    Command(key="restore", abbr="x", fn=restore_model, desc="Restore model"),
+    Command(key="write", fn=write_file, desc="Write file"),
+    Command(key="export", fn=export_model, desc="Export model to torchscript"),
 ]
 
 
 def generate_loop(app: AppState) -> None:
     pt.shortcuts.clear()
     # TODO: splash screen?
+
     while True:
         try:
             user_input = get_input(
