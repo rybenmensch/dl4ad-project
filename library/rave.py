@@ -8,7 +8,13 @@ import gin
 import rave
 import rave.core
 import torch
-from cached_conv.convs import CachedSequential, Conv1d, ConvTranspose1d
+from cached_conv.convs import (
+    CachedConv1d,
+    CachedConvTranspose1d,
+    CachedSequential,
+    Conv1d,
+    ConvTranspose1d,
+)
 from rave import Residual
 from scripts import export as rave_export
 from torch import nn
@@ -55,7 +61,9 @@ class RAVEModel(NNModel):
     def layer_get_channels(self, layer: nn.Module) -> tuple[int, int] | None:
         """Returns `None` if layer accepts any input/output size."""
         layer = unwrap_layer(layer)
-        if isinstance(layer, (Conv1d, ConvTranspose1d)):
+        if isinstance(
+            layer, (Conv1d, CachedConv1d, ConvTranspose1d, CachedConvTranspose1d)
+        ):
             return (layer.in_channels, layer.out_channels)
         elif isinstance(layer, Residual):
             net = cast(CachedSequential, layer.aligned.branches[0].net)
@@ -83,7 +91,9 @@ class RAVEModel(NNModel):
         except (ValueError, AttributeError):
             pass
 
-        if isinstance(layer, (Conv1d, ConvTranspose1d)):
+        if isinstance(
+            layer, (Conv1d, CachedConv1d, ConvTranspose1d, CachedConvTranspose1d)
+        ):
             bias = layer.bias if layer.bias != None else torch.empty((0, 0))
             return [WeightAndBias(weight=layer.weight, bias=bias)]
         elif isinstance(layer, Residual):
