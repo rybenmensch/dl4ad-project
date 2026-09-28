@@ -107,6 +107,7 @@ class AppState:
     def __init__(self, args: Args) -> None:
         self.files: list[File] = []
         self.model: NNModel
+        self.rave_path: Path | None
 
         self.args = args
         self.__load_model()
@@ -118,6 +119,7 @@ class AppState:
             assert self.args.rave_path != None
             self.model = RAVEModel(self.args.rave_path)
             self.backup_model = RAVEModel(self.args.rave_path)
+            self.rave_path = self.args.rave_path
         else:
             self.model = EncodecNNModel()
             self.backup_model = EncodecNNModel()
