@@ -2,9 +2,11 @@ import asyncio
 import sys
 from collections.abc import Callable
 from enum import StrEnum
-from typing import NamedTuple, Self, cast
+from typing import Any, NamedTuple, Self, cast
 
 import prompt_toolkit as pt
+from prompt_toolkit.key_binding import KeyBindings
+from prompt_toolkit.widgets import RadioList
 
 ########################### FORMATTING AND PRINTING
 
@@ -49,7 +51,7 @@ def get_input(
     msg: str = "", *, quit_on_q: bool = False, escape_cancels: bool = False
 ) -> str:
     try:
-        prompt_bindings = pt.key_binding.KeyBindings()
+        prompt_bindings = KeyBindings()
         prompt_bindings.add("c-l")(lambda event: event.app.renderer.clear())
         if escape_cancels:
             prompt_bindings.add("escape")(
@@ -81,16 +83,33 @@ class ChoiceOption[T](NamedTuple):
     value: T
     label: str
     shortcut: str | None
+    number_key: int | None = -9999
+
+    @classmethod
+    def from_labels(cls, labels: list[Any]) -> "list[ChoiceOption[int]]":
+        return [
+            ChoiceOption(value=i, label=l, shortcut=None) for i, l in enumerate(labels)
+        ]
+
+
+def bindings_with_exit() -> KeyBindings:
+    kb = KeyBindings()
+    kb.add("c-d", eager=True)(lambda event: event.app.exit(exception=EOFError()))
+    kb.add("escape", eager=True)(
+        lambda event: event.app.exit(exception=UserCancelledError())
+    )
+    kb.add("c-c", eager=True)(
+        lambda event: event.app.exit(exception=KeyboardInterrupt())
+    )
+    return kb
 
 
 def choose[T](
     message: str,
     options: list[ChoiceOption[T]],
-    *,
-    number_keys: dict[str, object] | None = None,
 ) -> T:
     """Show an arrow-key menu with optional direct letter and number selection."""
-    radio = pt.widgets.RadioList(
+    radio = RadioList(
         [(o.value, o.label) for o in options],
         show_numbers=False,
         select_on_focus=False,
@@ -100,7 +119,8 @@ def choose[T](
         select_character=">",
         close_character="",
     )
-    bindings = pt.key_binding.KeyBindings()
+    bindings = bindings_with_exit()
+
     values = [o.value for o in options]
 
     @bindings.add("enter", eager=True)
@@ -112,71 +132,52 @@ def choose[T](
     def move_up(event):
         radio._selected_index = max(0, radio._selected_index - 1)
         radio._handle_enter()
-        if number_keys:
-            reset_typed_number()
 
     @bindings.add("down", eager=True)
     def move_down(event):
-        radio._selected_index = min(len(values) - 1, radio._selected_index + 1)
+        radio._selected_index = min(len(radio.values) - 1, radio._selected_index + 1)
         radio._handle_enter()
-        if number_keys:
-            reset_typed_number()
 
-    @bindings.add("escape", eager=True)
-    def cancel(event):
-        event.app.exit(exception=UserCancelledError())
+    for option in [o for o in options if o.shortcut is not None]:
+        assert option.shortcut is not None
 
-    @bindings.add("c-c", eager=True)
-    def interrupt(event):
-        event.app.exit(exception=KeyboardInterrupt())
+        @bindings.add(option.shortcut, eager=True)
+        def select_shortcut(event, key=option.shortcut):
+            for other in options:
+                if other.shortcut == key:
+                    radio._selected_index = values.index(other.value)
+                    radio._handle_enter()
+                    event.app.exit(result=other.value)
+                    return
 
-    @bindings.add("c-d", eager=True)
-    def eof(event):
-        event.app.exit(exception=EOFError())
-
-    def choose_value(event, value: T) -> None:
-        radio._selected_index = values.index(value)
-        radio._handle_enter()
-        event.app.exit(result=value)
-
-    for option in options:
-        if option.shortcut is not None:
-
-            @bindings.add(option.shortcut, eager=True)
-            def select_shortcut(event, key=option.shortcut):
-                for other in options:
-                    if other.shortcut == key:
-                        choose_value(event, other.value)
-                        return
+    number_keys = [o.number_key for o in options if o.number_key is not None]
 
     if number_keys:
         typed_number = ""
         reset_task = None
 
-        def reset_typed_number() -> None:
-            nonlocal typed_number, reset_task
-            typed_number = ""
-            if reset_task is not None:
-                reset_task.cancel()
-                reset_task = None
-
         def select_number(event, digit: str) -> None:
             nonlocal typed_number, reset_task
             candidate = typed_number + digit
-            if any(index.startswith(candidate) for index in number_keys):
+            if any(str(index).startswith(candidate) for index in number_keys):
+                # if multi-digit number matches
                 typed_number = candidate
-            elif any(index.startswith(digit) for index in number_keys):
+            elif any(str(index).startswith(digit) for index in number_keys):
+                # if single-digit number matches
                 typed_number = digit
             else:
+                # if number does not match
                 typed_number = ""
 
-            value = number_keys.get(typed_number)
+            if typed_number == "":
+                value = None
+            else:
+                v_idx = number_keys.index(int(typed_number))
+                value = number_keys[v_idx] if v_idx != -1 else None
+
             if value is not None and value in values:
                 radio._selected_index = values.index(value)
                 radio._handle_enter()
-
-            if reset_task is not None:
-                reset_task.cancel()
 
             async def clear_after_pause() -> None:
                 nonlocal typed_number, reset_task
@@ -184,16 +185,16 @@ def choose[T](
                 typed_number = ""
                 reset_task = None
 
+            if reset_task is not None:
+                reset_task.cancel()
             reset_task = event.app.create_background_task(clear_after_pause())
 
-        for digit in "0123456789":
-
-            @bindings.add(digit, eager=True)
-            def select_layer_number(event, key=digit):
-                select_number(event, key)
+        for i in range(10):
+            digit = str(i)
+            bindings.add(digit, eager=True)(lambda e, k=digit: select_number(e, k))
 
     app = pt.Application(
-        layout=pt.Layout.Layout(pt.Layout.HSplit([pt.widgets.Label(message), radio])),
+        layout=pt.layout.Layout(pt.layout.HSplit([pt.widgets.Label(message), radio])),
         key_bindings=bindings,
         full_screen=False,
     )

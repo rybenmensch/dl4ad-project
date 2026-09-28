@@ -16,6 +16,7 @@ from cli.lib import (
     PromptEnum,
     UserCancelledError,
     auto_complete,
+    bindings_with_exit,
     choose,
     format_auto_complete,
     get_input,
@@ -165,13 +166,13 @@ def get_net_type_and_index(layers: list[LayerInfo]) -> tuple[NetTypeEnum, int]:
         f" Select layer ({usage(sel("index"))})",
         [
             ChoiceOption(
-                layer.index,
-                f"({layer.index}) {layer.name} {layer.inout or ''}",
-                None,
+                value=layer.index,
+                label=f"({layer.index}) {layer.name} {layer.inout or ''}",
+                shortcut=None,
+                number_key=layer.index,
             )
             for layer in layers
         ],
-        number_keys={str(layer.index): layer.index for layer in layers},
     )
 
     if index not in [layer.index for layer in layers]:
@@ -253,15 +254,9 @@ class ListeningMode(PromptEnum):
 def listen(app: AppState) -> None:
     input_index = 0
     if len(app.files) > 1:
-        input_index = cast(
-            int,
-            choose(
-                "Select input file for playback (↑/↓, Enter)",
-                [
-                    ChoiceOption(value=i, label=f.path.name, shortcut=None)
-                    for i, f in enumerate(app.files)
-                ],
-            ),
+        input_index = choose(
+            f"Select input file for playback {usage()}",
+            ChoiceOption.from_labels([f.path.name for f in app.files]),
         )
 
     try:
@@ -274,12 +269,6 @@ def listen(app: AppState) -> None:
     at = mode.get_audio_tensor(app, file.wav)
 
     def make_progress_bar(length: str) -> pt.shortcuts.ProgressBar:
-        kb = pt.key_binding.KeyBindings()
-
-        @kb.add("c-d", eager=True)
-        def exit_on_eof(event):
-            event.app.exit(exception=EOFError())
-
         custom_formatter = [
             pb_formatters.Label(),
             pb_formatters.Text(": "),
@@ -290,7 +279,11 @@ def listen(app: AppState) -> None:
             pb_formatters.Text(length, style="class:time-left"),
         ]
 
-        return pt.shortcuts.ProgressBar(key_bindings=kb, formatters=custom_formatter)
+        return pt.shortcuts.ProgressBar(
+            title="Now playing",
+            key_bindings=bindings_with_exit(),
+            formatters=custom_formatter,
+        )
 
     try:
         with make_progress_bar(at.readable_length()) as pb:
@@ -410,7 +403,6 @@ def generate_loop(app: AppState) -> None:
             sys.exit()
 
         try:
-            app.update_layer_lists()
 
             for c in commands:
                 if auto_complete(user_input, c.key, c.abbr):
