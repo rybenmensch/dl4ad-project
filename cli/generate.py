@@ -25,6 +25,7 @@ from cli.lib import (
     usage,
 )
 from cli.state import AppState, AudioTensor
+from library.encodec import EncodecNNModel
 from library.layers import AdditionLayer, MultiplierLayer, RepeatingLayer, SkippingLayer
 from library.model import (
     LayerInfo,
@@ -36,6 +37,7 @@ from library.model import (
     get_shape_preserving_layers,
     get_weighted_layers,
 )
+from library.rave import ExportOptions, RAVEModel
 
 
 def print_help(_: AppState) -> None:
@@ -368,8 +370,45 @@ def write_file(app: AppState) -> None:
         print(f"Wrote file {path}")
 
 
+class OutputFolderType(PromptEnum):
+    Same = "same"
+    New = "new"
+
+
 def export_model(app: AppState) -> None:
-    pass
+    if isinstance(app.model, RAVEModel):
+        choice = OutputFolderType.get_choice_menu()
+        output_path = None
+        if choice == OutputFolderType.Same:
+            output_path = app.rave_path
+        elif choice == OutputFolderType.New:
+            output_path = get_input(
+                "Enter output folder", quit_on_q=False, escape_cancels=True
+            )
+        assert output_path is not None
+        output_path = Path(output_path).absolute()
+
+        if not output_path.exists():
+            raise FileNotFoundError(f"Output folder does not exist: {output_path}")
+
+        name = get_input("Enter name", quit_on_q=False, escape_cancels=True)
+        name = Path(name).stem
+        name = name + ".ts"
+
+        output_path = output_path / name
+
+        if output_path.exists():
+            raise FileExistsError(f"Output file already exists: {output_path}")
+
+        fidelity = get_param(float, "fidelity")
+        app.model.export(ExportOptions(path=output_path, fidelity=fidelity))
+
+    elif isinstance(app.model, EncodecNNModel):
+        # just let that error print as it's not implemented anyway
+        try:
+            app.model.export(None)
+        except NotImplementedError as e:
+            print(e)
 
 
 @dataclass(frozen=True)
