@@ -1,0 +1,46 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nbform"
+version = "0.1.0"
+description = "Interactive network bending and corpus evaluation for neural audio models"
+requires-python = ">=3.11,<3.13"
+dependencies = [
+    "torch>=2.2,<2.3",
+    "torchaudio>=2.2,<2.3",
+    "numpy<2",
+    "pandas>=2.0",
+    "encodec==0.1.1",
+    "auraloss>=0.4",
+    "gin-config>=0.5",
+    "librosa>=0.11",
+    "matplotlib>=3.8",
+    "sounddevice>=0.4",
+    "setuptools<80.9",
+]
+
+[project.optional-dependencies]
+rave = ["acids-rave"]
+heatmap = ["seaborn>=0.13"]
+
+[project.scripts]
+nbform = "cli.app:main"
+
+[tool.setuptools]
+packages = ["cli"]
+py-modules = [
+    "analysis_kit",
+    "analysis_pipeline",
+    "encodec_lib",
+    "lib",
+    "metrics",
+    "model",
+    "modules",
+    "plotting",
+    "quarto_slides",
+    "rave_lib",
+    "stats",
+    "torch_lib",
+]

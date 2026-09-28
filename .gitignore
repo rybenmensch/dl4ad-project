@@ -1,5 +1,6 @@
 .DS_Store
 .venv/
+*.egg-info/
 __pycache__/
 models/jungle_ravev3.ts
 models/run/best.ckpt
