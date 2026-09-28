@@ -105,9 +105,6 @@ class File:
 
 class AppState:
     def __init__(self, args: Args) -> None:
-        self.shape_preserving_layers: list[LayerInfo] = []
-        self.weighted_layers: list[LayerInfo] = []
-        self.all_layers: list[LayerInfo] = []
         self.files: list[File] = []
         self.model: NNModel
 
