@@ -1,3 +1,4 @@
+import asyncio
 import copy
 import sys
 from collections.abc import Callable
@@ -7,9 +8,17 @@ from pathlib import Path
 from typing import Self, cast
 
 import sounddevice as sd
+import torch
 import torchaudio
+from prompt_toolkit import prompt
+from prompt_toolkit.application import Application
+from prompt_toolkit.key_binding import KeyBindings
+from prompt_toolkit.layout import HSplit, Layout
+from prompt_toolkit.shortcuts import ProgressBar
+from prompt_toolkit.shortcuts.progress_bar import formatters as pb_formatters
+from prompt_toolkit.widgets import Label, RadioList
 
-from cli.state import AppState
+from cli.state import AppState, AudioTensor
 from library.layers import AdditionLayer, MultiplierLayer, RepeatingLayer, SkippingLayer
 from library.model import (
     LayerInfo,
@@ -17,6 +26,7 @@ from library.model import (
     NetTypeEnum,
     NNModel,
     get_all_layers,
+    get_all_layers_from_net,
     get_shape_preserving_layers,
     get_weighted_layers,
 )
@@ -70,6 +80,19 @@ class PromptEnum(StrEnum):
     def get_param(cls) -> Self:
         return cast(Self, get_param(cls.parse, cls.prompt_string()))
 
+    @classmethod
+    def get_choice_menu(cls) -> Self:
+        return cast(
+            Self,
+            choose(
+                f"Select {cls.human_name()} (↑/↓, Enter, or shortcut key)",
+                [
+                    (member, member.formatted_choice(), member.value[0])
+                    for member in cls
+                ],
+            ),
+        )
+
 
 @dataclass(frozen=True)
 class Command:
@@ -83,10 +106,18 @@ class UserCancelledError(Exception):
     pass
 
 
-def get_input(msg: str = "") -> str:
+def get_input(
+    msg: str = "", *, quit_on_q: bool = False, escape_cancels: bool = False
+) -> str:
     try:
-        c = input(msg).strip().lower()
-        if c == "q":
+        prompt_bindings = KeyBindings()
+        prompt_bindings.add("c-l")(lambda event: event.app.renderer.clear())
+        if escape_cancels:
+            prompt_bindings.add("escape")(
+                lambda event: event.app.exit(exception=UserCancelledError())
+            )
+        c = prompt(msg, key_bindings=prompt_bindings).strip().lower()
+        if quit_on_q and c == "q":
             raise UserCancelledError
     except (EOFError, KeyboardInterrupt):
         sys.exit()
@@ -100,9 +131,10 @@ def get_param(fn: Callable[[str], ParamReturnType], thing: str) -> ParamReturnTy
     while True:
         user_input = ""
         try:
-            user_input = get_input(f"Enter {thing}: ")
+            sys.stdout.write("\r\n")
+            sys.stdout.flush()
+            user_input = get_input(f"Enter {thing}:\n", escape_cancels=True)
             return fn(user_input)
-            break
         except ValueError:
             print(f"Invalid {thing}: {user_input}.")
             continue
@@ -118,6 +150,128 @@ def format_auto_complete(string: str, abbr: str = "") -> str:
 
 def print_menu(cmd: str) -> None:
     print(f"[{cmd}] ", end="")
+
+
+def choose(
+    message: str,
+    options: list[tuple[object, str, str | None]],
+    *,
+    number_keys: dict[str, object] | None = None,
+) -> object:
+    """Show an arrow-key menu with optional direct letter and number selection."""
+    radio = RadioList(
+        [(value, label) for value, label, _ in options],
+        show_numbers=False,
+        select_on_focus=False,
+        show_cursor=False,
+        show_scrollbar=True,
+        open_character="",
+        select_character=">",
+        close_character="",
+    )
+    bindings = KeyBindings()
+    values = [value for value, _, _ in options]
+
+    @bindings.add("enter", eager=True)
+    def accept(event):
+        radio._handle_enter()
+        event.app.exit(result=radio.current_value)
+
+    @bindings.add("up", eager=True)
+    def move_up(event):
+        radio._selected_index = max(0, radio._selected_index - 1)
+        radio._handle_enter()
+        if number_keys:
+            reset_typed_number()
+
+    @bindings.add("down", eager=True)
+    def move_down(event):
+        radio._selected_index = min(len(values) - 1, radio._selected_index + 1)
+        radio._handle_enter()
+        if number_keys:
+            reset_typed_number()
+
+    @bindings.add("escape", eager=True)
+    def cancel(event):
+        event.app.exit(exception=UserCancelledError())
+
+    @bindings.add("c-c", eager=True)
+    def interrupt(event):
+        event.app.exit(exception=KeyboardInterrupt())
+
+    @bindings.add("c-d", eager=True)
+    def eof(event):
+        event.app.exit(exception=EOFError())
+
+    def choose_value(event, value: object) -> None:
+        radio._selected_index = values.index(value)
+        radio._handle_enter()
+        event.app.exit(result=value)
+
+    for _, _, shortcut in options:
+        if shortcut is not None:
+
+            @bindings.add(shortcut, eager=True)
+            def select_shortcut(event, key=shortcut):
+                for value, _, option_shortcut in options:
+                    if option_shortcut == key:
+                        choose_value(event, value)
+                        return
+
+    if number_keys:
+        typed_number = ""
+        reset_task = None
+
+        def reset_typed_number() -> None:
+            nonlocal typed_number, reset_task
+            typed_number = ""
+            if reset_task is not None:
+                reset_task.cancel()
+                reset_task = None
+
+        def select_number(event, digit: str) -> None:
+            nonlocal typed_number, reset_task
+            candidate = typed_number + digit
+            if any(index.startswith(candidate) for index in number_keys):
+                typed_number = candidate
+            elif any(index.startswith(digit) for index in number_keys):
+                typed_number = digit
+            else:
+                typed_number = ""
+
+            value = number_keys.get(typed_number)
+            if value is not None and value in values:
+                radio._selected_index = values.index(value)
+                radio._handle_enter()
+
+            if reset_task is not None:
+                reset_task.cancel()
+
+            async def clear_after_pause() -> None:
+                nonlocal typed_number, reset_task
+                await asyncio.sleep(1)
+                typed_number = ""
+                reset_task = None
+
+            reset_task = event.app.create_background_task(clear_after_pause())
+
+        for digit in "0123456789":
+
+            @bindings.add(digit, eager=True)
+            def select_layer_number(event, key=digit):
+                select_number(event, key)
+
+    app = Application(
+        layout=Layout(HSplit([Label(message), radio])),
+        key_bindings=bindings,
+        full_screen=False,
+    )
+    sys.stdout.write("\r\n")
+    sys.stdout.flush()
+    result = app.run()
+    sys.stdout.write("\r\n")
+    sys.stdout.flush()
+    return result
 
 
 def print_help(_: AppState) -> None:
@@ -160,15 +314,26 @@ class PrintMode(PromptEnum):
 
 def print_model(app: AppState) -> None:
     print_menu("PRINT")
-    mode = PrintMode.get_param()
+    mode = PrintMode.get_choice_menu()
 
     if mode == PrintMode.All:
-        for v in NetTypeEnum:
-            print_layer_common(app.model, get_all_layers(app.model), v.value, True)
+        for net_type in NetTypeEnum:
+            net = app.model.get_net(net_type)
+            print_layer_common(
+                app.model,
+                get_all_layers_from_net(app.model, net),
+                net_type.value,
+                True,
+            )
     else:
+        net = app.model.get_net(NetTypeEnum(mode))
         print_layer_common(
-            app.model, get_all_layers(app.model), NetTypeEnum(mode), True
+            app.model, get_all_layers_from_net(app.model, net), NetTypeEnum(mode), True
         )
+
+
+# def get_differing_models_from_net(model:)
+#     pass
 
 
 def print_diff(app: AppState) -> None:
@@ -206,6 +371,10 @@ class NetTypePromptEnum(PromptEnum):
     def to_net_type(self) -> NetTypeEnum:
         return NetTypeEnum(self.value)
 
+    @classmethod
+    def human_name(cls) -> str:
+        return "net type"
+
 
 def get_net_type_and_index(
     model: NNModel,
@@ -213,16 +382,23 @@ def get_net_type_and_index(
     layer_getter: Callable[[NNModel], list[LayerInfo]],
     layer_title: str,
 ) -> tuple[NetTypeEnum, int]:
-    net_type = NetTypePromptEnum.get_param().to_net_type()
+    net_type = NetTypePromptEnum.get_choice_menu().to_net_type()
 
     layers = [l for l in layer_getter(model) if l.net_type == net_type]
 
     print_menu(menu_name)
-    print(f"can be applied to {layer_title}:")
-    print_layer_common(model, layers, layer_title, False)
 
-    print_menu(menu_name)
-    index = cast(int, get_param(int, "layer index"))
+    index = cast(
+        int,
+        choose(
+            "Select layer (↑/↓, Enter; type its index to jump to it)",
+            [
+                (layer.index, f"({layer.index}) {layer.name} {layer.inout or ''}", None)
+                for layer in layers
+            ],
+            number_keys={str(layer.index): layer.index for layer in layers},
+        ),
+    )
 
     if index not in [l.index for l in layers]:
         raise IndexError(f"[{menu_name}] Index out of bounds: {index}")
@@ -300,17 +476,32 @@ class ListeningMode(PromptEnum):
     Modified = "modified"
     Baseline = "baseline"
 
+    @classmethod
+    def get_audio_tensor(
+        cls, app: AppState, wav: tuple[torch.Tensor, int]
+    ) -> AudioTensor:
+        if cls == ListeningMode.Modified:
+            audio = app.model(wav)
+            sr = app.model.get_sample_rate()
+        elif cls == ListeningMode.Baseline:
+            audio = app.backup_model(wav)
+            sr = app.backup_model.get_sample_rate()
+        else:
+            audio, sr = wav
+        return AudioTensor(audio=audio, sr=sr)
+
 
 def listen(app: AppState) -> None:
     print_menu("LISTEN")
     input_index = 0
     if len(app.files) > 1:
-        print("Select input file for playback:")
-        for i, f in enumerate(app.files):
-            print(f"{i})", f.path)
-
-        print_menu("LISTEN")
-        input_index = cast(int, get_param(int, "input file"))
+        input_index = cast(
+            int,
+            choose(
+                "Select input file for playback (↑/↓, Enter)",
+                [(i, f.path.name, None) for i, f in enumerate(app.files)],
+            ),
+        )
 
     try:
         file = app.files[input_index]
@@ -319,25 +510,38 @@ def listen(app: AppState) -> None:
         print(f"Index out of bounds: {input_index}")
         return
 
-    print_menu("LISTEN")
-    mode = cast(
-        ListeningMode,
-        get_param(ListeningMode.parse, ListeningMode.prompt_string()),
-    )
+    mode = ListeningMode.get_choice_menu()
+    at = mode.get_audio_tensor(app, file.wav)
 
-    if mode == ListeningMode.Modified:
-        audio = app.model(file.wav)
-        sr = app.model.get_sample_rate()
-    elif mode == ListeningMode.Baseline:
-        audio = app.backup_model(file.wav)
-        sr = app.backup_model.get_sample_rate()
-    else:
-        audio, sr = file.wav
+    def make_progress_bar(length: str) -> ProgressBar:
+        kb = KeyBindings()
+
+        @kb.add("c-d", eager=True)
+        def exit_on_eof(event):
+            event.app.exit(exception=EOFError())
+
+        custom_formatter = [
+            pb_formatters.Label(),
+            pb_formatters.Text(": "),
+            pb_formatters.Bar(sym_a="#", sym_b="#", sym_c="."),
+            pb_formatters.Text(" "),
+            pb_formatters.TimeElapsed(),
+            pb_formatters.Text(" / ", style="class:time-left"),
+            pb_formatters.Text(length, style="class:time-left"),
+        ]
+
+        return ProgressBar(key_bindings=kb, formatters=custom_formatter)
 
     try:
-        sd.play(audio.numpy().T, samplerate=sr, blocking=True)
+        with make_progress_bar(at.readable_length()) as pb:
+            with at.output_stream() as stream:
+                for chunk in pb(at.chunks()):
+                    stream.write(chunk)
     except KeyboardInterrupt:
-        pass
+        sd.stop()
+    except EOFError:
+        sd.stop()
+        sys.exit(0)
 
 
 class RestoreMode(PromptEnum):
@@ -347,10 +551,7 @@ class RestoreMode(PromptEnum):
 
 def restore_model(app: AppState) -> None:
     print_menu("RESTORE")
-    mode = cast(
-        RestoreMode,
-        get_param(RestoreMode.parse, RestoreMode.prompt_string()),
-    )
+    mode = RestoreMode.get_choice_menu()
 
     if mode == RestoreMode.All:
         app.model.reset()
@@ -382,7 +583,7 @@ class WriteFileMode(PromptEnum):
 
 
 def write_file(app: AppState) -> None:
-    mode = WriteFileMode.get_param()
+    mode = WriteFileMode.get_choice_menu()
 
     prep_or_app = ""
     if mode == WriteFileMode.Prepend or mode == WriteFileMode.Append:
@@ -438,9 +639,14 @@ def auto_complete(user_string: str, key: str, abbr="") -> bool:
 
 
 def generate_loop(app: AppState) -> None:
+    listen(app)
+    exit()
+
     while True:
         try:
-            user_input = get_input("[ROOT] Enter command ([h]elp / [q]uit)")
+            user_input = get_input(
+                "[ROOT] Enter command ([h]elp / [q]uit)", quit_on_q=True
+            )
         except UserCancelledError:
             sys.exit()
 
@@ -455,3 +661,5 @@ def generate_loop(app: AppState) -> None:
                     break
         except UserCancelledError:
             continue
+        except (KeyboardInterrupt, EOFError):
+            sys.exit(0)

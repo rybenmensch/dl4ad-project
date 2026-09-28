@@ -3,9 +3,12 @@ import os.path
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
+from typing import Any, Self
 
 import torch
 import torchaudio
+from numpy._typing import NDArray
+import sounddevice as sd
 
 from library.encodec import EncodecNNModel
 from library.model import (
@@ -60,6 +63,44 @@ class AnalyzeArgs(CommonArgs):
 @dataclass
 class ExportArgs(CommonArgs):
     pass
+
+
+# TODO: replace tuple[torch.Tensor, int] with AudioTensor
+@dataclass(frozen=True)
+class AudioTensor:
+    audio: torch.Tensor
+    sr: int
+
+    @classmethod
+    def from_tuple(cls, tup: tuple[torch.Tensor, int]) -> Self:
+        return cls(audio=tup[0], sr=tup[1])
+
+    def output_stream(self) -> sd.OutputStream:
+        return sd.OutputStream(
+            samplerate=self.sr, channels=self.num_channels(), dtype=self.dtype()
+        )
+
+    def num_channels(self) -> int:
+        return self.audio.shape[0]
+
+    def num_samps(self) -> int:
+        return self.audio.shape[1]
+
+    def dtype(self) -> Any:
+        return self.audio.numpy().dtype
+
+    def chunks(self, chunk_size: int = 512) -> list[NDArray]:
+        transposed = self.audio.numpy().T.astype(self.dtype(), copy=False)
+        return [
+            transposed[i : i + chunk_size].copy(order="C")
+            for i in range(0, len(transposed), chunk_size)
+        ]
+
+    def readable_length(self) -> str:
+        num_seconds = round(self.num_samps() / self.sr)
+        seconds = num_seconds % 60
+        minutes = num_seconds // 60
+        return f"{minutes:02}:{seconds:02}"
 
 
 @dataclass(frozen=True)
