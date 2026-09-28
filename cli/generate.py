@@ -1,23 +1,28 @@
-import asyncio
 import copy
 import sys
 from collections.abc import Callable
 from dataclasses import dataclass
-from enum import StrEnum
 from pathlib import Path
-from typing import NamedTuple, Self, cast
+from typing import cast
 
+import prompt_toolkit as pt
 import sounddevice as sd
 import torch
 import torchaudio
-from prompt_toolkit import prompt
-from prompt_toolkit.application import Application
-from prompt_toolkit.key_binding import KeyBindings
-from prompt_toolkit.layout import HSplit, Layout
-from prompt_toolkit.shortcuts import ProgressBar
 from prompt_toolkit.shortcuts.progress_bar import formatters as pb_formatters
-from prompt_toolkit.widgets import Label, RadioList
 
+from cli.lib import (
+    ChoiceOption,
+    PromptEnum,
+    UserCancelledError,
+    auto_complete,
+    choose,
+    format_auto_complete,
+    get_input,
+    get_param,
+    sel,
+    usage,
+)
 from cli.state import AppState, AudioTensor
 from library.layers import AdditionLayer, MultiplierLayer, RepeatingLayer, SkippingLayer
 from library.model import (
@@ -30,267 +35,6 @@ from library.model import (
     get_shape_preserving_layers,
     get_weighted_layers,
 )
-
-
-class PromptEnum(StrEnum):
-    @classmethod
-    def human_name(cls) -> str:
-        name = cls.__name__
-        chars = []
-        for i, char in enumerate(name):
-            if char.isupper() and i > 0:
-                chars.append(" ")
-            chars.append(char.lower())
-        return "".join(chars)
-
-    def formatted_choice(self) -> str:
-        val = self.value
-        shortcut = val[0]
-
-        if val.startswith(shortcut):
-            return f"[{val[0]}]{val[1:]}"
-        else:
-            return f"[{shortcut}]{val}"
-
-    @classmethod
-    def prompt_string(cls) -> str:
-        options = " / ".join(member.formatted_choice() for member in cls)
-        return f"{cls.human_name()} ({options})"
-
-    @classmethod
-    def parse(cls, msg: str) -> Self:
-        try:
-            return cls(msg)
-        except ValueError:
-            pass
-
-        for member in cls:
-            if msg == member.value[0]:
-                return member
-
-        prefix_matches = [member for member in cls if member.value.startswith(msg)]
-        if len(prefix_matches) == 1:
-            return prefix_matches[0]
-
-        raise ValueError(
-            f"Cannot parse '{msg}' into a valid option for {cls.human_name()}"
-        )
-
-    @classmethod
-    def get_param(cls) -> Self:
-        return cast(Self, get_param(cls.parse, cls.prompt_string()))
-
-    @classmethod
-    def get_choice_menu(cls) -> Self:
-        usage_str = usage(sel(format_auto_complete("shortcut")))
-        return cast(
-            Self,
-            choose(
-                f"Select {cls.human_name()} {usage_str}",
-                [
-                    ChoiceOption(member, member.formatted_choice(), member.value[0])
-                    for member in cls
-                ],
-            ),
-        )
-
-
-@dataclass(frozen=True)
-class Command:
-    key: str
-    fn: Callable[[AppState], None]
-    name: str
-    abbr: str = ""
-
-
-class UserCancelledError(Exception):
-    pass
-
-
-def get_input(
-    msg: str = "", *, quit_on_q: bool = False, escape_cancels: bool = False
-) -> str:
-    try:
-        prompt_bindings = KeyBindings()
-        prompt_bindings.add("c-l")(lambda event: event.app.renderer.clear())
-        if escape_cancels:
-            prompt_bindings.add("escape")(
-                lambda event: event.app.exit(exception=UserCancelledError())
-            )
-        c = prompt(msg, key_bindings=prompt_bindings).strip().lower()
-        if quit_on_q and c == "q":
-            raise UserCancelledError
-    except (EOFError, KeyboardInterrupt):
-        sys.exit()
-    return c
-
-
-def get_param[T](fn: Callable[[str], T], thing: str) -> T:
-    while True:
-        user_input = ""
-        try:
-            cr_and_flush()
-            user_input = get_input(f"Enter {thing}:\n", escape_cancels=True)
-            return fn(user_input)
-        except ValueError:
-            print(f"Invalid {thing}: {user_input}.")
-            continue
-
-
-def format_auto_complete(string: str, abbr: str = "") -> str:
-    if len(string) < 2:
-        return string
-    if abbr != "":
-        return f"[{abbr}]{string}"
-    return f"[{string[0]}]{string[1:]}"
-
-
-def menu_string(cmd: str) -> str:
-    return f"[{cmd}] "
-
-
-def sel(further: str = "") -> str:
-    if further != "":
-        further = ", " + further
-    return f"↑/↓, Enter{further}: select"
-
-
-def usage(prev: str = "") -> str:
-    if prev != "":
-        prev = prev + "; "
-    return "(" + prev + "<Esc>: abort; <C-c>, <C-d>: quit" + ")"
-
-
-class ChoiceOption[T](NamedTuple):
-    value: T
-    label: str
-    shortcut: str | None
-
-
-def cr_and_flush() -> None:
-    sys.stdout.write("\r\n")
-    sys.stdout.flush()
-
-
-def choose[T](
-    message: str,
-    options: list[ChoiceOption[T]],
-    *,
-    number_keys: dict[str, object] | None = None,
-) -> T:
-    """Show an arrow-key menu with optional direct letter and number selection."""
-    radio = RadioList(
-        [(o.value, o.label) for o in options],
-        show_numbers=False,
-        select_on_focus=False,
-        show_cursor=False,
-        show_scrollbar=True,
-        open_character="",
-        select_character=">",
-        close_character="",
-    )
-    bindings = KeyBindings()
-    values = [o.value for o in options]
-
-    @bindings.add("enter", eager=True)
-    def accept(event):
-        radio._handle_enter()
-        event.app.exit(result=radio.current_value)
-
-    @bindings.add("up", eager=True)
-    def move_up(event):
-        radio._selected_index = max(0, radio._selected_index - 1)
-        radio._handle_enter()
-        if number_keys:
-            reset_typed_number()
-
-    @bindings.add("down", eager=True)
-    def move_down(event):
-        radio._selected_index = min(len(values) - 1, radio._selected_index + 1)
-        radio._handle_enter()
-        if number_keys:
-            reset_typed_number()
-
-    @bindings.add("escape", eager=True)
-    def cancel(event):
-        event.app.exit(exception=UserCancelledError())
-
-    @bindings.add("c-c", eager=True)
-    def interrupt(event):
-        event.app.exit(exception=KeyboardInterrupt())
-
-    @bindings.add("c-d", eager=True)
-    def eof(event):
-        event.app.exit(exception=EOFError())
-
-    def choose_value(event, value: T) -> None:
-        radio._selected_index = values.index(value)
-        radio._handle_enter()
-        event.app.exit(result=value)
-
-    for option in options:
-        if option.shortcut is not None:
-
-            @bindings.add(option.shortcut, eager=True)
-            def select_shortcut(event, key=option.shortcut):
-                for other in options:
-                    if other.shortcut == key:
-                        choose_value(event, other.value)
-                        return
-
-    if number_keys:
-        typed_number = ""
-        reset_task = None
-
-        def reset_typed_number() -> None:
-            nonlocal typed_number, reset_task
-            typed_number = ""
-            if reset_task is not None:
-                reset_task.cancel()
-                reset_task = None
-
-        def select_number(event, digit: str) -> None:
-            nonlocal typed_number, reset_task
-            candidate = typed_number + digit
-            if any(index.startswith(candidate) for index in number_keys):
-                typed_number = candidate
-            elif any(index.startswith(digit) for index in number_keys):
-                typed_number = digit
-            else:
-                typed_number = ""
-
-            value = number_keys.get(typed_number)
-            if value is not None and value in values:
-                radio._selected_index = values.index(value)
-                radio._handle_enter()
-
-            if reset_task is not None:
-                reset_task.cancel()
-
-            async def clear_after_pause() -> None:
-                nonlocal typed_number, reset_task
-                await asyncio.sleep(1)
-                typed_number = ""
-                reset_task = None
-
-            reset_task = event.app.create_background_task(clear_after_pause())
-
-        for digit in "0123456789":
-
-            @bindings.add(digit, eager=True)
-            def select_layer_number(event, key=digit):
-                select_number(event, key)
-
-    app = Application(
-        layout=Layout(HSplit([Label(message), radio])),
-        key_bindings=bindings,
-        full_screen=False,
-    )
-
-    cr_and_flush()
-    result = app.run()
-    cr_and_flush()
-    return result
 
 
 def print_help(_: AppState) -> None:
@@ -529,8 +273,8 @@ def listen(app: AppState) -> None:
     mode = ListeningMode.get_choice_menu()
     at = mode.get_audio_tensor(app, file.wav)
 
-    def make_progress_bar(length: str) -> ProgressBar:
-        kb = KeyBindings()
+    def make_progress_bar(length: str) -> pt.shortcuts.ProgressBar:
+        kb = pt.key_binding.KeyBindings()
 
         @kb.add("c-d", eager=True)
         def exit_on_eof(event):
@@ -546,7 +290,7 @@ def listen(app: AppState) -> None:
             pb_formatters.Text(length, style="class:time-left"),
         ]
 
-        return ProgressBar(key_bindings=kb, formatters=custom_formatter)
+        return pt.shortcuts.ProgressBar(key_bindings=kb, formatters=custom_formatter)
 
     try:
         with make_progress_bar(at.readable_length()) as pb:
@@ -631,6 +375,14 @@ def write_file(app: AppState) -> None:
         print(f"Wrote file {path}")
 
 
+@dataclass(frozen=True)
+class Command:
+    key: str
+    fn: Callable[[AppState], None]
+    name: str
+    abbr: str = ""
+
+
 commands = [
     Command(key="skip", fn=handle_skip_layer, name="Skip"),
     Command(key="repeat", fn=handle_repeat_layer, name="Repeat"),
@@ -646,17 +398,14 @@ commands = [
 ]
 
 
-def auto_complete(user_string: str, key: str, abbr="") -> bool:
-    ret = False
-    if abbr != "":
-        ret = abbr == user_string
-    return ret or key.startswith(user_string)
-
-
 def generate_loop(app: AppState) -> None:
+    pt.shortcuts.clear()
+    # TODO: splash screen?
     while True:
         try:
-            user_input = get_input("Enter command ([h]elp / [q]uit)", quit_on_q=True)
+            user_input = get_input(
+                "Enter command ([h]elp / [q]uit)", escape_cancels=False, quit_on_q=True
+            )
         except UserCancelledError:
             sys.exit()
 
