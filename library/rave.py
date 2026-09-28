@@ -23,7 +23,6 @@ from library.torch_utils import unwrap_layer
 class ExportOptions:
     path: Path
     fidelity: float = 0.99
-    streaming: bool = True
 
 
 class RAVEModel(NNModel):
@@ -191,7 +190,6 @@ def export_rave_model(model: NNModel, options: ExportOptions) -> None:
     scripted_rave = script_class(
         pretrained=pretrained,
         channels=model.get_channels(),
-        prior=prior_scripted,
         fidelity=options.fidelity,
     )
 
