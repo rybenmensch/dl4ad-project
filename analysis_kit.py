@@ -27,16 +27,23 @@ MODULES = {
 
 @dataclass
 class Variant:
+    """Describe one layer intervention and the arguments passed to its wrapper."""
+
     operation: str
     parameters: dict[str, int | float]
 
     def __post_init__(self):
+        """Reject operations that have no registered intervention wrapper."""
         if self.operation not in MODULES:
             raise ValueError(f"Unknown operation: {self.operation}")
 
 
 def extract_audio_features(audio: torch.Tensor, sr: int) -> dict:
-    """Extrahiert objektive psychoakustische Audio-Deskriptoren mittels librosa."""
+    """Return mean spectral descriptors and RMS energy for a reconstructed waveform.
+
+    Stereo input is averaged to mono for feature extraction. The returned values
+    describe the output signal; they are not perceptual quality ratings.
+    """
     # Auf Mono runterrechnen für librosa, falls Stereo reinkommt
     audio_np = audio.mean(dim=0).detach().cpu().numpy()
     
@@ -49,9 +56,14 @@ def extract_audio_features(audio: torch.Tensor, sr: int) -> dict:
 
 
 def evaluate_transformation(audio_output: torch.Tensor, baseline: torch.Tensor, sr: int) -> dict:
-    """
-    Quality Gate & Evaluierungs-Funktion:
-    Fängt technische Totalausfälle ab, lässt aber gewollten Glitch-Schmutz zu.
+    """Compare one reconstruction with its baseline and classify output health.
+
+    Non-finite output and RMS below ``1e-5`` are returned as ``INVALID`` and
+    ``SILENT`` respectively. Clipping is retained and flagged when more than
+    5% of samples reach an absolute amplitude of 0.99. Successful comparisons
+    include raw MAE, RMS/peak-normalized MAE, MR-STFT loss, and mean audio
+    descriptors. The status describes technical signal conditions, not
+    aesthetic quality.
     """
     # 1. Technischer Crash-Check: Verhindert, dass NaN/Inf die Statistiken sprengen
     if not torch.isfinite(audio_output).all():
@@ -115,7 +127,13 @@ def run_variant_evaluation(
     plots,
     save_trial_audio=True,
 ) -> dict:
-    """Führt eine einzelne Modell-Modifikation aus und schickt das Audio durchs Quality Gate."""
+    """Apply one intervention, run inference, and return a result row.
+
+    The selected layer is replaced in the model before inference. Shape changes,
+    quality-gate outcomes, and runtime exceptions are recorded in the returned
+    row instead of aborting the remaining sweep. Audio is saved only when
+    ``save_trial_audio`` is true; plots are controlled separately by ``plots``.
+    """
     net = model.get_net(layer.net_type)
     row = {
         "layer": layer.layer_path,
@@ -201,6 +219,33 @@ def analyze_module_impact(
     write_intermediate_results: bool = True,
     write_results_csv: bool = True,
 ) -> list[dict]:
+    """Sweep selected interventions over eligible layers for one audio input.
+
+    A baseline reconstruction is computed once. Each trial starts from an
+    in-memory copy of the pristine model when possible, falling back to the
+    adapter's ``reset`` method if the model cannot be copied. Shape-preserving
+    layers are considered for skip/repeat; weight-bearing layers are considered
+    for multiply/add. Results are returned as dictionaries and can optionally
+    produce baseline/trial audio, plots, slides, and incremental/final CSVs.
+
+    Args:
+        model: Model adapter that exposes encoder/decoder layers and inference.
+        wav: Input waveform and its original sample rate.
+        output_dir: Directory for requested result files and visualizations.
+        nets: Network sections to inspect, normally ``encoder`` and ``decoder``.
+        plots: Whether to save comparison plots for trials with exported audio.
+        slides: Whether to write a slide deck from the ranked results.
+        interventions: Enabled operation names from ``MODULES``.
+        add_offset: Shared weight and bias offset used by the add intervention.
+        save_baseline: Whether to export the unmodified reconstruction.
+        save_trial_audio: Whether to export each successful trial reconstruction.
+        write_intermediate_results: Rewrite the per-input CSV after every trial.
+        write_results_csv: Write the final per-input CSV after the sweep.
+
+    Returns:
+        Trial rows, sorted by descending raw MAE; failed trials remain in the
+        list with their status and error message.
+    """
     if slides:
         plots = True
     output_dir = Path(output_dir)
@@ -258,7 +303,8 @@ def analyze_module_impact(
             # 2. Multiplikationen mit adaptivem Sampling (Sucht nach Tipping Points)
             restore_model()
             net = model.get_net(layer.net_type)
-            if model.layer_has_weights(net[layer.index]) and "multiply" in interventions:
+            has_weights = model.layer_has_weights(net[layer.index])
+            if has_weights and "multiply" in interventions:
                 factors_to_test = [1.0, 5.0, 10.0, 20.0]
                 tested_results = []
                 
@@ -293,7 +339,7 @@ def analyze_module_impact(
                             if output_dir is not None and write_intermediate_results:
                                 write_results(output_dir / "results.csv", rows)
 
-            if model.layer_has_weights(net[layer.index]) and "add" in interventions:
+            if has_weights and "add" in interventions:
                 restore_model()
                 variant = Variant(
                     "add",
@@ -324,10 +370,16 @@ def analyze_module_impact(
 
 
 def save_audio(path: Path, audio: torch.Tensor, sr: int) -> None:
+    """Write a waveform tensor as 32-bit floating-point PCM audio."""
     torchaudio.save(str(path), audio, sr, encoding="PCM_F", bits_per_sample=32)
 
 
 def write_results(path: Path, rows: list[dict]) -> None:
+    """Write trial rows to CSV, sorted by descending raw MAE.
+
+    Rows without a computed MAE (for example, failed trials) are placed after
+    measured rows.
+    """
     if not rows:
         return
     ranked = sorted(rows, key=lambda row: row["mae"] if row["mae"] is not None else -1, reverse=True)
