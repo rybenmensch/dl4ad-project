@@ -19,6 +19,7 @@ dependencies = [
     "matplotlib>=3.8",
     "sounddevice>=0.4",
     "setuptools<80.9",
+    "prompt-toolkit>=3.0.43",
 ]
 
 [project.optional-dependencies]
@@ -29,7 +30,7 @@ heatmap = ["seaborn>=0.13"]
 nbform = "cli.app:main"
 
 [tool.setuptools]
-packages = ["cli"]
+packages = ["cli", "library"]
 py-modules = [
     "analysis_kit",
     "encodec_lib",

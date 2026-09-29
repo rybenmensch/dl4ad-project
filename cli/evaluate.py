@@ -16,7 +16,7 @@ def evaluate_corpus(args) -> tuple[pd.DataFrame, pd.DataFrame]:
     audio_files = list_audio_files(corpus_path)
     model = create_model(args.model, args.rave_path, args.sample_rate)
     interventions = tuple(args.interventions)
-    model_name = args.model.value
+    model_name = args.model.value.lower()
 
     metadata = {
         "timestamp": datetime.now().astimezone().isoformat(timespec="seconds"),

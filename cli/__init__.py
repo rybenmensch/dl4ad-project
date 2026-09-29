@@ -1,1 +1,1 @@
-"""Command-line interface for nbform."""
+"""Command-line application and argument handling."""

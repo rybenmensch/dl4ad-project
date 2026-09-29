@@ -1,10 +1,11 @@
 # nbform
 
-`nbform` provides three workflows for bending pretrained neural audio models:
+`nbform` provides interactive bending and analysis workflows for pretrained neural audio models:
 
-- `generate`: interactively modify layers, listen to the current output, and export audio.
-- `analyze`: sweep configured interventions for one audio file.
-- `evaluate`: run the same sweep over a WAV corpus and export per-trial and aggregate CSVs.
+- `bend`: interactively modify layers, swap components, listen to model variants, and export audio or models.
+- `analyze`: run the interactive impact analysis and select which artifacts to save.
+- `sweep`: run the reproducible `analysis_kit` sweep for one audio file.
+- `evaluate`: run the corpus sweep and export per-trial and aggregate CSVs.
 
 ## Install
 
@@ -32,11 +33,11 @@ require a local checkpoint.
 
 ```sh
 nbform --help
-nbform generate --model encodec --input audio/source --output generated
-nbform analyze --model encodec --input audio/source/GLM.wav --output analysis
+nbform bend --type Encodec --input audio/source --output generated
+nbform analyze --type Encodec --input audio/source/GLM.wav --output analysis
+nbform sweep --model encodec --input audio/source/GLM.wav --output sweep
 nbform evaluate --model encodec --corpus-dir audio/source --output results
-nbform evaluate --model rave --rave-path models/rave-run --corpus-dir audio/source --output results-rave
+nbform evaluate --rave-path models/rave-run --corpus-dir audio/source --output results-rave
 ```
 
-`generate` is interactive; type `help` at its prompt to list actions. `analyze`
-and `evaluate` accept `--nets`, `--interventions`, and `--add-offset` options.
+`bend` is interactive; type `help` at its prompt to list actions. `generate` remains an alias for `bend`. The legacy `sweep` and `evaluate` commands retain the `--nets`, `--interventions`, and `--add-offset` options.
