@@ -9,6 +9,8 @@ from prompt_toolkit.history import History
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.widgets import RadioList
 
+from library.model import LayerInfo, NNModel, NetTypeEnum
+
 ########################### FORMATTING AND PRINTING
 
 
@@ -44,6 +46,35 @@ def menu_string(cmd: str) -> str:
 def cr_and_flush() -> None:
     sys.stdout.write("\r\n")
     sys.stdout.flush()
+
+
+def print_layer_common(
+    model: NNModel,
+    layers: list[LayerInfo],
+    title: str,
+    should_print_title: bool,
+) -> None:
+    max_name_len = max(len(l.name) for l in layers)
+
+    if should_print_title:
+        print(title.upper())
+        filler = " " * len(title)
+    else:
+        filler = ""
+
+    for layer in layers:
+        inout = layer.inout or ""
+        idx = f"({layer.index})"
+        fmt = f"{idx:<4} {layer.name:<{max_name_len}} {inout}"
+        print(filler, fmt)
+
+
+def print_filtered(
+    model: NNModel, all_layers: list[LayerInfo], net_type: NetTypeEnum
+) -> None:
+    print_layer_common(
+        model, [l for l in all_layers if l.net_type == net_type], net_type, True
+    )
 
 
 ########################### USER INPUT
@@ -201,8 +232,12 @@ def choose[T](
             if typed_number == "":
                 value = None
             else:
-                v_idx = number_keys.index(int(typed_number))
-                value = number_keys[v_idx] if v_idx != -1 else None
+                try:
+                    v_idx = number_keys.index(int(typed_number))
+                    value = number_keys[v_idx]
+                except ValueError:
+                    value = None
+                # value = number_keys[v_idx] if v_idx != -1 else None
 
             if value is not None and value in values:
                 radio._selected_index = values.index(value)

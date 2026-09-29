@@ -24,6 +24,7 @@ from cli.lib import (
     format_auto_complete,
     get_input,
     get_param,
+    print_filtered,
     sel,
     usage,
 )
@@ -37,7 +38,6 @@ from library.model import (
     NNModel,
     Swap,
     get_all_layers,
-    get_all_layers_from_net,
     get_shape_preserving_layers,
     get_swappable_layers,
     get_weighted_layers,
@@ -64,27 +64,6 @@ def print_help(_: AppState) -> None:
         print(f"{key_str:<{ln + padding}} {c.desc}")
 
 
-def print_layer_common(
-    model: NNModel,
-    layers: list[LayerInfo],
-    title: str,
-    should_print_title: bool,
-) -> None:
-    max_name_len = max(len(l.name) for l in layers)
-
-    if should_print_title:
-        print(title.upper())
-        filler = " " * len(title)
-    else:
-        filler = ""
-
-    for layer in layers:
-        inout = layer.inout or ""
-        idx = f"({layer.index})"
-        fmt = f"{idx:<4} {layer.name:<{max_name_len}} {inout}"
-        print(filler, fmt)
-
-
 class PrintMode(PromptEnum):
     All = "all"
     Encoder = "encoder"
@@ -92,25 +71,21 @@ class PrintMode(PromptEnum):
 
 
 def print_model(app: AppState) -> None:
-    print_mode = PrintMode.get_choice_menu()
+    layers = get_all_layers(app.model)
 
+    print_mode = PrintMode.get_choice_menu()
     if print_mode == PrintMode.All:
         for net_type in NetTypeEnum:
-            net = app.model.get_net(net_type)
-            print_layer_common(
-                app.model,
-                get_all_layers_from_net(app.model, net),
-                net_type.value,
-                True,
-            )
+            print_filtered(app.model, layers, net_type)
+
         add_to_command_history("print", print_mode.value)
+
     elif print_mode == PrintMode.Encoder or print_mode == PrintMode.Decoder:
-        net = app.model.get_net(NetTypeEnum(print_mode))
         net_type = NetTypeEnum(print_mode)
-        print_layer_common(
-            app.model, get_all_layers_from_net(app.model, net), net_type, True
-        )
+        print_filtered(app.model, layers, net_type)
+
         add_to_command_history("print", print_mode.value, net_type.value)
+
     else:
         raise NotImplementedError
 
@@ -129,22 +104,21 @@ def print_diff(app: AppState) -> None:
         print("Model has not yet been modified.")
         return
 
-    encoder_l = [l for l in layers if l.net_type == NetTypeEnum.Encoder]
-    decoder_l = [l for l in layers if l.net_type == NetTypeEnum.Decoder]
+    print_mode = PrintMode.get_choice_menu()
+    if print_mode == PrintMode.All:
+        for net_type in NetTypeEnum:
+            print_filtered(app.model, layers, net_type)
 
-    # version with selection
-    if len(encoder_l):
-        if len(decoder_l):
-            net_type, layers = get_net_type_and_layers(layers)
-            print_layer_common(app.model, layers, net_type.value, True)
-            add_to_command_history("diff", net_type.value)
-            return
-        else:
-            print_layer_common(app.model, encoder_l, NetTypeEnum.Encoder.value, True)
+        add_to_command_history("print", print_mode.value)
+
+    elif print_mode == PrintMode.Encoder or print_mode == PrintMode.Decoder:
+        net_type = NetTypeEnum(print_mode)
+        print_filtered(app.model, layers, net_type)
+
+        add_to_command_history("print", print_mode.value, net_type.value)
+
     else:
-        print_layer_common(app.model, decoder_l, NetTypeEnum.Decoder.value, True)
-
-    add_to_command_history("diff")
+        raise NotImplementedError
 
 
 def get_net_and_layer_info(
