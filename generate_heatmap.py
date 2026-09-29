@@ -38,7 +38,7 @@ def generate_interventions_heatmap(raw_csv_path: str = "results/raw_results.csv"
     os.makedirs(output_dir, exist_ok=True)
     
     if not os.path.exists(raw_csv_path):
-        print(f"Fehler: Datei '{raw_csv_path}' nicht gefunden. Bitte führe zuerst die Pipeline aus.")
+        print(f"Error: '{raw_csv_path}' not found. Run the analysis pipeline first.")
         return
         
     df = pd.read_csv(raw_csv_path)
@@ -52,7 +52,7 @@ def generate_interventions_heatmap(raw_csv_path: str = "results/raw_results.csv"
         'multiply_1.0 (Control)'
     ]
 
-    # --- 1. Aggregierte Heatmap (Median über alle WAVs) ---
+    # --- 1. Aggregated heatmap (median across all recordings) ---
     pivot_agg = df.pivot_table(
         index='layer',
         columns='intervention_col',
@@ -80,12 +80,12 @@ def generate_interventions_heatmap(raw_csv_path: str = "results/raw_results.csv"
     )
     
     plt.title(
-        "Interventions-Heatmap: Median der normalisierten Abweichung (MAE)\n"
-        "Architektur: EnCodec (48 kHz) | Stimulus-Basis: 4 WAV-Dateien", 
+        "Intervention Heatmap: Median Normalized MAE\n"
+        "EnCodec (48 kHz) | Aggregated across four recordings", 
         fontsize=13, pad=15, weight='bold'
     )
-    plt.xlabel("Intervention und Parameterstufe", fontsize=11, labelpad=10)
-    plt.ylabel("Modellschicht (Layer-Pfad)", fontsize=11, labelpad=10)
+    plt.xlabel("Intervention and Parameter Setting", fontsize=11, labelpad=10)
+    plt.ylabel("Model Layer (Layer Path)", fontsize=11, labelpad=10)
     plt.xticks(rotation=45, ha='right', fontsize=10)
     plt.yticks(fontsize=9)
     plt.tight_layout()
@@ -95,9 +95,9 @@ def generate_interventions_heatmap(raw_csv_path: str = "results/raw_results.csv"
     plt.savefig(png_agg, dpi=300)
     plt.savefig(pdf_agg, dpi=300)
     plt.close()
-    print(f"Aggregierte Heatmap gespeichert unter:\n- {png_agg}\n- {pdf_agg}")
+    print(f"Aggregated heatmap saved to:\n- {png_agg}\n- {pdf_agg}")
 
-    # --- 2. Einzel-Heatmaps pro WAV-Datei ---
+    # --- 2. Individual heatmaps for each recording ---
     audio_files = df['audio_file'].unique()
     for audio_name in audio_files:
         df_audio = df[df['audio_file'] == audio_name]
@@ -126,12 +126,12 @@ def generate_interventions_heatmap(raw_csv_path: str = "results/raw_results.csv"
         
         clean_name = os.path.splitext(audio_name)[0]
         plt.title(
-            f"Interventions-Heatmap für Stimulus: {audio_name}\n"
-            "Architektur: EnCodec (48 kHz)", 
+            f"Intervention Heatmap for Stimulus: {audio_name}\n"
+            "EnCodec (48 kHz)", 
             fontsize=13, pad=15, weight='bold'
         )
-        plt.xlabel("Intervention und Parameterstufe", fontsize=11, labelpad=10)
-        plt.ylabel("Modellschicht (Layer-Pfad)", fontsize=11, labelpad=10)
+        plt.xlabel("Intervention and Parameter Setting", fontsize=11, labelpad=10)
+        plt.ylabel("Model Layer (Layer Path)", fontsize=11, labelpad=10)
         plt.xticks(rotation=45, ha='right', fontsize=10)
         plt.yticks(fontsize=9)
         plt.tight_layout()
@@ -141,7 +141,7 @@ def generate_interventions_heatmap(raw_csv_path: str = "results/raw_results.csv"
         plt.savefig(png_single, dpi=300)
         plt.savefig(pdf_single, dpi=300)
         plt.close()
-        print(f"Einzel-Heatmap für '{audio_name}' gespeichert unter:\n- {png_single}")
+        print(f"Individual heatmap for '{audio_name}' saved to:\n- {png_single}")
 
 if __name__ == "__main__":
     generate_interventions_heatmap()

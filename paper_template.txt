@@ -1,0 +1,473 @@
+\begin{filecontents*}{network_bending_additions.bib}
+@inproceedings{yamamoto_parallel_2020,
+  author = {Yamamoto, Ryuichi and Song, Eunwoo and Kim, Jae-Min},
+  title = {Parallel {WaveGAN}: A Fast Waveform Generation Model Based on Generative Adversarial Networks with Multi-Resolution Spectrogram},
+  booktitle = {Proceedings of the IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP)},
+  year = {2020},
+  eprint = {1910.11480},
+  eprinttype = {arxiv},
+  url = {https://arxiv.org/abs/1910.11480}
+}
+\end{filecontents*}
+\documentclass[conference,compsoc]{IEEEtran}
+
+\usepackage[
+backend=biber,
+style=alphabetic,
+sorting=ynt
+]{biblatex}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{float}
+\usepackage{graphicx}
+
+
+\addbibresource{references.bib}
+\addbibresource{network_bending_additions.bib}
+
+\title{Bibliography management: \texttt{biblatex} package}
+\author{Share\LaTeX}
+\date{ }
+
+
+
+% Some very useful LaTeX packages include:
+% (uncomment the ones you want to load)
+
+
+% *** MISC UTILITY PACKAGES ***
+%
+%\usepackage{ifpdf}
+% Heiko Oberdiek's ifpdf.sty is very useful if you need conditional
+% compilation based on whether the output is pdf or dvi.
+% usage:
+% \ifpdf
+%   % pdf code
+% \else
+%   % dvi code
+% \fi
+% The latest version of ifpdf.sty can be obtained from:
+% http://www.ctan.org/pkg/ifpdf
+% Also, note that IEEEtran.cls V1.7 and later provides a builtin
+% \ifCLASSINFOpdf conditional that works the same way.
+% When switching from latex to pdflatex and vice-versa, the compiler may
+% have to be run twice to clear warning/error messages.
+
+
+
+
+
+
+% *** CITATION PACKAGES ***
+%
+\ifCLASSOPTIONcompsoc
+  % IEEE Computer Society needs nocompress option
+  % requires cite.sty v4.0 or later (November 2003)
+  %\usepackage[nocompress]{cite}
+\else
+  % normal IEEE
+  %\usepackage{cite}
+\fi
+% cite.sty was written by Donald Arseneau
+% V1.6 and later of IEEEtran pre-defines the format of the cite.sty package
+% \cite{} output to follow that of the IEEE. Loading the cite package will
+% result in citation numbers being automatically sorted and properly
+% "compressed/ranged". e.g., [1], [9], [2], [7], [5], [6] without using
+% cite.sty will become [1], [2], [5]--[7], [9] using cite.sty. cite.sty's
+% \cite will automatically add leading space, if needed. Use cite.sty's
+% noadjust option (cite.sty V3.8 and later) if you want to turn this off
+% such as if a citation ever needs to be enclosed in parenthesis.
+% cite.sty is already installed on most LaTeX systems. Be sure and use
+% version 5.0 (2009-03-20) and later if using hyperref.sty.
+% The latest version can be obtained at:
+% http://www.ctan.org/pkg/cite
+% The documentation is contained in the cite.sty file itself.
+%
+% Note that some packages require special options to format as the Computer
+% Society requires. In particular, Computer Society  papers do not use
+% compressed citation ranges as is done in typical IEEE papers
+% (e.g., [1]-[4]). Instead, they list every citation separately in order
+% (e.g., [1], [2], [3], [4]). To get the latter we need to load the cite
+% package with the nocompress option which is supported by cite.sty v4.0
+% and later.
+
+
+
+
+
+% *** GRAPHICS RELATED PACKAGES ***
+%
+\ifCLASSINFOpdf
+  % \usepackage[pdftex]{graphicx}
+  % declare the path(s) where your graphic files are
+  % \graphicspath{{../pdf/}{../jpeg/}}
+  % and their extensions so you won't have to specify these with
+  % every instance of \includegraphics
+  % \DeclareGraphicsExtensions{.pdf,.jpeg,.png}
+\else
+  % or other class option (dvipsone, dvipdf, if not using dvips). graphicx
+  % will default to the driver specified in the system graphics.cfg if no
+  % driver is specified.
+  % \usepackage[dvips]{graphicx}
+  % declare the path(s) where your graphic files are
+  % \graphicspath{{../eps/}}
+  % and their extensions so you won't have to specify these with
+  % every instance of \includegraphics
+  % \DeclareGraphicsExtensions{.eps}
+\fi
+% graphicx was written by David Carlisle and Sebastian Rahtz. It is
+% required if you want graphics, photos, etc. graphicx.sty is already
+% installed on most LaTeX systems. The latest version and documentation
+% can be obtained at: 
+% http://www.ctan.org/pkg/graphicx
+% Another good source of documentation is "Using Imported Graphics in
+% LaTeX2e" by Keith Reckdahl which can be found at:
+% http://www.ctan.org/pkg/epslatex
+%
+% latex, and pdflatex in dvi mode, support graphics in encapsulated
+% postscript (.eps) format. pdflatex in pdf mode supports graphics
+% in .pdf, .jpeg, .png and .mps (metapost) formats. Users should ensure
+% that all non-photo figures use a vector format (.eps, .pdf, .mps) and
+% not a bitmapped formats (.jpeg, .png). The IEEE frowns on bitmapped formats
+% which can result in "jaggedy"/blurry rendering of lines and letters as
+% well as large increases in file sizes.
+%
+% You can find documentation about the pdfTeX application at:
+% http://www.tug.org/applications/pdftex
+
+
+
+
+
+% *** SPECIALIZED LIST PACKAGES ***
+%
+%\usepackage{algorithmic}
+% algorithmic.sty was written by Peter Williams and Rogerio Brito.
+% This package provides an algorithmic environment fo describing algorithms.
+% You can use the algorithmic environment in-text or within a figure
+% environment to provide for a floating algorithm. Do NOT use the algorithm
+% floating environment provided by algorithm.sty (by the same authors) or
+% algorithm2e.sty (by Christophe Fiorio) as the IEEE does not use dedicated
+% algorithm float types and packages that provide these will not provide
+% correct IEEE style captions. The latest version and documentation of
+% algorithmic.sty can be obtained at:
+% http://www.ctan.org/pkg/algorithms
+% Also of interest may be the (relatively newer and more customizable)
+% algorithmicx.sty package by Szasz Janos:
+% http://www.ctan.org/pkg/algorithmicx
+
+
+
+
+% *** ALIGNMENT PACKAGES ***
+%
+%\usepackage{array}
+% Frank Mittelbach's and David Carlisle's array.sty patches and improves
+% the standard LaTeX2e array and tabular environments to provide better
+% appearance and additional user controls. As the default LaTeX2e table
+% generation code is lacking to the point of almost being broken with
+% respect to the quality of the end results, all users are strongly
+% advised to use an enhanced (at the very least that provided by array.sty)
+% set of table tools. array.sty is already installed on most systems. The
+% latest version and documentation can be obtained at:
+% http://www.ctan.org/pkg/array
+
+
+% IEEEtran contains the IEEEeqnarray family of commands that can be used to
+% generate multiline equations as well as matrices, tables, etc., of high
+% quality.
+
+
+
+
+% *** SUBFIGURE PACKAGES ***
+%\ifCLASSOPTIONcompsoc
+%  \usepackage[caption=false,font=footnotesize,labelfont=sf,textfont=sf]{subfig}
+%\else
+%  \usepackage[caption=false,font=footnotesize]{subfig}
+%\fi
+% subfig.sty, written by Steven Douglas Cochran, is the modern replacement
+% for subfigure.sty, the latter of which is no longer maintained and is
+% incompatible with some LaTeX packages including fixltx2e. However,
+% subfig.sty requires and automatically loads Axel Sommerfeldt's caption.sty
+% which will override IEEEtran.cls' handling of captions and this will result
+% in non-IEEE style figure/table captions. To prevent this problem, be sure
+% and invoke subfig.sty's "caption=false" package option (available since
+% subfig.sty version 1.3, 2005/06/28) as this is will preserve IEEEtran.cls
+% handling of captions.
+% Note that the Computer Society format requires a sans serif font rather
+% than the serif font used in traditional IEEE formatting and thus the need
+% to invoke different subfig.sty package options depending on whether
+% compsoc mode has been enabled.
+%
+% The latest version and documentation of subfig.sty can be obtained at:
+% http://www.ctan.org/pkg/subfig
+
+
+
+
+%\usepackage{stfloats}
+% stfloats.sty was written by Sigitas Tolusis. This package gives LaTeX2e
+% the ability to do double column floats at the bottom of the page as well
+% as the top. (e.g., "\begin{figure*}[!b]" is not normally possible in
+% LaTeX2e). It also provides a command:
+%\fnbelowfloat
+% to enable the placement of footnotes below bottom floats (the standard
+% LaTeX2e kernel puts them above bottom floats). This is an invasive package
+% which rewrites many portions of the LaTeX2e float routines. It may not work
+% with other packages that modify the LaTeX2e float routines. The latest
+% version and documentation can be obtained at:
+% http://www.ctan.org/pkg/stfloats
+% Do not use the stfloats baselinefloat ability as the IEEE does not allow
+% \baselineskip to stretch. Authors submitting work to the IEEE should note
+% that the IEEE rarely uses double column equations and that authors should try
+% to avoid such use. Do not be tempted to use the cuted.sty or midfloat.sty
+% packages (also by Sigitas Tolusis) as the IEEE does not format its papers in
+% such ways.
+% Do not attempt to use stfloats with fixltx2e as they are incompatible.
+% Instead, use Morten Hogholm'a dblfloatfix which combines the features
+% of both fixltx2e and stfloats:
+%
+% \usepackage{dblfloatfix}
+% The latest version can be found at:
+% http://www.ctan.org/pkg/dblfloatfix
+
+
+
+
+% *** PDF, URL AND HYPERLINK PACKAGES ***
+%
+%\usepackage{url}
+% url.sty was written by Donald Arseneau. It provides better support for
+% handling and breaking URLs. url.sty is already installed on most LaTeX
+% systems. The latest version and documentation can be obtained at:
+% http://www.ctan.org/pkg/url
+% Basically, \url{my_url_here}.
+
+
+
+
+% correct bad hyphenation here
+\hyphenation{op-tical net-works semi-conduc-tor}
+
+
+\begin{document}
+%
+% paper title
+% Titles are generally capitalized except for words such as a, an, and, as,
+% at, but, by, for, in, nor, of, on, or, the, to and up, which are usually
+% not capitalized unless they are the first or last word of the title.
+% Linebreaks \\ can be used within to get better formatting as desired.
+% Do not put math or special symbols in the title.
+	itle{Network Bending for Artistic Exploration of Neural Audio Models}
+
+
+% author names and affiliations
+% use a multiple column layout for up to three different
+% affiliations
+\author{\IEEEauthorblockN{Marek Malter}
+\IEEEauthorblockA{Audiokommunikation und\\-Technologie\\
+Technische Universität Berlin\\
+Matr.-Nr.:}
+\and
+\IEEEauthorblockN{Manolo Max Müller}
+\IEEEauthorblockA{Audiokommunikation und\\-Technologie\\
+Technische Universität Berlin\\
+Matr.-Nr.:0505701}
+\and
+\IEEEauthorblockN{Cecylia Krauss}
+\IEEEauthorblockA{Audiokommunikation und\\-Technologie\\
+Technische Universität Berlin\\
+Matr.-Nr.: 507099}
+\and
+\IEEEauthorblockN{Constantin Luca Sprenger}
+\IEEEauthorblockA{Audiokommunikation und\\-Technologie\\
+Technische Universität Berlin\\
+Matr.-Nr.: }}
+% make the title area
+\maketitle
+
+\begin{abstract}
+This paper presents \texttt{nbform}, an exploratory tool for artistic manipulation of pretrained neural audio models. The system exposes model components through a common interface and applies structural or parameter interventions without retraining. A reproducible parameter-sweep workflow compares each modified reconstruction with an unmodified baseline and summarizes the resulting intervention space in a heatmap. An EnCodec evaluation across four recordings demonstrates that the measured response depends on layer, operation, parameter value, and input. The results are a technical orientation for selecting material for listening-based exploration, not a user study or a measure of artistic quality.
+\end{abstract}
+
+
+\IEEEpeerreviewmaketitle
+
+
+
+\section{Introduction}
+% no \IEEEPARstart
+Deep generative models produce audio by learning a data distribution, but the same optimization for fidelity can make their behaviour appear uniform. For artistic practice, the model can instead be treated as material for exploration: its internal operations, learned parameters, and failure modes become possible sites of intervention.
+
+Network bending applies this logic to neural networks \cite{broad_network_2021}. Inspired by circuit bending \cite{ghazala_folk_2004}, it treats a trained model as a modifiable system whose graph and parameters can be altered to produce unexpected outputs. The goal is not to improve reconstruction fidelity, but to make the model's internal structure available as an artistic instrument.
+
+Network bending has been demonstrated in individual architectures, including neural vocoders based on a DDSP model \cite{yee-king_studio_2021} and the VAE model RAVE \cite{oliveira_brave_2025}. Existing implementations are typically coupled to a specific model. Applying the same bending techniques to a different architecture can be challenging, as the internal structure and naming conventions of neural audio models vary between implementations.
+ 
+This work presents \texttt{nbform}, a model-adaptive tool for exploratory network bending of pretrained neural audio models. Rather than introducing a new transformation technique, it separates model-specific access from reusable structural and parameter interventions, allowing the same intervention classes to be applied across supported architectures. We further provide an illustrative characterization of isolated interventions in the 48-kHz EnCodec model across selected encoder and decoder layers and four recordings. The resulting heatmap describes measured intervention sensitivity and provides candidate configurations for subsequent listening-based exploration; it does not measure artistic quality or prove improved artistic interaction.
+
+
+% You must have at least 2 lines in the paragraph with the drop letter
+% (should never be an issue)
+
+
+\subsection{Related Work}
+Network bending has been applied to neural vocoders and RAVE to induce active divergence from a model's expected behaviour \cite{yee-king_studio_2021,oliveira_brave_2025}. Existing tools are commonly tied to one architecture; \texttt{nbform} places model-specific access behind a shared interface while keeping interventions reusable. EnCodec provides the main evaluation case because its encoder--quantized-latent--decoder structure makes layer-level interventions explicit \cite{defossez_high_2022}.
+
+\subsubsection{Network bending Framework}
+Broad et al. \cite{broad_network_2021} introduced the notion of network bending as a direct manipulation of deep generative models to induce ``active divergence'' in the model's output relative to the original training distribution. They propose a method where a set of transformations can be inserted as distinct layers into the computational graph during inference. Thus, there is no modification of the model's learned weights.
+In contrast, Kotowski et al. \cite{kotowski_network_2026} propose to intervene directly in the model's parameter space, introducing a network bending tool that enables real-time manipulation of the weights and biases of neural audio models. Manz et al. \cite{oliveira_brave_2025} propose a hardware implementation of the same approach applied to RAVE, which results in a network bending instrument. McCallum and Yee-King \cite{yee-king_studio_2021} developed an exploratory toolkit that focuses on transformations of a DDSP-based vocoder.
+
+From a purely machine-learning perspective, these approaches produce undesirable results because they actively depart from the model's intended function. From a creative perspective, however, they treat malfunction and unintended use as artistic resources. This aligns with Cascone's account of glitch aesthetics \cite{cascone_aesthetics_2000}, in which composers seek digital failures as material for composition.
+
+Beyond artistic use, network bending has political and pedagogical implications: pretrained models can be explored without the computational cost of training or extensive prior knowledge. As Kotowski et al. describe it, network bending enables ``exploratory intervention and repurposing'' \cite{kotowski_network_2026}.
+
+
+\subsubsection{Audio model context}
+RAVE is a real-time waveform synthesizer based on a variational autoencoder, whereas EnCodec is a neural audio codec with a convolutional encoder, residual vector quantization, and decoder \cite{caillonRAVEVariationalAutoencoder2021,defossez_high_2022}. The adapters expose these different architectures through the same intervention workflow; only EnCodec is used for the quantitative evaluation below.
+
+% An example of a floating figure using the graphicx package.
+% Note that \label must occur AFTER (or within) \caption.
+% For figures, \caption should occur after the \includegraphics.
+% Note that IEEEtran v1.7 and later has special internal code that
+% is designed to preserve the operation of \label within \caption
+% even when the captionsoff option is in effect. However, because
+% of issues like this, it may be the safest practice to put all your
+% \label just after \caption rather than within \caption{}.
+%
+% Reminder: the "draftcls" or "draftclsnofoot", not "draft", class
+% option should be used if it is desired that the figures are to be
+% displayed while in draft mode.
+%
+%\begin{figure}[!t]
+%\centering
+%\includegraphics[width=2.5in]{myfigure}
+% where an .eps filename suffix will be assumed under latex, 
+% and a .pdf suffix will be assumed for pdflatex; or what has been declared
+% via \DeclareGraphicsExtensions.
+%\caption{Simulation results for the network.}
+%\label{fig_sim}
+%\end{figure}
+
+
+
+
+\section{Technical Design and Implementation}
+The tool is designed for artistic exploration rather than optimization toward a target signal. It lets users inspect a pretrained model, select encoder or decoder components, apply and combine interventions, and export outputs for listening. The workflow separates model access, interventions, inference, and result export across supported architectures.
+
+\subsection{Model and Layer Abstraction}
+\label{model_layer_abstraction}
+Architecture-specific adapters implement a shared \texttt{NNModel} interface. They expose encoder and decoder containers, model audio requirements, layer metadata, and supported weight and bias tensors. A direct child of an exposed container is an intervention target and is identified by a stable path and a \texttt{LayerInfo} record. Composite targets apply parameter operations to all supported tensors exposed inside the component. RAVE requires its training checkpoint and \texttt{config.gin}; EnCodec uses its public pretrained 24~kHz or 48~kHz model.
+
+\subsubsection{Transformation Operators}
+\label{transformation_operators}
+Four operators probe complementary affordances: computation can be omitted (\texttt{skip}), repeated for $r\in\{3,5,10\}$ (\texttt{repeat}), weights and biases can be scaled (\texttt{multiply}), or shifted by an offset (\texttt{add}). For a selected component $f_l$ with input $z$, skipping uses $\widetilde{f}_l(z)=z$ and repetition uses $\widetilde{f}_l(z)=f_l^r(z)$. Parameter operations use
+\begin{equation}
+  \widetilde{W}=\alpha W,\quad \widetilde{b}=\beta b,
+  \qquad\text{or}\qquad
+  \widetilde{W}=W+\gamma,\quad \widetilde{b}=b+\eta.
+\end{equation}
+The automated sweep selects shape-compatible candidates; a failed shape or runtime check is recorded rather than terminating the sweep.
+
+\subsubsection{Reproducible Sweep}
+For technical characterization, candidate targets are direct children of the exposed encoder and decoder containers. A candidate is retained when the adapter reports matching input and output channels or no channel information; the evaluated EnCodec model yielded ten positions per section. This accessible set is not an exhaustive analysis of all internal operations. Each trial starts from a pristine model, tests factors $\{1,5,10,20\}$ or an additive offset of 0.1, and stores its layer, parameters, status, audio, and metrics in CSV format.
+
+Let $y_i$ and $\widehat{y}_i$ be sample $i$ of the baseline reconstruction and transformed output, respectively. For $N$ waveform samples, mean absolute error is
+\begin{equation}
+    \operatorname{MAE}(y,\widehat{y})
+    = \frac{1}{N}\sum_{i=1}^{N}\left|\widehat{y}_i-y_i\right|.
+\end{equation}
+Output changes are also measured using multi-resolution short-time Fourier transform loss, which compares spectrograms computed with different analysis resolutions \cite{yamamoto_parallel_2020}. MR-STFT is retained as a secondary spectral descriptor; the heatmap and the present interpretation focus on normalized MAE. These measures characterize waveform and spectral deviations from the baseline reconstruction, not perceptual quality or artistic usefulness. The heatmap characterizes first-order effects of isolated interventions and does not predict interaction effects from combined transformations.
+
+\subsection{Heatmap as an Exploratory Tool}
+The heatmap provides a candidate view for subsequent listening. Its left panel aggregates normalized MAE by layer and intervention setting, while the right panel provides a complementary view of multi-resolution spectral deviation through MR-STFT. Configurations with greater measured response are made visible for further exploration; the figure does not identify artistically promising regions, rank perceptual preference, or demonstrate improved interaction. Black borders mark clipped cells, and blank cells indicate only untested combinations.
+
+\section{Method}
+The exemplar analysis used the pretrained 48-kHz EnCodec model and four recordings: \textit{AmenBreak.wav}, \textit{Fontane Sprachsignal.wav}, \textit{GLM.wav}, and \textit{tof.wav}. Direct child modules in the encoder and decoder were tested, producing ten accessible candidate positions per network section. The sweep evaluated \texttt{skip}, \texttt{repeat} with 3, 5, or 10 repetitions, \texttt{multiply} with factors 1, 5, 10, or 20, and \texttt{add} with an offset of 0.1. Each trial began from the same pretrained model and was compared with its unmodified reconstruction. Results were summarized descriptively over the four recordings using normalized MAE, secondary MR-STFT values, and quality-gate status.
+
+\section{Evaluation}
+\label{sec:evaluation}
+
+The evaluation used the pretrained 48-kHz EnCodec model \cite{defossez_high_2022} and four recordings: \textit{AmenBreak.wav}, \textit{Fontane Sprachsignal.wav}, \textit{GLM.wav}, and \textit{tof.wav}. The adapter converted each input to EnCodec's required sample rate and channel configuration. The environment used Python $\geq$3.11, PyTorch $\geq$2.2, EnCodec 0.1.1, auraloss $\geq$0.4, and librosa $\geq$0.11. RAVE is supported by the project but not quantitatively evaluated here.
+
+The evaluation is an illustrative application of the tool rather than a perceptual or user study. It comprised 480 isolated-intervention trials across 20 accessible EnCodec layer positions and four recordings. Each trial was reset to the pretrained model and compared with the corresponding unmodified reconstruction. Normalized MAE was used for the sensitivity map; MR-STFT was retained as a secondary spectral descriptor. The results identify configurations with different measured responses for subsequent listening, not artistic quality.
+
+A quality gate recorded non-finite outputs and near-silence, and flagged clipping when more than 5\% of samples reached $|x|\geq0.99$; clipped outputs were retained and interpreted as boundary cases. For normalized MAE, baseline and intervention outputs were normalized independently to RMS 0.1 and peak-limited to 0.99 before comparison. Consequently, normalized MAE emphasizes waveform differences after independent level alignment; raw MAE preserves unnormalized signal differences. Results were exported per trial and summarized by layer, operation, and parameter setting using medians and interquartile ranges. The four recordings are the independent stimuli; intervention trials are repeated measurements, not independent observations. No user study was conducted.
+
+
+\section{Results and Discussion}
+\label{sec:results-discussion}
+
+\subsection{Corpus-Level Results}
+
+The evaluation comprised 480 trials across four recordings and 20 accessible EnCodec layer positions: 80 skip, 240 repeat, 128 multiply, and 32 additive conditions. Of these, 478 were valid and two were clipped; both clipped cases occurred for skipping \texttt{decoder.model.13}. The recordings are the stimulus set, not 480 independent observations.
+
+Across the tested conditions, the median normalized MAE was 0.0264 for \texttt{skip}, 0.0319 for \texttt{repeat}, and 0.0219 for \texttt{add}. Non-control weight multiplications produced a median normalized MAE of 0.0053 across factors 5, 10, and 20; their factor-specific medians were 0.0050, 0.0053, and 0.0054. The factor-1 condition was retained as an unchanged control and is reported separately in the heatmap. These are descriptive summaries of the tested configurations; no inferential significance is claimed.
+
+\subsection{Layer and Stimulus Dependence}
+
+Among the tested layer positions, the strongest median deviations included skipping \texttt{decoder.model.13} (normalized MAE 0.1057) and repeating \texttt{encoder.model.4} ten times (0.1025). The largest individual normalized MAE was 0.1276 for \texttt{decoder.model.10} with five repetitions on \textit{GLM.wav}; the largest skip value was 0.1233 for \texttt{encoder.model.4} on the same recording. These cases show that the measured response varied with target layer, intervention setting, and input.
+
+The two clipped outputs were specific to the skip intervention at \texttt{decoder.model.13}; they are treated as boundary cases and do not establish a general tendency for decoder interventions to clip. Because clipping can contribute substantially to waveform deviation, these cases are reported separately when interpreting the largest observed MAE values. Likewise, the comparatively high values for \textit{GLM.wav} describe this stimulus set and do not identify a causal spectral or temporal property of that recording.
+
+\subsection{Implications for Artistic Exploration}
+
+Figure~\ref{fig:intervention-heatmap} shows that the measured response varies among the tested layer/intervention pairs. The sweep therefore provides a descriptive sensitivity map from which configurations can be selected for closer listening. It characterizes isolated interventions rather than the interaction space of combined transformations.
+
+MAE and MR-STFT quantify signal differences, however, and do not determine whether an output is aesthetically interesting or useful. The heatmap is therefore an intermediate representation between model analysis and artistic exploration: it structures part of the search space and provides candidate configurations for subsequent listening. Whether this information improves the efficiency, controllability, or quality of artistic interaction remains an open question for future user-centred evaluation.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=0.98\columnwidth]{results/interventions_heatmap_dual.pdf}
+    \caption{Median response across four recordings for the tested layer--intervention configurations. The left panel shows normalized MAE after independent level alignment; the right panel shows MR-STFT as a secondary spectral descriptor. Black borders mark clipped cells, blank cells indicate only untested combinations, and neither metric measures perceptual preference or artistic quality.}
+    \label{fig:intervention-heatmap}
+\end{figure}
+
+\section{Conclusion and Outlook}
+\label{sec:conclusion}
+
+\subsection{Conclusion}
+
+This paper presented \texttt{nbform}, a model-adaptive tool for exploratory network bending of pretrained neural audio models. Its model abstraction separates architecture-specific access to encoder and decoder components from reusable structural and parameter interventions. The quantitative characterization reported here is an illustrative EnCodec case study covering four recordings and isolated interventions at accessible layer positions.
+
+The tested interventions produced heterogeneous reconstruction deviations across layer positions, parameter settings, and input recordings. Non-control weight multiplications produced a median normalized MAE of 0.0053, while skip and repeat conditions showed larger deviations in the tested configuration. These observations characterize the evaluated EnCodec model, stimuli, and interventions; they do not establish perceptual preference, artistic value, or general behavior across models and inputs.
+
+The sensitivity map provides an intermediate representation between model analysis and artistic exploration. It can structure candidate selection for subsequent listening, while aesthetic interpretation remains part of the user's practice. Whether this information improves the efficiency, controllability, or quality of artistic interaction remains open for future user-centred evaluation.
+
+\subsection{Outlook}
+
+Future work should expand the stimulus set, evaluate RAVE with a comparable protocol, and pair the sensitivity map with structured listening studies. Further development could investigate finer structural interventions and interactions between combined transformations.
+
+
+% trigger a \newpage just before the given reference
+% number - used to balance the columns on the last page
+% adjust value as needed - may need to be readjusted if
+% the document is modified later
+%\IEEEtriggeratref{8}
+% The "triggered" command can be changed if desired:
+%\IEEEtriggercmd{\enlargethispage{-5in}}
+
+% references section
+
+% can use a bibliography generated by BibTeX as a .bbl file
+% BibTeX documentation can be easily obtained at:
+% http://mirror.ctan.org/biblio/bibtex/contrib/doc/
+% The IEEEtran BibTeX style support page is at:
+% http://www.michaelshell.org/tex/ieeetran/bibtex/
+%\bibliographystyle{IEEEtran}
+% argument is your BibTeX string definitions and bibliography database(s)
+%\bibliography{IEEEabrv,../bib/paper}
+%
+% <OR> manually copy in the resultant .bbl file
+% set second argument of \begin to the number of references
+% (used to reserve space for the reference number labels box)
+
+\printbibliography
+
+
+
+
+
+% that's all folks
+\end{document}
+
