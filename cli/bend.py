@@ -358,7 +358,6 @@ class RestoreMode(PromptEnum):
 
 def handle_restore(app: AppState) -> None:
     restore_mode = RestoreMode.choice()
-
     if restore_mode == RestoreMode.All:
         app.model.reset()
 

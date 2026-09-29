@@ -9,7 +9,7 @@ from prompt_toolkit.history import History
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.widgets import RadioList
 
-from library.model import LayerInfo, NNModel, NetTypeEnum
+from library.model import LayerInfo, NetTypeEnum, NNModel
 
 ########################### FORMATTING AND PRINTING
 
