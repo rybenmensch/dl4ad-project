@@ -338,7 +338,6 @@ def handle_listen(app: AppState) -> None:
 
     stop_playback = threading.Event()
     quit_requested = threading.Event()
-    playback_bindings = KeyBindings()
 
     def stop(event) -> None:
         stop_playback.set()
@@ -348,27 +347,25 @@ def handle_listen(app: AppState) -> None:
         quit_requested.set()
         stop(event)
 
+    playback_bindings = KeyBindings()
     playback_bindings.add("c-c", eager=True)(stop)
     playback_bindings.add("escape", eager=True)(stop)
     playback_bindings.add("c-d", eager=True)(quit)
 
-    def make_progress_bar(length: str) -> pt.shortcuts.ProgressBar:
-        custom_formatter = [
+    pb = pt.shortcuts.ProgressBar(
+        title="Now playing",
+        key_bindings=playback_bindings,
+        formatters=[
             pb_formatters.Bar(sym_a="#", sym_b="#", sym_c="."),
             pb_formatters.Text(" "),
             pb_formatters.TimeElapsed(),
             pb_formatters.Text(" / ", style="class:time-left"),
-            pb_formatters.Text(length, style="class:time-left"),
-        ]
-
-        return pt.shortcuts.ProgressBar(
-            title="Now playing",
-            key_bindings=playback_bindings,
-            formatters=custom_formatter,
-        )
+            pb_formatters.Text(at.readable_length(), style="class:time-left"),
+        ],
+    )
 
     try:
-        with make_progress_bar(at.readable_length()) as pb:
+        with pb as pb:
             with at.output_stream() as stream:
                 for chunk in pb(at.chunks()):
                     if stop_playback.is_set():
