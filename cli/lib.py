@@ -47,6 +47,10 @@ class UserCancelledError(Exception):
     pass
 
 
+class UserQuitError(Exception):
+    pass
+
+
 def get_input(
     msg: str = "", *, quit_on_q: bool = False, escape_cancels: bool = False
 ) -> str:
@@ -60,7 +64,7 @@ def get_input(
         u_str = "<Esc>: abort;" if escape_cancels else ""
         u_str = f"({u_str} <C-c>, <C-d>: quit)"
         msg = f"{msg} {u_str}:\n"
-        c = pt.prompt(msg, key_bindings=prompt_bindings).strip().lower()
+        c = pt.prompt(msg, key_bindings=prompt_bindings).strip()
         if quit_on_q and c == "q":
             raise UserCancelledError
     except (EOFError, KeyboardInterrupt):
@@ -283,6 +287,7 @@ class PromptEnum(StrEnum):
 
 
 def auto_complete(user_string: str, key: str, abbr: str | None = "") -> bool:
+    user_string = user_string.lower()
     ret = False
     if abbr != "":
         ret = abbr == user_string
