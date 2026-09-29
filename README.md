@@ -27,5 +27,5 @@ uv run black .
 ## Project layout
 
 - `nbform` is the application command, implemented in `cli/app.py`.
-- `cli/` contains argument handling and the generate and analyze flows.
+- `cli/` contains argument handling and the bend and analyze flows.
 - `library/` contains reusable audio, model, plotting, and RAVE components.

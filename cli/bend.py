@@ -544,7 +544,7 @@ commands = [
 ]
 
 
-def generate_loop(app: AppState) -> None:
+def bend_loop(app: AppState) -> None:
     pt.shortcuts.clear()
     # TODO: splash screen?
 

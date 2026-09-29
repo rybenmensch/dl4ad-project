@@ -31,7 +31,7 @@ class ModelType(str, Enum):
 
 
 class Command(str, Enum):
-    GENERATE = "generate"
+    BEND = "bend"
     ANALYZE = "analyze"
 
 
@@ -44,7 +44,7 @@ class CommonArgs:
 
 
 @dataclass
-class GenerateArgs(CommonArgs):
+class BendArgs(CommonArgs):
     input: Path
 
 
@@ -56,7 +56,7 @@ class AnalyzeArgs(CommonArgs):
     seconds: float | None = None
 
 
-Args = GenerateArgs | AnalyzeArgs
+Args = BendArgs | AnalyzeArgs
 
 
 # TODO: replace tuple[torch.Tensor, int] with AudioTensor

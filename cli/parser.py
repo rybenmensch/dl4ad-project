@@ -6,9 +6,9 @@ from cli.state import (
     AUDIO_EXTENSIONS,
     AnalyzeArgs,
     Args,
+    BendArgs,
     Command,
     CommonArgs,
-    GenerateArgs,
     ModelType,
 )
 
@@ -69,13 +69,13 @@ def build_parser() -> argparse.ArgumentParser:
 
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    generate = subparsers.add_parser(
-        Command.GENERATE.value,
-        help="Generate audio.",
-        description="Generate audio from an audio file or directory.",
+    bend = subparsers.add_parser(
+        Command.BEND.value,
+        help="Bend networks.",
+        description="Bend networks and generate audio from an audio file or directory.",
     )
-    add_common_options(generate)
-    add_input_option(generate, "Input audio file.")
+    add_common_options(bend)
+    add_input_option(bend, "Input audio file.")
 
     analyze = subparsers.add_parser(
         Command.ANALYZE.value,
@@ -116,8 +116,8 @@ def parse_args(parser: argparse.ArgumentParser) -> Args:
         output=namespace.output,
     )
 
-    if command == Command.GENERATE:
-        return GenerateArgs(
+    if command == Command.BEND:
+        return BendArgs(
             **common.__dict__,
             input=namespace.input,
         )
@@ -145,8 +145,8 @@ def validate_and_normalize(args: Args) -> Args:
 
         args.model_type = ModelType.RAVE
 
-    if args.command == Command.GENERATE:
-        assert isinstance(args, GenerateArgs)
+    if args.command == Command.BEND:
+        assert isinstance(args, BendArgs)
 
         if args.input.is_file() and args.input.suffix.lower() not in AUDIO_EXTENSIONS:
             raise ValueError(f"Not a supported audio file: {args.input}")
