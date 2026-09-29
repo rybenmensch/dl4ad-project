@@ -8,7 +8,6 @@ from typing import cast
 
 import prompt_toolkit as pt
 import sounddevice as sd
-import torch
 import torchaudio
 from prompt_toolkit import PromptSession
 from prompt_toolkit.key_binding import KeyBindings
@@ -25,7 +24,6 @@ from cli.lib import (
     format_auto_complete,
     get_input,
     get_param,
-    quit_string,
     sel,
     usage,
 )
@@ -48,6 +46,12 @@ from library.model import (
 from library.rave import ExportOptions, RAVEModel
 
 command_history = CommandHistory()
+main_session = PromptSession(
+    history=command_history,
+    enable_suspend=True,
+    interrupt_exception=KeyboardInterrupt,
+    eof_exception=EOFError,
+)
 
 
 def print_help(_: AppState) -> None:
@@ -100,13 +104,15 @@ def print_model(app: AppState) -> None:
                 True,
             )
         add_to_command_history("print", print_mode.value)
-    else:
+    elif print_mode == PrintMode.Encoder or print_mode == PrintMode.Decoder:
         net = app.model.get_net(NetTypeEnum(print_mode))
         net_type = NetTypeEnum(print_mode)
         print_layer_common(
             app.model, get_all_layers_from_net(app.model, net), net_type, True
         )
         add_to_command_history("print", print_mode.value, net_type.value)
+    else:
+        raise NotImplementedError
 
 
 def get_diff_layers(model: NNModel, other_model: NNModel) -> list[LayerInfo]:
@@ -121,18 +127,10 @@ def print_diff(app: AppState) -> None:
     layers = get_diff_layers(app.model, app.backup_model)
     if len(layers) == 0:
         print("Model has not yet been modified.")
-        add_to_command_history("diff")
         return
 
     encoder_l = [l for l in layers if l.net_type == NetTypeEnum.Encoder]
     decoder_l = [l for l in layers if l.net_type == NetTypeEnum.Decoder]
-
-    # version without selection
-    # if len(encoder_l):
-    #     print_layer_common(app.model, encoder_l, NetTypeEnum.Encoder.value, True)
-    #
-    # if len(decoder_l):
-    #     print_layer_common(app.model, decoder_l, NetTypeEnum.Decoder.value, True)
 
     # version with selection
     if len(encoder_l):
@@ -180,8 +178,6 @@ def get_net_type_and_layers(
 def get_net_type_and_index(layers: list[LayerInfo]) -> tuple[NetTypeEnum, int]:
     net_type, layers = get_net_type_and_layers(layers)
     if len(layers) == 0:
-        # TODO: change error type, don't think that really is an indexerror, just
-        # because layers is empty?
         raise IndexError(f"Net {net_type.value} has no layers of interest.")
 
     index = choose(
@@ -197,7 +193,6 @@ def get_net_type_and_index(layers: list[LayerInfo]) -> tuple[NetTypeEnum, int]:
         ],
     )
 
-    # can this ever actually happen???
     if index not in [layer.index for layer in layers]:
         raise IndexError(f"Index out of bounds: {index}")
 
@@ -312,24 +307,6 @@ class ListeningMode(PromptEnum):
     Modified = "modified"
     Baseline = "baseline"
 
-    def get_audio_tensor(
-        self, app: AppState, wav: tuple[torch.Tensor, int]
-    ) -> AudioTensor:
-        if self == self.Modified:
-            audio = app.model(wav)
-            sr = app.model.get_sample_rate()
-            print("modified")
-        elif self == self.Baseline:
-            audio = app.backup_model(wav)
-            print("baseline")
-            sr = app.backup_model.get_sample_rate()
-        elif self == self.Original:
-            print("original")
-            audio, sr = wav
-        else:
-            raise NotImplementedError
-        return AudioTensor(audio=audio, sr=sr)
-
 
 def handle_listen(app: AppState) -> None:
     input_index = 0
@@ -346,7 +323,18 @@ def handle_listen(app: AppState) -> None:
         return
 
     listening_mode = ListeningMode.get_choice_menu()
-    at = listening_mode.get_audio_tensor(app, file.wav)
+    if listening_mode == ListeningMode.Modified:
+        audio = app.model(file.wav)
+        sr = app.model.get_sample_rate()
+    elif listening_mode == ListeningMode.Baseline:
+        audio = app.backup_model(file.wav)
+        sr = app.backup_model.get_sample_rate()
+    elif listening_mode == ListeningMode.Original:
+        audio, sr = file.wav
+    else:
+        raise NotImplementedError
+
+    at = AudioTensor.from_tuple((audio, sr))
 
     stop_playback = threading.Event()
     quit_requested = threading.Event()
@@ -366,8 +354,6 @@ def handle_listen(app: AppState) -> None:
 
     def make_progress_bar(length: str) -> pt.shortcuts.ProgressBar:
         custom_formatter = [
-            # pb_formatters.Label(),
-            # pb_formatters.Text(": "),
             pb_formatters.Bar(sym_a="#", sym_b="#", sym_c="."),
             pb_formatters.Text(" "),
             pb_formatters.TimeElapsed(),
@@ -454,7 +440,6 @@ def handle_write(app: AppState) -> None:
         path = f.path
         stem, suffix = path.stem, path.suffix
 
-        name = ""
         if write_mode == WriteFileMode.Keep:
             name = stem + suffix
         elif write_mode == WriteFileMode.Prepend:
@@ -468,6 +453,8 @@ def handle_write(app: AppState) -> None:
             new_names.append(str(name))
             name = name.stem
             name = name + suffix
+        else:
+            raise NotImplementedError
 
         path = parent / name
         processed = app.model(f.wav)
@@ -485,11 +472,12 @@ class OutputFolderType(PromptEnum):
 def handle_export(app: AppState) -> None:
     if isinstance(app.model, RAVEModel):
         output_folder_type = OutputFolderType.get_choice_menu()
-        output_folder = None
         if output_folder_type == OutputFolderType.Same:
-            output_path = app.rave_path
+            output_folder = app.rave_path
         elif output_folder_type == OutputFolderType.New:
             output_folder = get_input("Enter output folder", escape_cancels=True)
+        else:
+            raise NotImplementedError
         assert output_folder is not None
         output_folder = Path(output_folder).absolute()
 
@@ -528,6 +516,10 @@ def handle_quit(app: AppState) -> None:
     quit_mode = QuitMode.get_choice_menu(prompt="Are you sure?")
     if quit_mode == QuitMode.Yes:
         raise UserQuitError
+    elif quit_mode == QuitMode.No:
+        return
+    else:
+        raise NotImplementedError  # lol
 
 
 @dataclass(frozen=True)
@@ -554,13 +546,6 @@ commands = [
     Command(key="export", fn=handle_export, desc="Export model to torchscript"),
 ]
 
-main_session = PromptSession(
-    history=command_history,
-    enable_suspend=True,
-    interrupt_exception=KeyboardInterrupt,
-    eof_exception=EOFError,
-)
-
 
 def generate_loop(app: AppState) -> None:
     pt.shortcuts.clear()
@@ -568,7 +553,6 @@ def generate_loop(app: AppState) -> None:
 
     while True:
         try:
-            # user_input = main_session.prompt(f"Enter command ({quit_string()})").strip()
             user_input = get_input(
                 msg="Enter command", escape_cancels=False, session=main_session
             )
