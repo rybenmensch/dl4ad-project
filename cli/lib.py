@@ -5,6 +5,7 @@ from enum import StrEnum
 from typing import Any, NamedTuple, Self, cast
 
 import prompt_toolkit as pt
+from prompt_toolkit.history import History
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.widgets import RadioList
 
@@ -292,3 +293,33 @@ def auto_complete(user_string: str, key: str, abbr: str | None = "") -> bool:
     if abbr != "":
         ret = abbr == user_string
     return ret or key.startswith(user_string)
+
+
+class CommandHistory(History):
+    """In-memory history whose newest entry can be replaced after a command."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self._entries: list[str] = []
+
+    async def load(self):
+        for entry in reversed(self._entries):
+            yield entry
+
+    def load_history_strings(self):
+        return reversed(self._entries)
+
+    def get_strings(self) -> list[str]:
+        return self._entries.copy()
+
+    def store_string(self, string: str) -> None:
+        self._entries.append(string)
+
+    def append_string(self, string: str) -> None:
+        self._entries.append(string)
+
+    def replace_last(self, string: str) -> None:
+        if self._entries:
+            self._entries[-1] = string
+        else:
+            self._entries.append(string)

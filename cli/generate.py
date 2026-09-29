@@ -16,6 +16,7 @@ from prompt_toolkit.shortcuts.progress_bar import formatters as pb_formatters
 
 from cli.lib import (
     ChoiceOption,
+    CommandHistory,
     PromptEnum,
     UserCancelledError,
     UserQuitError,
@@ -45,7 +46,10 @@ from library.model import (
 )
 from library.rave import ExportOptions, RAVEModel
 
+command_history = CommandHistory()
+
 main_session = PromptSession(
+    history=command_history,
     enable_suspend=True,
     interrupt_exception=KeyboardInterrupt,
     eof_exception=EOFError,
@@ -214,7 +218,7 @@ def make_command(command_name: str, *args) -> str:
 def add_to_command_history(command_name: str, *args) -> None:
     args = [command_name] + [str(a) for a in args if a != ""]
     argstr = " ".join(args)
-    main_session.history.append_string(argstr)
+    command_history.replace_last(argstr)
 
 
 def handle_skip_layer(app: AppState) -> None:
@@ -566,26 +570,11 @@ def generate_loop(app: AppState) -> None:
         ]
     )
 
-    bindings = KeyBindings()
-    # bindings.add("c-l")(lambda event: event.app.renderer.clear())
-
-    def h_prev(event):
-        """TODO: implement"""
-
-    def h_next(event):
-        """TODO: implement"""
-
-    # for fn, keys in (h_prev, ("up", "c-p")), (h_next, ("down", "c-n")):
-    #     for k in keys:
-    #         bindings.add(k, eager=True)(fn)
-
     while True:
         try:
-
-            default = ""  # TODO: implement
-            msg = f"Enter command ({quit_str}: quit)"
-            # user_input = pt.prompt(msg, key_bindings=bindings, default=default).strip()
-            user_input = main_session.prompt(msg, key_bindings=bindings).strip()
+            user_input = main_session.prompt(
+                f"Enter command ({quit_str}: quit)"
+            ).strip()
 
         except (EOFError, KeyboardInterrupt, UserQuitError):
             sys.exit(0)
