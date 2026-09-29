@@ -73,7 +73,7 @@ class PrintMode(PromptEnum):
 def print_model(app: AppState) -> None:
     layers = get_all_layers(app.model)
 
-    print_mode = PrintMode.get_choice_menu()
+    print_mode = PrintMode.choice()
     if print_mode == PrintMode.All:
         for net_type in NetTypeEnum:
             print_filtered(app.model, layers, net_type)
@@ -104,7 +104,7 @@ def print_diff(app: AppState) -> None:
         print("Model has not yet been modified.")
         return
 
-    print_mode = PrintMode.get_choice_menu()
+    print_mode = PrintMode.choice()
     if print_mode == PrintMode.All:
         for net_type in NetTypeEnum:
             print_filtered(app.model, layers, net_type)
@@ -133,9 +133,6 @@ class NetTypePromptEnum(PromptEnum):
     Encoder = "encoder"
     Decoder = "decoder"
 
-    def to_net_type(self) -> NetTypeEnum:
-        return NetTypeEnum(self.value)
-
     @classmethod
     def human_name(cls) -> str:
         return "net type"
@@ -144,7 +141,7 @@ class NetTypePromptEnum(PromptEnum):
 def get_net_type_and_layers(
     layers: list[LayerInfo],
 ) -> tuple[NetTypeEnum, list[LayerInfo]]:
-    net_type = NetTypePromptEnum.get_choice_menu().to_net_type()
+    net_type = NetTypeEnum(NetTypePromptEnum.choice())
     layers = [l for l in layers if l.net_type == net_type]
     return (net_type, layers)
 
@@ -296,7 +293,7 @@ def handle_listen(app: AppState) -> None:
         print(f"Index out of bounds: {input_index}")
         return
 
-    listening_mode = ListeningMode.get_choice_menu()
+    listening_mode = ListeningMode.choice()
     if listening_mode == ListeningMode.Modified:
         audio = app.model(file.wav)
         sr = app.model.get_sample_rate()
@@ -360,7 +357,7 @@ class RestoreMode(PromptEnum):
 
 
 def handle_restore(app: AppState) -> None:
-    restore_mode = RestoreMode.get_choice_menu()
+    restore_mode = RestoreMode.choice()
 
     if restore_mode == RestoreMode.All:
         app.model.reset()
@@ -399,7 +396,7 @@ class WriteFileMode(PromptEnum):
 
 
 def handle_write(app: AppState) -> None:
-    write_mode = WriteFileMode.get_choice_menu()
+    write_mode = WriteFileMode.choice()
 
     prep_or_app = ""
     if write_mode == WriteFileMode.Prepend or write_mode == WriteFileMode.Append:
@@ -442,7 +439,7 @@ class OutputFolderType(PromptEnum):
 
 def handle_export(app: AppState) -> None:
     if isinstance(app.model, RAVEModel):
-        output_folder_type = OutputFolderType.get_choice_menu()
+        output_folder_type = OutputFolderType.choice()
         if output_folder_type == OutputFolderType.Same:
             output_folder = app.rave_path
         elif output_folder_type == OutputFolderType.New:
@@ -484,7 +481,7 @@ class QuitMode(PromptEnum):
 
 
 def handle_quit(app: AppState) -> None:
-    quit_mode = QuitMode.get_choice_menu(prompt="Are you sure?")
+    quit_mode = QuitMode.choice(prompt="Are you sure?")
     if quit_mode == QuitMode.Yes:
         raise UserQuitError
     elif quit_mode == QuitMode.No:
