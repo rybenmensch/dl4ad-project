@@ -10,6 +10,7 @@ import prompt_toolkit as pt
 import sounddevice as sd
 import torch
 import torchaudio
+from prompt_toolkit import PromptSession
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.shortcuts.progress_bar import formatters as pb_formatters
 
@@ -17,6 +18,7 @@ from cli.lib import (
     ChoiceOption,
     PromptEnum,
     UserCancelledError,
+    UserQuitError,
     auto_complete,
     choose,
     format_auto_complete,
@@ -42,6 +44,12 @@ from library.model import (
     swap_layers,
 )
 from library.rave import ExportOptions, RAVEModel
+
+main_session = PromptSession(
+    enable_suspend=True,
+    interrupt_exception=KeyboardInterrupt,
+    eof_exception=EOFError,
+)
 
 
 def print_help(_: AppState) -> None:
@@ -82,9 +90,9 @@ class PrintMode(PromptEnum):
 
 
 def print_model(app: AppState) -> None:
-    mode = PrintMode.get_choice_menu()
+    print_mode = PrintMode.get_choice_menu()
 
-    if mode == PrintMode.All:
+    if print_mode == PrintMode.All:
         for net_type in NetTypeEnum:
             net = app.model.get_net(net_type)
             print_layer_common(
@@ -93,11 +101,14 @@ def print_model(app: AppState) -> None:
                 net_type.value,
                 True,
             )
+        add_to_command_history("print", print_mode.value)
     else:
-        net = app.model.get_net(NetTypeEnum(mode))
+        net = app.model.get_net(NetTypeEnum(print_mode))
+        net_type = NetTypeEnum(print_mode)
         print_layer_common(
-            app.model, get_all_layers_from_net(app.model, net), NetTypeEnum(mode), True
+            app.model, get_all_layers_from_net(app.model, net), net_type, True
         )
+        add_to_command_history("print", print_mode.value, net_type.value)
 
 
 def get_diff_layers(model: NNModel, other_model: NNModel) -> list[LayerInfo]:
@@ -112,6 +123,7 @@ def print_diff(app: AppState) -> None:
     layers = get_diff_layers(app.model, app.backup_model)
     if len(layers) == 0:
         print("Model has not yet been modified.")
+        add_to_command_history("diff")
         return
 
     encoder_l = [l for l in layers if l.net_type == NetTypeEnum.Encoder]
@@ -129,10 +141,14 @@ def print_diff(app: AppState) -> None:
         if len(decoder_l):
             net_type, layers = get_net_type_and_layers(layers)
             print_layer_common(app.model, layers, net_type.value, True)
+            add_to_command_history("diff", net_type.value)
+            return
         else:
             print_layer_common(app.model, encoder_l, NetTypeEnum.Encoder.value, True)
     else:
         print_layer_common(app.model, decoder_l, NetTypeEnum.Decoder.value, True)
+
+    add_to_command_history("diff")
 
 
 def get_net_and_layer_info(
@@ -190,6 +206,17 @@ def get_net_type_and_index(layers: list[LayerInfo]) -> tuple[NetTypeEnum, int]:
     return (net_type, index)
 
 
+def make_command(command_name: str, *args) -> str:
+    args = [command_name] + [a for a in args]
+    return " ".join(args)
+
+
+def add_to_command_history(command_name: str, *args) -> None:
+    args = [command_name] + [str(a) for a in args if a != ""]
+    argstr = " ".join(args)
+    main_session.history.append_string(argstr)
+
+
 def handle_skip_layer(app: AppState) -> None:
     try:
         net_type, index = get_net_type_and_index(get_shape_preserving_layers(app.model))
@@ -199,6 +226,8 @@ def handle_skip_layer(app: AppState) -> None:
 
     net, layer_info = get_net_and_layer_info(app.model, net_type, index)
     net[index] = SkippingLayer(layer_info)
+
+    add_to_command_history("skip", net_type.value, index)
 
 
 def handle_repeat_layer(app: AppState) -> None:
@@ -211,7 +240,9 @@ def handle_repeat_layer(app: AppState) -> None:
     num_repeats = get_param(int, "number of repetitions")
 
     net, layer_info = get_net_and_layer_info(app.model, net_type, index)
-    net[index] = RepeatingLayer(layer_info, repeats=cast(int, num_repeats))
+    net[index] = RepeatingLayer(layer_info, repeats=num_repeats)
+
+    add_to_command_history("repeat", net_type.value, index, num_repeats)
 
 
 def handle_swap_layer(app: AppState) -> None:
@@ -258,7 +289,9 @@ def handle_multiplier_layer(app: AppState) -> None:
     mult = get_param(float, "multiplication factor")
 
     net, layer_info = get_net_and_layer_info(app.model, net_type, index)
-    net[index] = MultiplierLayer(layer_info, weight_mul=cast(float, mult))
+    net[index] = MultiplierLayer(layer_info, weight_mul=mult)
+
+    add_to_command_history("multiply", net_type.value, index, mult)
 
 
 def handle_addition_layer(app: AppState) -> None:
@@ -271,7 +304,9 @@ def handle_addition_layer(app: AppState) -> None:
     add = get_param(float, "addition factor")
 
     net, layer_info = get_net_and_layer_info(app.model, net_type, index)
-    net[index] = AdditionLayer(layer_info, weight_add=cast(float, add))
+    net[index] = AdditionLayer(layer_info, weight_add=add)
+
+    add_to_command_history("add", net_type.value, index, add)
 
 
 class ListeningMode(PromptEnum):
@@ -298,7 +333,7 @@ class ListeningMode(PromptEnum):
         return AudioTensor(audio=audio, sr=sr)
 
 
-def listen(app: AppState) -> None:
+def handle_listen(app: AppState) -> None:
     input_index = 0
     if len(app.files) > 1:
         input_index = choose(
@@ -312,8 +347,8 @@ def listen(app: AppState) -> None:
         print(f"Index out of bounds: {input_index}")
         return
 
-    mode = ListeningMode.get_choice_menu()
-    at = mode.get_audio_tensor(app, file.wav)
+    listening_mode = ListeningMode.get_choice_menu()
+    at = listening_mode.get_audio_tensor(app, file.wav)
 
     stop_playback = threading.Event()
     quit_requested = threading.Event()
@@ -358,6 +393,8 @@ def listen(app: AppState) -> None:
     finally:
         sd.stop()
 
+    add_to_command_history("listen", input_index, listening_mode.value)
+
     if quit_requested.is_set():
         sys.exit(0)
 
@@ -367,11 +404,13 @@ class RestoreMode(PromptEnum):
     Index = "index"
 
 
-def restore_model(app: AppState) -> None:
-    mode = RestoreMode.get_choice_menu()
+def handle_restore(app: AppState) -> None:
+    restore_mode = RestoreMode.get_choice_menu()
 
-    if mode == RestoreMode.All:
+    if restore_mode == RestoreMode.All:
         app.model.reset()
+
+        add_to_command_history("restore", restore_mode.value)
         return
 
     layers = get_diff_layers(app.model, app.backup_model)
@@ -394,6 +433,8 @@ def restore_model(app: AppState) -> None:
         print(f"Index out of bounds: {index}")
         return
 
+    add_to_command_history("restore", restore_mode.value, net_type.value, index)
+
 
 class WriteFileMode(PromptEnum):
     Keep = "keep"
@@ -402,28 +443,31 @@ class WriteFileMode(PromptEnum):
     Individual = "individual"
 
 
-def write_file(app: AppState) -> None:
-    mode = WriteFileMode.get_choice_menu()
+def handle_write(app: AppState) -> None:
+    write_mode = WriteFileMode.get_choice_menu()
 
     prep_or_app = ""
-    if mode == WriteFileMode.Prepend or mode == WriteFileMode.Append:
-        prep_or_app = get_param(str, f"file name {mode.value}")
+    if write_mode == WriteFileMode.Prepend or write_mode == WriteFileMode.Append:
+        prep_or_app = get_param(str, f"file name {write_mode.value}")
 
     parent = Path(app.output)
+    new_names: list[str] = []
     for f in app.files:
         path = f.path
         stem, suffix = path.stem, path.suffix
 
-        if mode == WriteFileMode.Keep:
+        name = ""
+        if write_mode == WriteFileMode.Keep:
             name = stem + suffix
-        elif mode == WriteFileMode.Prepend:
+        elif write_mode == WriteFileMode.Prepend:
             name = prep_or_app + "_" + stem + suffix
-        elif mode == WriteFileMode.Append:
+        elif write_mode == WriteFileMode.Append:
             name = stem + "_" + prep_or_app + suffix
-        else:
+        elif write_mode == WriteFileMode.Individual:
             name = cast(
                 Path, get_param(Path, f"new file name for modified file {path.name}")
             )
+            new_names.append(str(name))
             name = name.stem
             name = name + suffix
 
@@ -432,33 +476,34 @@ def write_file(app: AppState) -> None:
         torchaudio.save(path, processed, app.model.get_sample_rate())
         print(f"Wrote file {path}")
 
+    add_to_command_history("write", write_mode, prep_or_app, *new_names)
+
 
 class OutputFolderType(PromptEnum):
     Same = "same"
     New = "new"
 
 
-def export_model(app: AppState) -> None:
+def handle_export(app: AppState) -> None:
     if isinstance(app.model, RAVEModel):
-        choice = OutputFolderType.get_choice_menu()
-        output_path = None
-        if choice == OutputFolderType.Same:
+        output_folder_type = OutputFolderType.get_choice_menu()
+        output_folder = None
+        if output_folder_type == OutputFolderType.Same:
             output_path = app.rave_path
-        elif choice == OutputFolderType.New:
-            output_path = get_input(
+        elif output_folder_type == OutputFolderType.New:
+            output_folder = get_input(
                 "Enter output folder", quit_on_q=False, escape_cancels=True
             )
-        assert output_path is not None
-        output_path = Path(output_path).absolute()
+        assert output_folder is not None
+        output_folder = Path(output_folder).absolute()
 
-        if not output_path.exists():
-            raise FileNotFoundError(f"Output folder does not exist: {output_path}")
+        if not output_folder.exists():
+            raise FileNotFoundError(f"Output folder does not exist: {output_folder}")
 
         name = get_input("Enter name", quit_on_q=False, escape_cancels=True)
         name = Path(name).stem
-        name = name + ".ts"
-
-        output_path = output_path / name
+        name_ext = name + ".ts"
+        output_path = output_folder / name_ext
 
         if output_path.exists():
             raise FileExistsError(f"Output file already exists: {output_path}")
@@ -466,12 +511,20 @@ def export_model(app: AppState) -> None:
         fidelity = get_param(float, "fidelity")
         app.model.export(ExportOptions(path=output_path, fidelity=fidelity))
 
+        add_to_command_history(
+            "export", output_folder_type.value, str(output_folder), name, fidelity
+        )
+
     elif isinstance(app.model, EncodecNNModel):
         # just let that error print as it's not implemented anyway
         try:
             app.model.export(None)
         except NotImplementedError as e:
             print(e)
+
+
+def handle_quit(app: AppState) -> None:
+    raise UserQuitError
 
 
 @dataclass(frozen=True)
@@ -488,14 +541,14 @@ commands = [
     Command(key="swap", abbr=None, fn=handle_swap_layer, desc="Swap layers"),
     Command(key="multiply", fn=handle_multiplier_layer, desc="Multiply"),
     Command(key="add", fn=handle_addition_layer, desc="Add"),
-    Command(key="quit", fn=lambda _: sys.exit(0), desc="Quit"),
+    Command(key="quit", fn=handle_quit, desc="Quit"),
     Command(key="help", fn=print_help, desc="Help"),
     Command(key="print", fn=print_model, desc="Print model"),
     Command(key="diff", fn=print_diff, desc="Print difference to baseline model"),
-    Command(key="listen", fn=listen, desc="Listen to the current state"),
-    Command(key="restore", abbr="x", fn=restore_model, desc="Restore model"),
-    Command(key="write", fn=write_file, desc="Write file"),
-    Command(key="export", fn=export_model, desc="Export model to torchscript"),
+    Command(key="listen", fn=handle_listen, desc="Listen to the current state"),
+    Command(key="restore", abbr="x", fn=handle_restore, desc="Restore model"),
+    Command(key="write", fn=handle_write, desc="Write file"),
+    Command(key="export", fn=handle_export, desc="Export model to torchscript"),
 ]
 
 
@@ -503,13 +556,39 @@ def generate_loop(app: AppState) -> None:
     pt.shortcuts.clear()
     # TODO: splash screen?
 
+    quit_str = ", ".join(
+        [
+            "<C-c>",
+            "<C-d>",
+            format_auto_complete(
+                commands[[c.fn for c in commands].index(handle_quit)].key
+            ),
+        ]
+    )
+
+    bindings = KeyBindings()
+    # bindings.add("c-l")(lambda event: event.app.renderer.clear())
+
+    def h_prev(event):
+        """TODO: implement"""
+
+    def h_next(event):
+        """TODO: implement"""
+
+    # for fn, keys in (h_prev, ("up", "c-p")), (h_next, ("down", "c-n")):
+    #     for k in keys:
+    #         bindings.add(k, eager=True)(fn)
+
     while True:
         try:
-            user_input = get_input(
-                "Enter command ([h]elp / [q]uit)", escape_cancels=False, quit_on_q=True
-            )
-        except UserCancelledError:
-            sys.exit()
+
+            default = ""  # TODO: implement
+            msg = f"Enter command ({quit_str}: quit)"
+            # user_input = pt.prompt(msg, key_bindings=bindings, default=default).strip()
+            user_input = main_session.prompt(msg, key_bindings=bindings).strip()
+
+        except (EOFError, KeyboardInterrupt, UserQuitError):
+            sys.exit(0)
 
         try:
 
@@ -519,5 +598,5 @@ def generate_loop(app: AppState) -> None:
                     break  # skip other commands that match
         except UserCancelledError:
             continue
-        except (KeyboardInterrupt, EOFError):
+        except (KeyboardInterrupt, EOFError, UserQuitError):
             sys.exit(0)
