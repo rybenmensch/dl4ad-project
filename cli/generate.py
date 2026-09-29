@@ -25,6 +25,7 @@ from cli.lib import (
     format_auto_complete,
     get_input,
     get_param,
+    quit_string,
     sel,
     usage,
 )
@@ -47,13 +48,6 @@ from library.model import (
 from library.rave import ExportOptions, RAVEModel
 
 command_history = CommandHistory()
-
-main_session = PromptSession(
-    history=command_history,
-    enable_suspend=True,
-    interrupt_exception=KeyboardInterrupt,
-    eof_exception=EOFError,
-)
 
 
 def print_help(_: AppState) -> None:
@@ -495,16 +489,14 @@ def handle_export(app: AppState) -> None:
         if output_folder_type == OutputFolderType.Same:
             output_path = app.rave_path
         elif output_folder_type == OutputFolderType.New:
-            output_folder = get_input(
-                "Enter output folder", quit_on_q=False, escape_cancels=True
-            )
+            output_folder = get_input("Enter output folder", escape_cancels=True)
         assert output_folder is not None
         output_folder = Path(output_folder).absolute()
 
         if not output_folder.exists():
             raise FileNotFoundError(f"Output folder does not exist: {output_folder}")
 
-        name = get_input("Enter name", quit_on_q=False, escape_cancels=True)
+        name = get_input("Enter name", escape_cancels=True)
         name = Path(name).stem
         name_ext = name + ".ts"
         output_path = output_folder / name_ext
@@ -555,26 +547,24 @@ commands = [
     Command(key="export", fn=handle_export, desc="Export model to torchscript"),
 ]
 
+main_session = PromptSession(
+    history=command_history,
+    enable_suspend=True,
+    interrupt_exception=KeyboardInterrupt,
+    eof_exception=EOFError,
+)
+
 
 def generate_loop(app: AppState) -> None:
     pt.shortcuts.clear()
     # TODO: splash screen?
 
-    quit_str = ", ".join(
-        [
-            "<C-c>",
-            "<C-d>",
-            format_auto_complete(
-                commands[[c.fn for c in commands].index(handle_quit)].key
-            ),
-        ]
-    )
-
     while True:
         try:
-            user_input = main_session.prompt(
-                f"Enter command ({quit_str}: quit)"
-            ).strip()
+            # user_input = main_session.prompt(f"Enter command ({quit_string()})").strip()
+            user_input = get_input(
+                msg="Enter command", escape_cancels=False, session=main_session
+            )
 
         except (EOFError, KeyboardInterrupt, UserQuitError):
             sys.exit(0)

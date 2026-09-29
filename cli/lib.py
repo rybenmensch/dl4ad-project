@@ -18,10 +18,15 @@ def sel(further: str = "") -> str:
     return f"↑/↓, Enter{further}: select"
 
 
+def quit_string() -> str:
+    return "<C-c>, <C-d>: quit"
+
+
 def usage(prev: str = "") -> str:
     if prev != "":
         prev = prev + "; "
-    return "(" + prev + "<Esc>: abort; <C-c>, <C-d>: quit" + ")"
+
+    return f"({prev}<Esc>: abort; {quit_string()}" + ")"
 
 
 def format_auto_complete(string: str, abbr: str | None = "") -> str:
@@ -53,23 +58,30 @@ class UserQuitError(Exception):
 
 
 def get_input(
-    msg: str = "", *, quit_on_q: bool = False, escape_cancels: bool = False
+    msg: str = "",
+    *,
+    escape_cancels: bool = False,
+    session: pt.PromptSession | None = None,
 ) -> str:
     try:
-        prompt_bindings = KeyBindings()
-        prompt_bindings.add("c-l")(lambda event: event.app.renderer.clear())
         if escape_cancels:
-            prompt_bindings.add("escape")(
-                lambda event: event.app.exit(exception=UserCancelledError())
-            )
-        u_str = "<Esc>: abort;" if escape_cancels else ""
-        u_str = f"({u_str} <C-c>, <C-d>: quit)"
-        msg = f"{msg} {u_str}:\n"
-        c = pt.prompt(msg, key_bindings=prompt_bindings).strip()
-        if quit_on_q and c == "q":
-            raise UserCancelledError
+            u_str = f"<Esc>: abort; {quit_string()}"
+        else:
+            u_str = quit_string()
+        msg = f"{msg} ({u_str}):\n"
+        if session is None:
+            prompt_bindings = KeyBindings()
+            prompt_bindings.add("c-l")(lambda event: event.app.renderer.clear())
+            if escape_cancels:
+                prompt_bindings.add("escape")(
+                    lambda event: event.app.exit(exception=UserCancelledError())
+                )
+
+            c = pt.prompt(msg, key_bindings=prompt_bindings).strip()
+        else:
+            c = session.prompt(msg).strip()
     except (EOFError, KeyboardInterrupt):
-        sys.exit()
+        sys.exit(0)
     return c
 
 
@@ -78,9 +90,7 @@ def get_param[T](fn: Callable[[str], T], thing: str) -> T:
         user_input = ""
         try:
             cr_and_flush()
-            user_input = get_input(
-                f"Enter {thing}", escape_cancels=True, quit_on_q=False
-            )
+            user_input = get_input(f"Enter {thing}", escape_cancels=True)
             return fn(user_input)
         except ValueError:
             print(f"Invalid {thing}: {user_input}.")
