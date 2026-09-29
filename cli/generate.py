@@ -315,22 +315,21 @@ def listen(app: AppState) -> None:
     mode = ListeningMode.get_choice_menu()
     at = mode.get_audio_tensor(app, file.wav)
 
-    cancel_playback = threading.Event()
-    exit_command: str | None = None
+    stop_playback = threading.Event()
+    quit_requested = threading.Event()
     playback_bindings = KeyBindings()
 
-    def stop_playback(command: str):
-        def handler(event):
-            nonlocal exit_command
-            exit_command = command
-            cancel_playback.set()
-            event.app.exit()
+    def stop(event) -> None:
+        stop_playback.set()
+        event.app.exit()
 
-        return handler
+    def quit(event) -> None:
+        quit_requested.set()
+        stop(event)
 
-    playback_bindings.add("c-c", eager=True)(stop_playback("cancel"))
-    playback_bindings.add("escape", eager=True)(stop_playback("cancel"))
-    playback_bindings.add("c-d", eager=True)(stop_playback("quit"))
+    playback_bindings.add("c-c", eager=True)(stop)
+    playback_bindings.add("escape", eager=True)(stop)
+    playback_bindings.add("c-d", eager=True)(quit)
 
     def make_progress_bar(length: str) -> pt.shortcuts.ProgressBar:
         custom_formatter = [
@@ -353,13 +352,13 @@ def listen(app: AppState) -> None:
         with make_progress_bar(at.readable_length()) as pb:
             with at.output_stream() as stream:
                 for chunk in pb(at.chunks()):
-                    if cancel_playback.is_set():
+                    if stop_playback.is_set():
                         break
                     stream.write(chunk)
     finally:
         sd.stop()
 
-    if exit_command == "quit":
+    if quit_requested.is_set():
         sys.exit(0)
 
 
