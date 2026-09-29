@@ -283,12 +283,15 @@ class PromptEnum(StrEnum):
         return cast(Self, get_param(cls.parse, cls.prompt_string()))
 
     @classmethod
-    def get_choice_menu(cls) -> Self:
-        usage_str = usage(sel(format_auto_complete("shortcut")))
+    def get_choice_menu(cls, prompt: str = "") -> Self:
+        if prompt == "":
+            usage_str = usage(sel(format_auto_complete("shortcut")))
+            prompt = f"Select {cls.human_name()} {usage_str}"
+
         return cast(
             Self,
             choose(
-                f"Select {cls.human_name()} {usage_str}",
+                prompt,
                 [
                     ChoiceOption(member, member.formatted_choice(), member.value[0])
                     for member in cls

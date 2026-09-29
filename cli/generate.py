@@ -519,8 +519,15 @@ def handle_export(app: AppState) -> None:
             print(e)
 
 
+class QuitMode(PromptEnum):
+    Yes = "yes"
+    No = "no"
+
+
 def handle_quit(app: AppState) -> None:
-    raise UserQuitError
+    quit_mode = QuitMode.get_choice_menu(prompt="Are you sure?")
+    if quit_mode == QuitMode.Yes:
+        raise UserQuitError
 
 
 @dataclass(frozen=True)
