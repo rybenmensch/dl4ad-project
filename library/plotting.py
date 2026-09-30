@@ -1,4 +1,3 @@
-import auraloss
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
@@ -14,10 +13,12 @@ def plot_comparison(
     clean: torch.Tensor,
     degraded: torch.Tensor,
     sr: int,
+    mae: float,
+    mrstft: float,
     title: str = "Comparison: clean vs. degraded)",
     save_path: str | None = None,
     show: bool = True,
-) -> dict:
+) -> None:
     """
     Vergleicht output_clean (unverändertes Modell) mit
     Output des manipuliertes Modells ("degraded"), für gleichen input.
@@ -29,7 +30,7 @@ def plot_comparison(
     Erwartet Tensoren mit Shape [Kanaele, Samples]
     Bei Stereo nur der erste Kanal geplottet
 
-    Gibt ein Dictionary mit den berechneten Metriken zurueck
+    mae and mrstft are the metrics already computed during module impact analysis.
     """
     clean_np = _to_mono_numpy(clean)
     degraded_np = _to_mono_numpy(degraded)
@@ -41,17 +42,6 @@ def plot_comparison(
     time_axis = np.arange(min_len) / sr
 
     diff_np = clean_np - degraded_np
-
-    # Metriken
-    mean_abs_diff = float(np.mean(np.abs(diff_np)))
-    std_abs_diff = float(np.std(np.abs(diff_np)))
-
-    spectral_loss = None
-    mrstft = auraloss.freq.MultiResolutionSTFTLoss()
-    clean_t = torch.from_numpy(clean_np).float().unsqueeze(0).unsqueeze(0)
-    degraded_t = torch.from_numpy(degraded_np).float().unsqueeze(0).unsqueeze(0)
-    with torch.no_grad():
-        spectral_loss = float(mrstft(degraded_t, clean_t))
 
     # Plot
     plt.rcParams["font.family"] = "Times New Roman"
@@ -102,11 +92,8 @@ def plot_comparison(
     ax.set_ylabel("Frequency (Hz)")
     ax.set_title("Spectrogram degraded")
 
-    # Titel mit Metriken
-    subtitle_parts = [f"mean|diff|={mean_abs_diff:.4f}", f"std={std_abs_diff:.4f}"]
-    if spectral_loss is not None:
-        subtitle_parts.append(f"auraloss={spectral_loss:.4f}")
-    fig.suptitle(f"{title}\n({', '.join(subtitle_parts)})", fontsize=12)
+    # Use the all-channel metrics already calculated by the analysis sweep.
+    fig.suptitle(f"{title}\n(MAE={mae:.4f}, MRSTFT={mrstft:.4f})", fontsize=12)
 
     fig.tight_layout(rect=(0, 0, 1, 0.94))
 
@@ -117,9 +104,3 @@ def plot_comparison(
         plt.show()
     else:
         plt.close(fig)
-
-    return {
-        "mean_abs_diff": mean_abs_diff,
-        "std_abs_diff": std_abs_diff,
-        "spectral_loss": spectral_loss,
-    }

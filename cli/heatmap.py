@@ -107,7 +107,7 @@ def render_heatmap(
     ).reindex(index=layer_order, columns=setting_order)
 
     palette = "YlOrRd" if metric == "mae" else "YlGnBu"
-    metric_label = "Raw MAE" if metric == "mae" else "MR-STFT"
+    metric_label = "MAE" if metric == "mae" else "MRSTFT"
     color_map = plt.colormaps.get_cmap(palette).copy()
     color_map.set_bad("whitesmoke")
     plt.rcParams["font.family"] = "Times New Roman"

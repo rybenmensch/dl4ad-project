@@ -185,6 +185,8 @@ def analyze_module_impact(
                     baseline,
                     reconstruction,
                     sr,
+                    mae=row["mae"],
+                    mrstft=row["mrstft"],
                     title=f"{row['layer_path']}: {row['operation']} {row['parameters']}",
                     save_path=str(plot_path),
                     show=False,
