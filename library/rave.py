@@ -1,4 +1,5 @@
 import logging
+import warnings
 from dataclasses import dataclass
 from pathlib import Path
 from typing import cast
@@ -168,7 +169,16 @@ def raw_rave_model(run_path: Path | str) -> rave.RAVE:
     n_channels = rave_get_in_channels_from_state_dict(state_dict)
 
     cc.use_cached_conv(True)
-    model = rave.RAVE(n_channels=n_channels)
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "ignore",
+            message=(
+                r"torch\.nn\.utils\.weight_norm is deprecated in favor of "
+                r"torch\.nn\.utils\.parametrizations\.weight_norm\."
+            ),
+            category=UserWarning,
+        )
+        model = rave.RAVE(n_channels=n_channels)
     model.load_state_dict(state_dict, strict=False)
     model.eval()
 
