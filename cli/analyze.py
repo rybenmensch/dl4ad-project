@@ -71,6 +71,12 @@ def analyze_module_impact(
         raise ValueError("Provide at least one variant")
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
+    audio_dir = output_dir / "audio"
+    plot_dir = output_dir / "plots"
+    if make_audio:
+        audio_dir.mkdir(parents=True, exist_ok=True)
+    if plots:
+        plot_dir.mkdir(parents=True, exist_ok=True)
     rows = []
     artifacts = []
     model.reset()
@@ -110,7 +116,7 @@ def analyze_module_impact(
         baseline = model(wav).detach().cpu().clone()
         sr = model.get_sample_rate()
         if make_audio:
-            save_audio(output_dir / "baseline.wav", baseline, sr)
+            save_audio(audio_dir / "baseline.wav", baseline, sr)
         for layer in layers.values():
             for variant in variants:
                 if layer.layer_path not in eligible[variant.operation]:
@@ -174,13 +180,13 @@ def analyze_module_impact(
     for row, stem, reconstruction in artifacts:
         try:
             if make_audio:
-                audio_path = output_dir / f"{stem}.wav"
+                audio_path = audio_dir / f"{stem}.wav"
                 save_audio(audio_path, reconstruction, sr)
-                row["audio"] = audio_path.name
+                row["audio"] = f"audio/{audio_path.name}"
             if plots:
                 from library.plotting import plot_comparison
 
-                plot_path = output_dir / f"{stem}.png"
+                plot_path = plot_dir / f"{stem}.png"
                 plot_comparison(
                     baseline,
                     reconstruction,
@@ -191,7 +197,7 @@ def analyze_module_impact(
                     save_path=str(plot_path),
                     show=False,
                 )
-                row["plot"] = plot_path.name
+                row["plot"] = f"plots/{plot_path.name}"
         except Exception as exc:
             row["error"] = f"Artifact export failed: {type(exc).__name__}: {exc}"
     write_results(output_dir / "results.csv", rows)
@@ -239,16 +245,23 @@ def analyze_loop(app: AppState) -> None:
         )
 
         print(f"Finished analysis for {file.path.name}", flush=True)
-        if app.args.make_heatmap is not None:
+        if app.args.make_heatmap:
             from cli.heatmap import render_heatmap
 
-            output_stem = output_dir / (
-                f"{file.path.stem}_{app.args.make_heatmap}_heatmap"
-            )
-            output = render_heatmap(
+            mae_stem = output_dir / f"{file.path.stem}_mae_heatmap"
+            mae_output = render_heatmap(
                 rows,
-                app.args.make_heatmap,
+                "mae",
                 file.path.name,
-                output_stem,
+                mae_stem,
             )
-            print(f"Saved {app.args.make_heatmap.upper()} heatmap to {output}")
+            print(f"Saved MAE heatmap to {mae_output}")
+
+            mrstft_stem = output_dir / f"{file.path.stem}_mrstft_heatmap"
+            mrstft_output = render_heatmap(
+                rows,
+                "mrstft",
+                file.path.name,
+                mrstft_stem,
+            )
+            print(f"Saved MR-STFT heatmap to {mrstft_output}")

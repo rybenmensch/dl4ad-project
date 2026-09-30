@@ -54,7 +54,7 @@ class AnalyzeArgs(CommonArgs):
     make_plots: bool = False
     make_slides: bool = False
     make_audio: bool = False
-    make_heatmap: str | None = None
+    make_heatmap: bool = False
 
 
 Args = BendArgs | AnalyzeArgs

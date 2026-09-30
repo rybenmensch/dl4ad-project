@@ -116,9 +116,8 @@ def build_parser() -> argparse.ArgumentParser:
     )
     analyze.add_argument(
         "--make-heatmap",
-        choices=("mae", "mrstft"),
-        metavar="METRIC",
-        help="Save a 300 dpi PNG heatmap (mae, mrstft).",
+        action="store_true",
+        help="Save 300 dpi PNG heatmaps for both MAE and MR-STFT.",
     )
 
     return parser
@@ -204,8 +203,5 @@ def validate_and_normalize(args: Args) -> Args:
             raise ValueError(
                 f"--input must be an audio file or directory: {args.input}"
             )
-
-        if args.make_heatmap not in {None, "mae", "mrstft"}:
-            raise ValueError("--make-heatmap must be either 'mae' or 'mrstft'")
 
     return args

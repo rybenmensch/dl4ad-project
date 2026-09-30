@@ -25,9 +25,9 @@ def write_impact_slides(
         "Reference: the unmodified model reconstruction. Metrics use all channels "
         "without amplitude normalization; plots show the first channel.\n",
     ]
-    baseline = output_dir / "baseline.wav"
+    baseline = output_dir / "audio" / "baseline.wav"
     if baseline.is_file():
-        parts.append(_audio("baseline.wav", "Baseline"))
+        parts.append(_audio("audio/baseline.wav", "Baseline"))
     for row in ranked:
         parts.extend(
             [
