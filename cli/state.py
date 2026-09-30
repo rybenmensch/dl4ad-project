@@ -56,6 +56,7 @@ class AnalyzeArgs(CommonArgs):
     make_audio: bool = False
     make_heatmap: bool = False
     read_output_csv: Path | None = None
+    output_format: str = "png"
 
 
 Args = BendArgs | AnalyzeArgs

@@ -60,6 +60,7 @@ def analyze_module_impact(
     slides: bool = True,
     max_artifacts: int | None = None,
     make_audio: bool = True,
+    output_format: str = "png",
 ) -> list[dict]:
     if max_artifacts is not None and (
         isinstance(max_artifacts, bool)
@@ -69,6 +70,8 @@ def analyze_module_impact(
         raise ValueError("max_artifacts must be a nonnegative integer or None")
     if not variants:
         raise ValueError("Provide at least one variant")
+    if output_format not in {"png", "jpg", "pdf"}:
+        raise ValueError("output_format must be 'png', 'jpg', or 'pdf'")
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     audio_dir = output_dir / "audio"
@@ -195,7 +198,7 @@ def analyze_module_impact(
             if plots:
                 from library.plotting import plot_comparison
 
-                plot_path = plot_dir / f"{stem}.png"
+                plot_path = plot_dir / f"{stem}.{output_format}"
                 plot_comparison(
                     baseline,
                     reconstruction,
@@ -256,6 +259,7 @@ def analyze_loop(app: AppState) -> None:
             slides=app.args.make_slides,
             max_artifacts=app.args.save_depth if make_artifacts else 0,
             make_audio=app.args.make_audio,
+            output_format=app.args.output_format,
         )
 
         print(f"Finished analysis for {file.path.name}", flush=True)
@@ -269,18 +273,20 @@ def analyze_loop(app: AppState) -> None:
                 "mae",
                 file.path.name,
                 mae_stem,
+                app.args.output_format,
             )
             print(f"Saved MAE heatmap to {mae_output}")
 
             mrstft_stem = output_dir / f"{file.path.stem}_mrstft_heatmap"
-            print(f"Generating MR-STFT heatmap for {file.path.name}...", flush=True)
+            print(f"Generating MRSTFT heatmap for {file.path.name}...", flush=True)
             mrstft_output = render_heatmap(
                 rows,
                 "mrstft",
                 file.path.name,
                 mrstft_stem,
+                app.args.output_format,
             )
-            print(f"Saved MR-STFT heatmap to {mrstft_output}")
+            print(f"Saved MRSTFT heatmap to {mrstft_output}")
 
 
 def analyze_heatmaps_from_csv(args: AnalyzeArgs) -> None:
@@ -298,15 +304,22 @@ def analyze_heatmaps_from_csv(args: AnalyzeArgs) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
     mae_stem = output_dir / f"{args.read_output_csv.stem}_mae_heatmap"
     print(f"Generating MAE heatmap from {args.read_output_csv}...", flush=True)
-    mae_output = render_heatmap(rows, "mae", args.read_output_csv.name, mae_stem)
+    mae_output = render_heatmap(
+        rows,
+        "mae",
+        args.read_output_csv.name,
+        mae_stem,
+        args.output_format,
+    )
     print(f"Saved MAE heatmap to {mae_output}")
 
     mrstft_stem = output_dir / f"{args.read_output_csv.stem}_mrstft_heatmap"
-    print(f"Generating MR-STFT heatmap from {args.read_output_csv}...", flush=True)
+    print(f"Generating MRSTFT heatmap from {args.read_output_csv}...", flush=True)
     mrstft_output = render_heatmap(
         rows,
         "mrstft",
         args.read_output_csv.name,
         mrstft_stem,
+        args.output_format,
     )
-    print(f"Saved MR-STFT heatmap to {mrstft_output}")
+    print(f"Saved MRSTFT heatmap to {mrstft_output}")

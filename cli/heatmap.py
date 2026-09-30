@@ -80,9 +80,12 @@ def render_heatmap(
     metric: str,
     input_name: str,
     output_stem: Path,
+    output_format: str = "png",
 ) -> Path:
     if metric not in {"mae", "mrstft"}:
         raise ValueError("metric must be 'mae' or 'mrstft'")
+    if output_format not in {"png", "jpg", "pdf"}:
+        raise ValueError("output_format must be 'png', 'jpg', or 'pdf'")
 
     values = []
     for row in rows:
@@ -137,7 +140,7 @@ def render_heatmap(
     axis.tick_params(axis="y", labelrotation=0, labelsize=7)
 
     output_stem.parent.mkdir(parents=True, exist_ok=True)
-    png_output = output_stem.with_suffix(".png")
-    figure.savefig(png_output, dpi=300, bbox_inches="tight")
+    output = output_stem.with_suffix(f".{output_format}")
+    figure.savefig(output, dpi=300, bbox_inches="tight")
     plt.close(figure)
-    return png_output
+    return output

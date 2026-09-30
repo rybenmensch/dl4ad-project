@@ -125,7 +125,14 @@ def build_parser() -> argparse.ArgumentParser:
     analyze.add_argument(
         "--make-heatmap",
         action="store_true",
-        help="Save both MAE and MR-STFT layer impact heatmaps.",
+        help="Save both MAE and MRSTFT layer impact heatmaps.",
+    )
+    analyze.add_argument(
+        "--format",
+        dest="output_format",
+        choices=("png", "jpg", "pdf"),
+        default="png",
+        help="Format for plots and heatmaps (default: png).",
     )
 
     return parser
@@ -162,6 +169,7 @@ def parse_args(parser: argparse.ArgumentParser) -> Args:
             make_audio=namespace.make_audio,
             make_heatmap=namespace.make_heatmap,
             read_output_csv=namespace.read_output_csv,
+            output_format=namespace.output_format,
         )
 
     raise RuntimeError(f"Unknown command: {command}")

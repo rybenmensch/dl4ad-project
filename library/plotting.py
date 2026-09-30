@@ -21,7 +21,7 @@ def plot_comparison(
     """Plot baseline and modified model outputs with their precomputed metrics.
 
     Audio tensors are expected to have shape [channels, samples]. The plots use
-    the first channel; MAE and MR-STFT are the all-channel values from analysis.
+    the first channel; MAE and MRSTFT are the all-channel values from analysis.
     """
     clean_np = _to_mono_numpy(clean)
     degraded_np = _to_mono_numpy(degraded)
