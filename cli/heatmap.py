@@ -86,14 +86,17 @@ def render_heatmap(
 
     values = []
     for row in rows:
-        value = row.get(metric)
-        if value is None or not math.isfinite(float(value)):
+        try:
+            value = float(row.get(metric))
+        except (TypeError, ValueError):
+            continue
+        if not math.isfinite(value):
             continue
         values.append(
             {
                 "layer": row["layer_path"],
                 "setting": _column_key(row),
-                "value": float(value),
+                "value": value,
             }
         )
     if not values:

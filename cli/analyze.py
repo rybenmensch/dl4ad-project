@@ -7,7 +7,7 @@ from pathlib import Path
 import torch
 import torchaudio
 
-from cli.state import AnalyzeArgs, AppState
+from cli.state import AnalyzeArgs, AppState, Command
 from library.audio import mean_absolute_error, mrstft
 from library.layers import AdditionLayer, MultiplierLayer, RepeatingLayer, SkippingLayer
 from library.model import (
@@ -265,3 +265,30 @@ def analyze_loop(app: AppState) -> None:
                 mrstft_stem,
             )
             print(f"Saved MR-STFT heatmap to {mrstft_output}")
+
+
+def analyze_heatmaps_from_csv(args: AnalyzeArgs) -> None:
+    if args.read_output_csv is None:
+        raise ValueError("--read-output-csv is required")
+
+    with args.read_output_csv.open(newline="", encoding="utf-8-sig") as stream:
+        rows = list(csv.DictReader(stream))
+    if not rows:
+        raise ValueError(f"No analysis rows found in {args.read_output_csv}")
+
+    from cli.heatmap import render_heatmap
+
+    output_dir = args.output / Command.ANALYZE.value
+    output_dir.mkdir(parents=True, exist_ok=True)
+    mae_stem = output_dir / f"{args.read_output_csv.stem}_mae_heatmap"
+    mae_output = render_heatmap(rows, "mae", args.read_output_csv.name, mae_stem)
+    print(f"Saved MAE heatmap to {mae_output}")
+
+    mrstft_stem = output_dir / f"{args.read_output_csv.stem}_mrstft_heatmap"
+    mrstft_output = render_heatmap(
+        rows,
+        "mrstft",
+        args.read_output_csv.name,
+        mrstft_stem,
+    )
+    print(f"Saved MR-STFT heatmap to {mrstft_output}")

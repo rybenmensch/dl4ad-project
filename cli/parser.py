@@ -51,12 +51,13 @@ def add_common_options(parser: argparse.ArgumentParser) -> None:
 def add_input_option(
     parser: argparse.ArgumentParser,
     help_text: str,
+    required: bool = True,
 ) -> None:
     parser.add_argument(
         "-i",
         "--input",
         type=Path,
-        required=True,
+        required=required,
         metavar="PATH",
         help=help_text,
     )
@@ -98,6 +99,13 @@ def build_parser() -> argparse.ArgumentParser:
     add_input_option(
         analyze,
         "Input audio file or directory containing audio files.",
+        required=False,
+    )
+    analyze.add_argument(
+        "--read-output-csv",
+        type=Path,
+        metavar="CSV",
+        help="Read saved analysis results from a CSV instead of running a model sweep.",
     )
     analyze.add_argument(
         "--make-plots",
@@ -117,7 +125,7 @@ def build_parser() -> argparse.ArgumentParser:
     analyze.add_argument(
         "--make-heatmap",
         action="store_true",
-        help="Save 300 dpi PNG heatmaps for both MAE and MR-STFT.",
+        help="Save both MAE and MR-STFT layer impact heatmaps.",
     )
 
     return parser
@@ -153,6 +161,7 @@ def parse_args(parser: argparse.ArgumentParser) -> Args:
             make_slides=namespace.make_slides,
             make_audio=namespace.make_audio,
             make_heatmap=namespace.make_heatmap,
+            read_output_csv=namespace.read_output_csv,
         )
 
     raise RuntimeError(f"Unknown command: {command}")
@@ -193,15 +202,34 @@ def validate_and_normalize(args: Args) -> Args:
         if args.save_depth is not None and args.save_depth < 0:
             raise ValueError("--save-depth must be a nonnegative integer")
 
-        if not args.input.exists():
-            raise FileNotFoundError(f"Input path not found: {args.input}")
+        if args.read_output_csv is not None:
+            if args.input is not None:
+                raise ValueError("--input cannot be used with --read-output-csv")
+            if not args.read_output_csv.is_file():
+                raise ValueError(
+                    f"--read-output-csv must be an existing file: {args.read_output_csv}"
+                )
+            if not args.make_heatmap:
+                raise ValueError("--read-output-csv requires --make-heatmap")
+            if args.make_plots or args.make_slides or args.make_audio:
+                raise ValueError(
+                    "--read-output-csv cannot be combined with --make-plots, "
+                    "--make-slides, or --make-audio"
+                )
+        else:
+            if args.input is None:
+                raise ValueError(
+                    "--input is required unless --read-output-csv is provided"
+                )
+            if not args.input.exists():
+                raise FileNotFoundError(f"Input path not found: {args.input}")
 
-        if args.input.is_file():
-            if args.input.suffix.lower() not in AUDIO_EXTENSIONS:
-                raise ValueError(f"Not a supported audio file: {args.input}")
-        elif not args.input.is_dir():
-            raise ValueError(
-                f"--input must be an audio file or directory: {args.input}"
-            )
+            if args.input.is_file():
+                if args.input.suffix.lower() not in AUDIO_EXTENSIONS:
+                    raise ValueError(f"Not a supported audio file: {args.input}")
+            elif not args.input.is_dir():
+                raise ValueError(
+                    f"--input must be an audio file or directory: {args.input}"
+                )
 
     return args

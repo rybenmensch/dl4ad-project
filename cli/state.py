@@ -47,7 +47,7 @@ class BendArgs(CommonArgs):
 
 @dataclass
 class AnalyzeArgs(CommonArgs):
-    input: Path
+    input: Path | None = None
     save_depth: int | None = None
     seed: int = 0
     seconds: float | None = None
@@ -55,6 +55,7 @@ class AnalyzeArgs(CommonArgs):
     make_slides: bool = False
     make_audio: bool = False
     make_heatmap: bool = False
+    read_output_csv: Path | None = None
 
 
 Args = BendArgs | AnalyzeArgs
