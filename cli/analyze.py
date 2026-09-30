@@ -116,6 +116,7 @@ def analyze_module_impact(
         baseline = model(wav).detach().cpu().clone()
         sr = model.get_sample_rate()
         if make_audio:
+            print(f"Saving baseline audio to {audio_dir / 'baseline.wav'}", flush=True)
             save_audio(audio_dir / "baseline.wav", baseline, sr)
         for layer in layers.values():
             for variant in variants:
@@ -173,16 +174,24 @@ def analyze_module_impact(
                 if output_dir is not None:
                     write_results(output_dir / "results.csv", rows)
     finally:
+        print("Restoring the model after the analysis sweep...", flush=True)
         model.reset()
+        print("Model restored; preparing requested outputs.", flush=True)
     rows.sort(
         key=lambda row: row["mae"] if row["mae"] is not None else -1, reverse=True
     )
-    for row, stem, reconstruction in artifacts:
+    if artifacts:
+        print(
+            f"Saving requested artifacts for {len(artifacts)} selected trials...",
+            flush=True,
+        )
+    for artifact_number, (row, stem, reconstruction) in enumerate(artifacts, start=1):
         try:
             if make_audio:
                 audio_path = audio_dir / f"{stem}.wav"
                 save_audio(audio_path, reconstruction, sr)
                 row["audio"] = f"audio/{audio_path.name}"
+                print(f"Saved audio: {audio_path}", flush=True)
             if plots:
                 from library.plotting import plot_comparison
 
@@ -198,13 +207,18 @@ def analyze_module_impact(
                     show=False,
                 )
                 row["plot"] = f"plots/{plot_path.name}"
+                print(f"Saved plot: {plot_path}", flush=True)
         except Exception as exc:
             row["error"] = f"Artifact export failed: {type(exc).__name__}: {exc}"
+            print(f"  Artifact export failed: {row['error']}", flush=True)
+    print(f"Writing analysis results to {output_dir / 'results.csv'}", flush=True)
     write_results(output_dir / "results.csv", rows)
     if slides and artifacts:
         from library.slides import write_impact_slides
 
-        write_impact_slides([item[0] for item in artifacts], output_dir)
+        print("Generating slides...", flush=True)
+        slides_path = write_impact_slides([item[0] for item in artifacts], output_dir)
+        print(f"Saved slides to {slides_path}", flush=True)
     return rows
 
 
@@ -249,6 +263,7 @@ def analyze_loop(app: AppState) -> None:
             from cli.heatmap import render_heatmap
 
             mae_stem = output_dir / f"{file.path.stem}_mae_heatmap"
+            print(f"Generating MAE heatmap for {file.path.name}...", flush=True)
             mae_output = render_heatmap(
                 rows,
                 "mae",
@@ -258,6 +273,7 @@ def analyze_loop(app: AppState) -> None:
             print(f"Saved MAE heatmap to {mae_output}")
 
             mrstft_stem = output_dir / f"{file.path.stem}_mrstft_heatmap"
+            print(f"Generating MR-STFT heatmap for {file.path.name}...", flush=True)
             mrstft_output = render_heatmap(
                 rows,
                 "mrstft",
@@ -281,10 +297,12 @@ def analyze_heatmaps_from_csv(args: AnalyzeArgs) -> None:
     output_dir = args.output / Command.ANALYZE.value
     output_dir.mkdir(parents=True, exist_ok=True)
     mae_stem = output_dir / f"{args.read_output_csv.stem}_mae_heatmap"
+    print(f"Generating MAE heatmap from {args.read_output_csv}...", flush=True)
     mae_output = render_heatmap(rows, "mae", args.read_output_csv.name, mae_stem)
     print(f"Saved MAE heatmap to {mae_output}")
 
     mrstft_stem = output_dir / f"{args.read_output_csv.stem}_mrstft_heatmap"
+    print(f"Generating MR-STFT heatmap from {args.read_output_csv}...", flush=True)
     mrstft_output = render_heatmap(
         rows,
         "mrstft",
