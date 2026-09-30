@@ -4,8 +4,7 @@ import torch
 
 
 def _to_mono_numpy(x: torch.Tensor) -> np.ndarray:
-    """ersten Kanal (Mono) in numpy-Array, für plotten
-    Erwartet Shape [Kanaele, Samples]."""
+    """Return the first channel of a [channels, samples] tensor as a NumPy array."""
     return x[0].detach().cpu().numpy()
 
 
@@ -19,23 +18,15 @@ def plot_comparison(
     save_path: str | None = None,
     show: bool = True,
 ) -> None:
-    """
-    Vergleicht output_clean (unverändertes Modell) mit
-    Output des manipuliertes Modells ("degraded"), für gleichen input.
+    """Plot baseline and modified model outputs with their precomputed metrics.
 
-
-    clean:    output_clean = model_clean.process_audio(waveform)
-    degraded: output_tensor = model.process_audio(waveform)
-
-    Erwartet Tensoren mit Shape [Kanaele, Samples]
-    Bei Stereo nur der erste Kanal geplottet
-
-    mae and mrstft are the metrics already computed during module impact analysis.
+    Audio tensors are expected to have shape [channels, samples]. The plots use
+    the first channel; MAE and MR-STFT are the all-channel values from analysis.
     """
     clean_np = _to_mono_numpy(clean)
     degraded_np = _to_mono_numpy(degraded)
 
-    # Falls die beiden Signale unterschiedlich lang sind auf die kkürzere Länge
+    # Trim both signals to their shared length before plotting.
     min_len = min(len(clean_np), len(degraded_np))
     clean_np = clean_np[:min_len]
     degraded_np = degraded_np[:min_len]
@@ -43,11 +34,9 @@ def plot_comparison(
 
     diff_np = clean_np - degraded_np
 
-    # Plot
     plt.rcParams["font.family"] = "Times New Roman"
     fig, axes = plt.subplots(2, 2, figsize=(12, 7))
 
-    # (0,0) Wellenformen übereinander
     ax = axes[0, 0]
     ax.plot(
         time_axis,
@@ -67,10 +56,9 @@ def plot_comparison(
     )
     ax.set_xlabel("Time (s)")
     ax.set_ylabel("Amplitude")
-    ax.set_title("comparison waveform")
+    ax.set_title("waveform comparison")
     ax.legend(loc="upper right", fontsize=8)
 
-    # Differenz-Wellenform
     ax = axes[0, 1]
     ax.plot(time_axis, diff_np, color="#7a4fbf", linewidth=0.8)
     ax.set_xlabel("Time (s)")
@@ -78,19 +66,17 @@ def plot_comparison(
     ax.set_title("Difference between outputs")
     ax.axhline(0, color="black", linewidth=0.5)
 
-    # Spektrogramm cleanes Modell
     ax = axes[1, 0]
     ax.specgram(clean_np, Fs=sr, NFFT=1024, noverlap=512, cmap="magma")
     ax.set_xlabel("Time (s)")
     ax.set_ylabel("Frequency (Hz)")
     ax.set_title("Spectrogram clean")
 
-    # Spektrogramm manipuliertes Modell
     ax = axes[1, 1]
     ax.specgram(degraded_np, Fs=sr, NFFT=1024, noverlap=512, cmap="magma")
     ax.set_xlabel("Time (s)")
     ax.set_ylabel("Frequency (Hz)")
-    ax.set_title("Spectrogram degraded")
+    ax.set_title("Degraded spectrogram")
 
     # Use the all-channel metrics already calculated by the analysis sweep.
     fig.suptitle(f"{title}\n(MAE={mae:.4f}, MRSTFT={mrstft:.4f})", fontsize=12)
