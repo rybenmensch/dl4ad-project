@@ -17,7 +17,9 @@ dependencies = [
     "numpy<2",
     # Lightning 1.9 imports pkg_resources; setuptools 80.9+ warns on import.
     "setuptools<80.9",
-    "prompt_toolkit"
+    "prompt_toolkit",
+    "pandas",
+    "seaborn"
 ]
 
 [build-system]

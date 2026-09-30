@@ -11,10 +11,7 @@ import torchaudio
 from numpy._typing import NDArray
 
 from library.encodec import EncodecNNModel
-from library.model import (
-    LayerInfo,
-    NNModel,
-)
+from library.model import NNModel
 from library.rave import RAVEModel
 
 AUDIO_EXTENSIONS = {
@@ -33,6 +30,7 @@ class ModelType(str, Enum):
 class Command(str, Enum):
     BEND = "bend"
     ANALYZE = "analyze"
+    HEATMAP = "heatmap"
 
 
 @dataclass
@@ -56,7 +54,14 @@ class AnalyzeArgs(CommonArgs):
     seconds: float | None = None
 
 
-Args = BendArgs | AnalyzeArgs
+@dataclass
+class HeatmapArgs(CommonArgs):
+    input: Path
+    metric: str = "mae"
+    output_format: str | None = None
+
+
+Args = BendArgs | AnalyzeArgs | HeatmapArgs
 
 
 # TODO: replace tuple[torch.Tensor, int] with AudioTensor

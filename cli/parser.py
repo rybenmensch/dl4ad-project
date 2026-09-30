@@ -9,6 +9,7 @@ from cli.state import (
     BendArgs,
     Command,
     CommonArgs,
+    HeatmapArgs,
     ModelType,
 )
 
@@ -98,6 +99,26 @@ def build_parser() -> argparse.ArgumentParser:
         "Input audio file or directory containing audio files.",
     )
 
+    heatmap = subparsers.add_parser(
+        Command.HEATMAP.value,
+        help="Generate a metric heatmap for one audio file.",
+        description="Run module impact analysis for one audio file and plot the selected metric.",
+    )
+    add_common_options(heatmap)
+    add_input_option(heatmap, "Single input audio file.")
+    heatmap.add_argument(
+        "--metric",
+        choices=("mae", "mrstft"),
+        default="mae",
+        help="Metric to plot (default: mae).",
+    )
+    heatmap.add_argument(
+        "--format",
+        dest="output_format",
+        choices=("png", "pdf", "both"),
+        help="Figure format. Prompted interactively when omitted.",
+    )
+
     return parser
 
 
@@ -127,6 +148,14 @@ def parse_args(parser: argparse.ArgumentParser) -> Args:
             **common.__dict__,
             input=namespace.input,
             save_depth=namespace.save_depth,
+        )
+
+    if command == Command.HEATMAP:
+        return HeatmapArgs(
+            **common.__dict__,
+            input=namespace.input,
+            metric=namespace.metric,
+            output_format=namespace.output_format,
         )
 
     raise RuntimeError(f"Unknown command: {command}")
@@ -166,6 +195,24 @@ def validate_and_normalize(args: Args) -> Args:
 
         if args.save_depth is not None and args.save_depth < 0:
             raise ValueError("--save-depth must be a nonnegative integer")
+
+        if not args.input.exists():
+            raise FileNotFoundError(f"File not found: {args.input}")
+
+        if not args.input.is_file():
+            raise ValueError(f"--input must be an audio file: {args.input}")
+
+        if args.input.suffix.lower() not in AUDIO_EXTENSIONS:
+            raise ValueError(f"Not a supported audio file: {args.input}")
+
+    elif args.command == Command.HEATMAP:
+        assert isinstance(args, HeatmapArgs)
+
+        if args.metric not in {"mae", "mrstft"}:
+            raise ValueError("--metric must be either 'mae' or 'mrstft'")
+
+        if not args.input.exists():
+            raise FileNotFoundError(f"File not found: {args.input}")
 
         if not args.input.is_file():
             raise ValueError(f"--input must be an audio file: {args.input}")
