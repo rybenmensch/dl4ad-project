@@ -44,7 +44,7 @@ DEFAULT_ANALYSIS_VARIENTS = [
         for factor in (5.0, 10.0, 20.0)
     ],
     *[
-        Variant("add", {"weight_add": 0.0, "bias_add": offset})
+        Variant("add", {"weight_add": offset, "bias_add": 0.0})
         for offset in (0.2, -0.2, 0.5, -0.5)
     ],
 ]
@@ -118,7 +118,7 @@ def analyze_module_impact(
                 trial_number += 1
                 print(
                     f"Analyzing trial {trial_number}/{total_trials}: "
-                    f"{layer.layer_path} ({variant.operation})",
+                    f"{variant.operation} {layer.layer_path}",
                     flush=True,
                 )
                 model.reset()
@@ -235,6 +235,7 @@ def analyze_loop(app: AppState) -> None:
             max_artifacts=app.args.save_depth if make_artifacts else 0,
             make_audio=app.args.make_audio,
         )
+
         print(f"Finished analysis for {file.path.name}", flush=True)
         if app.args.make_heatmap is not None:
             from cli.heatmap import render_heatmap
