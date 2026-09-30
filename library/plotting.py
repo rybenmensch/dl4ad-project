@@ -38,10 +38,13 @@ def plot_comparison(
     fig, axes = plt.subplots(2, 2, figsize=(12, 7))
 
     ax = axes[0, 0]
+
+    ylim = max(np.max(np.abs(a)) for a in (clean_np, degraded_np))
+    ax.set_ylim(-ylim, ylim)
     ax.plot(
         time_axis,
         clean_np,
-        label="clean model",
+        label="clean reconstruction",
         color="#2a78d6",
         linewidth=0.8,
         alpha=0.5,
@@ -49,28 +52,30 @@ def plot_comparison(
     ax.plot(
         time_axis,
         degraded_np,
-        label="degraded model",
+        label="degraded reconstruction",
         color="#e34948",
         linewidth=0.8,
         alpha=0.5,
     )
     ax.set_xlabel("Time (s)")
     ax.set_ylabel("Amplitude")
-    ax.set_title("waveform comparison")
+    ax.set_title("Waveform comparison")
     ax.legend(loc="upper right", fontsize=8)
 
     ax = axes[0, 1]
+    ylim = np.max(np.abs(diff_np))
+    ax.set_ylim(-ylim, ylim)
     ax.plot(time_axis, diff_np, color="#7a4fbf", linewidth=0.8)
     ax.set_xlabel("Time (s)")
     ax.set_ylabel("Difference (clean - degraded)")
-    ax.set_title("Difference between outputs")
+    ax.set_title("Difference between reconstructions")
     ax.axhline(0, color="black", linewidth=0.5)
 
     ax = axes[1, 0]
     ax.specgram(clean_np, Fs=sr, NFFT=1024, noverlap=512, cmap="magma")
     ax.set_xlabel("Time (s)")
     ax.set_ylabel("Frequency (Hz)")
-    ax.set_title("Spectrogram clean")
+    ax.set_title("Clean spectrogram")
 
     ax = axes[1, 1]
     ax.specgram(degraded_np, Fs=sr, NFFT=1024, noverlap=512, cmap="magma")
@@ -79,7 +84,7 @@ def plot_comparison(
     ax.set_title("Degraded spectrogram")
 
     # Use the all-channel metrics already calculated by the analysis sweep.
-    fig.suptitle(f"{title}\n(MAE={mae:.4f}, MRSTFT={mrstft:.4f})", fontsize=12)
+    fig.suptitle(f"{title}\n", fontsize=12)
 
     fig.tight_layout(rect=(0, 0, 1, 0.94))
 
