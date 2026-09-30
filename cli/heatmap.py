@@ -131,9 +131,8 @@ def render_heatmap(
         cbar_kws={"label": metric_label},
         ax=axis,
     )
-    axis.set_title(
-        f"{metric_label} by layer and intervention\n{input_name}", fontsize=10
-    )
+
+    axis.set_title(f"Layer impact heatmap for {input_name}")
     axis.set_xlabel("Intervention setting")
     axis.set_ylabel("Model layer")
     axis.tick_params(axis="x", labelrotation=35, labelsize=7)

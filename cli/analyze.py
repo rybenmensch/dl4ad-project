@@ -34,8 +34,7 @@ class Variant:
             raise ValueError(f"Unknown operation: {self.operation}")
 
 
-DEFAULT_ANALYSIS_VARIENTS = [
-    Variant("skip", {}),
+DEFAULT_ANALYSIS_VARIANTS = [
     # Total applications; 1 is the unchanged control.
     *[Variant("repeat", {"repeats": n}) for n in (3, 5, 10)],
     # Change weights while keeping biases unchanged.
@@ -54,13 +53,14 @@ def analyze_module_impact(
     model: NNModel,
     wav: tuple[torch.Tensor, int],
     output_dir: str | Path,
-    variants: list[Variant] = DEFAULT_ANALYSIS_VARIENTS,
+    variants: list[Variant] = DEFAULT_ANALYSIS_VARIANTS,
     nets=("encoder", "decoder"),
     plots: bool = True,
     slides: bool = True,
     max_artifacts: int | None = None,
     make_audio: bool = True,
     output_format: str = "png",
+    filename: str = "",
 ) -> list[dict]:
     if max_artifacts is not None and (
         isinstance(max_artifacts, bool)
@@ -110,17 +110,20 @@ def analyze_module_impact(
                         eligible[operation].add(layer.layer_path)
         if not layers:
             raise ValueError("No eligible layers found in the selected nets")
+
         total_trials = sum(
             layer.layer_path in eligible[variant.operation]
             for layer in layers.values()
             for variant in variants
         )
-        trial_number = 0
         baseline = model(wav).detach().cpu().clone()
         sr = model.get_sample_rate()
+
         if make_audio:
             print(f"Saving baseline audio to {audio_dir / 'baseline.wav'}", flush=True)
             save_audio(audio_dir / "baseline.wav", baseline, sr)
+
+        trial_number = 0
         for layer in layers.values():
             for variant in variants:
                 if layer.layer_path not in eligible[variant.operation]:
@@ -136,6 +139,7 @@ def analyze_module_impact(
                 net = model.get_net(layer.net_type)
                 stem = f"{len(rows):04d}_{layer.net_type.value}_{layer.index}_{variant.operation}"
                 row = {
+                    "filename": filename,
                     "layer_path": layer.layer_path,
                     "layer_type": layer.name,
                     "operation": variant.operation,
@@ -146,6 +150,7 @@ def analyze_module_impact(
                     "plot": "",
                     "error": "",
                 }
+
                 try:
                     net[layer.index] = MODULES[variant.operation](
                         layer, **variant.parameters
@@ -198,6 +203,18 @@ def analyze_module_impact(
             if plots:
                 from library.plotting import plot_comparison
 
+                parameters = json.loads(row["parameters"])
+                operation_title = row["operation"].capitalize()
+                if parameters:
+                    parameter_text = ", ".join(
+                        f"{name}={value}" for name, value in parameters.items()
+                    )
+                    operation_title += f" ({parameter_text})"
+                title = (
+                    "Reconstruction comparison for "
+                    f"{row['filename']}\n {operation_title} {row['layer_path']}"
+                )
+
                 plot_path = plot_dir / f"{stem}.{output_format}"
                 plot_comparison(
                     baseline,
@@ -205,7 +222,7 @@ def analyze_module_impact(
                     sr,
                     mae=row["mae"],
                     mrstft=row["mrstft"],
-                    title=f"{row['layer_path']}: {row['operation']} {row['parameters']}",
+                    title=title,
                     save_path=str(plot_path),
                     show=False,
                 )
@@ -260,6 +277,7 @@ def analyze_loop(app: AppState) -> None:
             max_artifacts=app.args.save_depth if make_artifacts else 0,
             make_audio=app.args.make_audio,
             output_format=app.args.output_format,
+            filename=file.path.name,
         )
 
         print(f"Finished analysis for {file.path.name}", flush=True)

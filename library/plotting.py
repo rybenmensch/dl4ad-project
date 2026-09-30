@@ -84,7 +84,7 @@ def plot_comparison(
     ax.set_title("Degraded spectrogram")
 
     # Use the all-channel metrics already calculated by the analysis sweep.
-    fig.suptitle(f"{title}\n", fontsize=12)
+    fig.suptitle(f"{title}\n", fontsize=14)
 
     fig.tight_layout(rect=(0, 0, 1, 0.94))
 
