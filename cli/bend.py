@@ -152,7 +152,7 @@ def get_net_type_and_index(layers: list[LayerInfo]) -> tuple[NetTypeEnum, int]:
         raise IndexError(f"Net {net_type.value} has no layers of interest.")
 
     index = choose(
-        f" Select layer {usage(sel("index"))}",
+        f" Select layer {usage(sel('index'))}",
         [
             ChoiceOption(
                 value=layer.index,
@@ -226,7 +226,7 @@ def handle_swap_layer(app: AppState) -> None:
         net_type, index = get_net_type_and_index(swappable_info)
     else:
         index = choose(
-            f" Select layer {usage(sel("index"))}",
+            f" Select layer {usage(sel('index'))}",
             ChoiceOption.from_labels_and_number_keys(
                 [
                     (
@@ -528,7 +528,6 @@ def bend_loop(app: AppState) -> None:
             sys.exit(0)
 
         try:
-
             for c in commands:
                 if auto_complete(user_input, c.key, c.abbr):
                     c.fn(app)
