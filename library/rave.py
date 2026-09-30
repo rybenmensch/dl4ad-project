@@ -1,4 +1,4 @@
-import os
+import logging
 from dataclasses import dataclass
 from pathlib import Path
 from typing import cast
@@ -17,7 +17,6 @@ from cached_conv.convs import (
     ConvTranspose1d,
 )
 from rave import Residual
-from scripts import export as rave_export
 from torch import nn
 from torch.nn import LeakyReLU
 from torch.nn.utils import remove_weight_norm
@@ -176,7 +175,20 @@ def raw_rave_model(run_path: Path | str) -> rave.RAVE:
     return model
 
 
+class _RaveStartupLogFilter(logging.Filter):
+    def filter(self, record: logging.LogRecord) -> bool:
+        return record.getMessage() not in {"library loading", "DEBUG"}
+
+
 def export_rave_model(model: NNModel, options: ExportOptions) -> None:
+    _root_logger = logging.getLogger()
+    _rave_startup_log_filter = _RaveStartupLogFilter()
+    _root_logger.addFilter(_rave_startup_log_filter)
+    try:
+        from scripts import export as rave_export
+    finally:
+        _root_logger.removeFilter(_rave_startup_log_filter)
+
     cc.use_cached_conv(True)
 
     pretrained = model.model
