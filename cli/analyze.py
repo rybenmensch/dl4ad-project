@@ -59,6 +59,7 @@ def analyze_module_impact(
     plots: bool = True,
     slides: bool = True,
     max_artifacts: int | None = None,
+    make_audio: bool = True,
 ) -> list[dict]:
     if max_artifacts is not None and (
         isinstance(max_artifacts, bool)
@@ -68,8 +69,6 @@ def analyze_module_impact(
         raise ValueError("max_artifacts must be a nonnegative integer or None")
     if not variants:
         raise ValueError("Provide at least one variant")
-    if slides:
-        plots = True
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     rows = []
@@ -104,7 +103,7 @@ def analyze_module_impact(
             raise ValueError("No eligible layers found in the selected nets")
         baseline = model(wav).detach().cpu().clone()
         sr = model.get_sample_rate()
-        if output_dir is not None:
+        if make_audio:
             save_audio(output_dir / "baseline.wav", baseline, sr)
         for layer in layers.values():
             for variant in variants:
@@ -161,9 +160,10 @@ def analyze_module_impact(
     )
     for row, stem, reconstruction in artifacts:
         try:
-            audio_path = output_dir / f"{stem}.wav"
-            save_audio(audio_path, reconstruction, sr)
-            row["audio"] = audio_path.name
+            if make_audio:
+                audio_path = output_dir / f"{stem}.wav"
+                save_audio(audio_path, reconstruction, sr)
+                row["audio"] = audio_path.name
             if plots:
                 from library.plotting import plot_comparison
 
@@ -205,9 +205,32 @@ def analyze_loop(app: AppState) -> None:
     assert isinstance(app.args, AnalyzeArgs)
 
     for file in app.files:
-        analyze_module_impact(
+        output_dir = app.output
+        if len(app.files) > 1:
+            output_dir = output_dir / file.path.stem
+
+        make_artifacts = (
+            app.args.make_audio or app.args.make_plots or app.args.make_slides
+        )
+        rows = analyze_module_impact(
             model=app.model,
             wav=file.wav,
-            output_dir=app.output,
-            max_artifacts=app.args.save_depth,
+            output_dir=output_dir,
+            plots=app.args.make_plots,
+            slides=app.args.make_slides,
+            max_artifacts=app.args.save_depth if make_artifacts else 0,
+            make_audio=app.args.make_audio,
         )
+        if app.args.make_heatmap is not None:
+            from cli.heatmap import render_heatmap
+
+            output_stem = output_dir / (
+                f"{file.path.stem}_{app.args.make_heatmap}_heatmap"
+            )
+            output = render_heatmap(
+                rows,
+                app.args.make_heatmap,
+                file.path.name,
+                output_stem,
+            )
+            print(f"Saved {app.args.make_heatmap.upper()} heatmap to {output}")

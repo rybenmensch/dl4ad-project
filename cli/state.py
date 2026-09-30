@@ -30,7 +30,6 @@ class ModelType(str, Enum):
 class Command(str, Enum):
     BEND = "bend"
     ANALYZE = "analyze"
-    HEATMAP = "heatmap"
 
 
 @dataclass
@@ -52,16 +51,13 @@ class AnalyzeArgs(CommonArgs):
     save_depth: int | None = None
     seed: int = 0
     seconds: float | None = None
+    make_plots: bool = False
+    make_slides: bool = False
+    make_audio: bool = False
+    make_heatmap: str | None = None
 
 
-@dataclass
-class HeatmapArgs(CommonArgs):
-    input: Path
-    metric: str = "mae"
-    output_format: str | None = None
-
-
-Args = BendArgs | AnalyzeArgs | HeatmapArgs
+Args = BendArgs | AnalyzeArgs
 
 
 # TODO: replace tuple[torch.Tensor, int] with AudioTensor

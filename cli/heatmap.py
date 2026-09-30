@@ -7,10 +7,6 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 
-from cli.analyze import analyze_module_impact
-from cli.lib import ChoiceOption, choose
-from cli.state import AppState, HeatmapArgs
-
 
 def _parameters(row: dict) -> dict:
     try:
@@ -84,12 +80,9 @@ def render_heatmap(
     metric: str,
     input_name: str,
     output_stem: Path,
-    output_format: str,
-) -> list[Path]:
+) -> Path:
     if metric not in {"mae", "mrstft"}:
         raise ValueError("metric must be 'mae' or 'mrstft'")
-    if output_format not in {"png", "pdf", "both"}:
-        raise ValueError("output_format must be 'png', 'pdf', or 'both'")
 
     values = []
     for row in rows:
@@ -140,54 +133,7 @@ def render_heatmap(
     axis.tick_params(axis="y", labelrotation=0, labelsize=7)
 
     output_stem.parent.mkdir(parents=True, exist_ok=True)
-    outputs = []
-    if output_format in {"png", "both"}:
-        png_output = output_stem.with_suffix(".png")
-        figure.savefig(png_output, dpi=300, bbox_inches="tight")
-        outputs.append(png_output)
-    if output_format in {"pdf", "both"}:
-        pdf_output = output_stem.with_suffix(".pdf")
-        figure.savefig(pdf_output, bbox_inches="tight")
-        outputs.append(pdf_output)
+    png_output = output_stem.with_suffix(".png")
+    figure.savefig(png_output, dpi=300, bbox_inches="tight")
     plt.close(figure)
-    return outputs
-
-
-def _choose_output_format() -> str:
-    return choose(
-        "Choose heatmap output format",
-        [
-            ChoiceOption("png", "PNG (300 dpi)", "p"),
-            ChoiceOption("pdf", "PDF (scalable)", "d"),
-            ChoiceOption("both", "PNG and PDF", "b"),
-        ],
-    )
-
-
-def generate_heatmap(app: AppState) -> None:
-    if not isinstance(app.args, HeatmapArgs):
-        raise TypeError("Heatmap command requires HeatmapArgs")
-    if len(app.files) != 1:
-        raise ValueError("Heatmap generation supports exactly one input audio file")
-
-    output_format = app.args.output_format or _choose_output_format()
-    audio_file = app.files[0]
-    sweep_dir = app.output / "sweep"
-    rows = analyze_module_impact(
-        model=app.model,
-        wav=audio_file.wav,
-        output_dir=sweep_dir,
-        plots=False,
-        slides=False,
-        max_artifacts=0,
-    )
-    output_stem = app.output / f"{audio_file.path.stem}_{app.args.metric}_heatmap"
-    outputs = render_heatmap(
-        rows,
-        app.args.metric,
-        audio_file.path.name,
-        output_stem,
-        output_format,
-    )
-    for output in outputs:
-        print(f"Saved {app.args.metric.upper()} heatmap to {output}")
+    return png_output

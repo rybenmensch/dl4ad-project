@@ -9,7 +9,6 @@ from cli.state import (
     BendArgs,
     Command,
     CommonArgs,
-    HeatmapArgs,
     ModelType,
 )
 
@@ -21,7 +20,8 @@ def add_common_options(parser: argparse.ArgumentParser) -> None:
         type=Path,
         metavar="DIR",
         help=(
-            "RAVE model directory. Supplying this option automatically implies --type RAVE. "
+            "RAVE model directory. "
+            "Supplying this option automatically implies --type RAVE. "
             "Combining --rave-path with --type Encodec is always an error."
         ),
     )
@@ -80,8 +80,8 @@ def build_parser() -> argparse.ArgumentParser:
 
     analyze = subparsers.add_parser(
         Command.ANALYZE.value,
-        help="Analyze a model using an audio file.",
-        description="Analyze a model using an audio file.",
+        help="Analyze a model using audio files.",
+        description="Analyze a model using an audio file or a directory of audio files.",
     )
     add_common_options(analyze)
     analyze.add_argument(
@@ -90,33 +90,35 @@ def build_parser() -> argparse.ArgumentParser:
         type=int,
         metavar="N",
         help=(
-            "Number of highest-impact trials to save as audio, plots, and slides. "
-            "Omit to save all trials. Use 0 to save only the baseline and results."
+            "Number of highest-impact trials to save as requested artifacts. "
+            "Omit to save all trials. Use 0 to save only requested baseline audio "
+            "and results."
         ),
     )
     add_input_option(
         analyze,
         "Input audio file or directory containing audio files.",
     )
-
-    heatmap = subparsers.add_parser(
-        Command.HEATMAP.value,
-        help="Generate a metric heatmap for one audio file.",
-        description="Run module impact analysis for one audio file and plot the selected metric.",
+    analyze.add_argument(
+        "--make-plots",
+        action="store_true",
+        help="Save baseline and reconstruction comparison plots.",
     )
-    add_common_options(heatmap)
-    add_input_option(heatmap, "Single input audio file.")
-    heatmap.add_argument(
-        "--metric",
+    analyze.add_argument(
+        "--make-slides",
+        action="store_true",
+        help="Save a Quarto impact slide deck.",
+    )
+    analyze.add_argument(
+        "--make-audio",
+        action="store_true",
+        help="Save baseline and selected reconstruction audio.",
+    )
+    analyze.add_argument(
+        "--make-heatmap",
         choices=("mae", "mrstft"),
-        default="mae",
-        help="Metric to plot (default: mae).",
-    )
-    heatmap.add_argument(
-        "--format",
-        dest="output_format",
-        choices=("png", "pdf", "both"),
-        help="Figure format. Prompted interactively when omitted.",
+        metavar="METRIC",
+        help="Save a 300 dpi PNG heatmap (mae, mrstft).",
     )
 
     return parser
@@ -148,14 +150,10 @@ def parse_args(parser: argparse.ArgumentParser) -> Args:
             **common.__dict__,
             input=namespace.input,
             save_depth=namespace.save_depth,
-        )
-
-    if command == Command.HEATMAP:
-        return HeatmapArgs(
-            **common.__dict__,
-            input=namespace.input,
-            metric=namespace.metric,
-            output_format=namespace.output_format,
+            make_plots=namespace.make_plots,
+            make_slides=namespace.make_slides,
+            make_audio=namespace.make_audio,
+            make_heatmap=namespace.make_heatmap,
         )
 
     raise RuntimeError(f"Unknown command: {command}")
@@ -197,27 +195,17 @@ def validate_and_normalize(args: Args) -> Args:
             raise ValueError("--save-depth must be a nonnegative integer")
 
         if not args.input.exists():
-            raise FileNotFoundError(f"File not found: {args.input}")
+            raise FileNotFoundError(f"Input path not found: {args.input}")
 
-        if not args.input.is_file():
-            raise ValueError(f"--input must be an audio file: {args.input}")
+        if args.input.is_file():
+            if args.input.suffix.lower() not in AUDIO_EXTENSIONS:
+                raise ValueError(f"Not a supported audio file: {args.input}")
+        elif not args.input.is_dir():
+            raise ValueError(
+                f"--input must be an audio file or directory: {args.input}"
+            )
 
-        if args.input.suffix.lower() not in AUDIO_EXTENSIONS:
-            raise ValueError(f"Not a supported audio file: {args.input}")
-
-    elif args.command == Command.HEATMAP:
-        assert isinstance(args, HeatmapArgs)
-
-        if args.metric not in {"mae", "mrstft"}:
-            raise ValueError("--metric must be either 'mae' or 'mrstft'")
-
-        if not args.input.exists():
-            raise FileNotFoundError(f"File not found: {args.input}")
-
-        if not args.input.is_file():
-            raise ValueError(f"--input must be an audio file: {args.input}")
-
-        if args.input.suffix.lower() not in AUDIO_EXTENSIONS:
-            raise ValueError(f"Not a supported audio file: {args.input}")
+        if args.make_heatmap not in {None, "mae", "mrstft"}:
+            raise ValueError("--make-heatmap must be either 'mae' or 'mrstft'")
 
     return args
