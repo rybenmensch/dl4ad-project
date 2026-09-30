@@ -101,6 +101,12 @@ def analyze_module_impact(
                         eligible[operation].add(layer.layer_path)
         if not layers:
             raise ValueError("No eligible layers found in the selected nets")
+        total_trials = sum(
+            layer.layer_path in eligible[variant.operation]
+            for layer in layers.values()
+            for variant in variants
+        )
+        trial_number = 0
         baseline = model(wav).detach().cpu().clone()
         sr = model.get_sample_rate()
         if make_audio:
@@ -109,6 +115,12 @@ def analyze_module_impact(
             for variant in variants:
                 if layer.layer_path not in eligible[variant.operation]:
                     continue
+                trial_number += 1
+                print(
+                    f"Analyzing trial {trial_number}/{total_trials}: "
+                    f"{layer.layer_path} ({variant.operation})",
+                    flush=True,
+                )
                 model.reset()
                 model.model.eval()
                 net = model.get_net(layer.net_type)
@@ -149,6 +161,7 @@ def analyze_module_impact(
                             del artifacts[max_artifacts:]
                 except Exception as exc:
                     row["error"] = f"{type(exc).__name__}: {exc}"
+                    print(f"  Trial failed: {row['error']}", flush=True)
                 rows.append(row)
                 # Persist after each trial so long sweeps retain partial results.
                 if output_dir is not None:
@@ -205,6 +218,7 @@ def analyze_loop(app: AppState) -> None:
     assert isinstance(app.args, AnalyzeArgs)
 
     for file in app.files:
+        print(f"Starting analysis for {file.path.name}", flush=True)
         output_dir = app.output
         if len(app.files) > 1:
             output_dir = output_dir / file.path.stem
@@ -221,6 +235,7 @@ def analyze_loop(app: AppState) -> None:
             max_artifacts=app.args.save_depth if make_artifacts else 0,
             make_audio=app.args.make_audio,
         )
+        print(f"Finished analysis for {file.path.name}", flush=True)
         if app.args.make_heatmap is not None:
             from cli.heatmap import render_heatmap
 

@@ -54,6 +54,7 @@ def plot_comparison(
         spectral_loss = float(mrstft(degraded_t, clean_t))
 
     # Plot
+    plt.rcParams["font.family"] = "Times New Roman"
     fig, axes = plt.subplots(2, 2, figsize=(12, 7))
 
     # (0,0) Wellenformen übereinander

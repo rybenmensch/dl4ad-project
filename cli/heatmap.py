@@ -110,6 +110,7 @@ def render_heatmap(
     metric_label = "Raw MAE" if metric == "mae" else "MR-STFT"
     color_map = plt.colormaps.get_cmap(palette).copy()
     color_map.set_bad("whitesmoke")
+    plt.rcParams["font.family"] = "Times New Roman"
     figure, axis = plt.subplots(figsize=(5.2, 4.6), constrained_layout=True)
     sns.heatmap(
         heatmap,
