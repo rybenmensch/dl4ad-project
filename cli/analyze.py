@@ -201,7 +201,7 @@ def analyze_module_impact(
                 row["audio"] = f"audio/{audio_path.name}"
                 print(f"Saved audio: {audio_path}", flush=True)
             if plots:
-                from library.plotting import plot_comparison
+                from cli.plotting import plot_comparison
 
                 parameters = json.loads(row["parameters"])
                 operation_title = row["operation"].capitalize()
