@@ -266,7 +266,7 @@ def analyze_loop(app: AppState) -> None:
         if app.args.make_heatmap:
             from cli.heatmap import render_heatmap
 
-            mae_stem = output_dir / f"{file.path.stem}_mae_heatmap"
+            mae_stem = output_dir / "heatmap_mae"
             print(f"Generating MAE heatmap for {file.path.name}...", flush=True)
             mae_output = render_heatmap(
                 rows,
@@ -277,7 +277,7 @@ def analyze_loop(app: AppState) -> None:
             )
             print(f"Saved MAE heatmap to {mae_output}")
 
-            mrstft_stem = output_dir / f"{file.path.stem}_mrstft_heatmap"
+            mrstft_stem = output_dir / "heatmap_mrstft"
             print(f"Generating MRSTFT heatmap for {file.path.name}...", flush=True)
             mrstft_output = render_heatmap(
                 rows,
@@ -302,7 +302,7 @@ def analyze_heatmaps_from_csv(args: AnalyzeArgs) -> None:
 
     output_dir = args.output / Command.ANALYZE.value
     output_dir.mkdir(parents=True, exist_ok=True)
-    mae_stem = output_dir / f"{args.read_output_csv.stem}_mae_heatmap"
+    mae_stem = output_dir / "heatmap_mae"
     print(f"Generating MAE heatmap from {args.read_output_csv}...", flush=True)
     mae_output = render_heatmap(
         rows,
@@ -313,7 +313,7 @@ def analyze_heatmaps_from_csv(args: AnalyzeArgs) -> None:
     )
     print(f"Saved MAE heatmap to {mae_output}")
 
-    mrstft_stem = output_dir / f"{args.read_output_csv.stem}_mrstft_heatmap"
+    mrstft_stem = output_dir / "heatmap_mrstft"
     print(f"Generating MRSTFT heatmap from {args.read_output_csv}...", flush=True)
     mrstft_output = render_heatmap(
         rows,
